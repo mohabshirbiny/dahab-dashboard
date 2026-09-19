@@ -1,0 +1,30 @@
+@use './tokens.scss';
+
+@layer vuetify-overrides {
+  code, pre, .v-code {
+    font-family: var(--font-mono);
+  }
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Vuetify's app root should transparently show our bg.
+.v-application { background: var(--bg) !important; }
+.v-application__wrap { background: var(--bg); min-height: 100vh; }
+
+.num, .mono, .tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+// Killed Vuetify defaults where they fight the design.
+.v-btn.dahab-btn { text-transform: none; letter-spacing: 0; box-shadow: none; }
+.v-btn.dahab-btn:hover { box-shadow: none; }
+
+// Basic tap targets on mobile.
+button, a, .navlink, .chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

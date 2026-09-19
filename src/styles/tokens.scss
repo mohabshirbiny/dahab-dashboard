@@ -1,0 +1,52 @@
+// Design tokens extracted from the Dahab admin reference.
+// Do not use Vuetify's default palette directly for surfaces; use these.
+
+:root {
+  // Dark nav
+  --nav: #16150F;
+  --nav-2: #211F17;
+  --nav-line: #2E2C22;
+  --nav-txt: #A7A498;
+
+  // Surfaces
+  --bg: #FAFAF8;
+  --panel: #FFFFFF;
+  --line: #E6E3DC;
+  --line-2: #D2CEC4;
+  --row-hover: #FCFCFA;
+  --row-head: #FCFCFA;
+  --row-input-bg: #FCFCFA;
+
+  // Ink
+  --ink: #17160F;
+  --ink-2: #55524A;
+  --ink-3: #8A867C;
+
+  // Accent
+  --gold: #8B6F3D;
+  --gold-2: #D4AF37;
+
+  // Status
+  --ok: #1F6B4C;
+  --ok-bg: #E8F2EC;
+  --wait: #8A6516;
+  --wait-bg: #FBF2DF;
+  --bad: #9B3B2E;
+  --bad-bg: #F8EAE7;
+  --warn: #8A5A00;
+  --warn-bg: #FBEECF;
+  --info: #2B5C7E;
+  --info-bg: #E9F1F6;
+  --off: #F0EEE9;
+
+  // Radii
+  --r-panel: 9px;
+  --r-btn: 6px;
+  --r-input: 7px;
+  --r-pill: 5px;
+  --r-chip: 999px;
+
+  // Type
+  --f-body: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
+  --tnum: "tnum" 1;
+}
