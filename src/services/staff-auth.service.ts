@@ -27,7 +27,8 @@ function toStaffUser (profile: ApiStaffProfile): StaffUser {
     id: profile.id,
     name: profile.full_name,
     email: profile.email,
-    role: profile.role,
+    roles: profile.roles_detail.map(role => ({ name: role.name, displayName: role.display_name })),
+    isFounder: profile.is_founder,
     permissions: profile.permissions,
   }
 }
@@ -42,7 +43,8 @@ const AUTH_STEP = { skipAuthRefresh: true } as const
 
 export const staffAuthService = {
   // POST /dashboard/auth/login. The Backend answers with a session, an MFA challenge,
-  // or an MFA enrollment payload; roles ceo, coo and finance always go through MFA.
+  // or an MFA enrollment payload; founders and anyone holding a role flagged
+  // `requires_mfa` always go through MFA (Backend spec 002).
   async login (payload: StaffLoginPayload): Promise<StaffLoginResult> {
     const { data } = await http.post<ApiEnvelope<ApiLoginData>>(endpoints.staffLogin, payload, AUTH_STEP)
     const result = data.data

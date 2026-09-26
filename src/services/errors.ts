@@ -23,13 +23,18 @@ export class ServiceError extends Error {
   readonly status: number
   // Backend validation messages by field name, on `validation` only.
   readonly fields: Readonly<Record<string, string[]>>
+  // The Backend's own `code`, for screens that must tell apart refusals that share
+  // a UI code (for example `escalation_denied` vs `permission_denied`). Null when
+  // the failure did not come from the Backend.
+  readonly backendCode: string | null
 
-  constructor (code: ServiceErrorCode, message: string, status = 400, fields: Record<string, string[]> = {}) {
+  constructor (code: ServiceErrorCode, message: string, status = 400, fields: Record<string, string[]> = {}, backendCode: string | null = null) {
     super(message)
     this.name = 'ServiceError'
     this.code = code
     this.status = status
     this.fields = fields
+    this.backendCode = backendCode
   }
 }
 
@@ -39,6 +44,10 @@ export function isServiceError (error: unknown): error is ServiceError {
 
 export function errorCodeOf (error: unknown): ServiceErrorCode {
   return isServiceError(error) ? error.code : 'unknown'
+}
+
+export function backendCodeOf (error: unknown): string | null {
+  return isServiceError(error) ? error.backendCode : null
 }
 
 // The Backend's stable `code` values (AuthErrorCode and DomainApiException)
@@ -55,6 +64,12 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   token_expired: 'unauthenticated',
   refresh_invalid: 'unauthenticated',
   permission_denied: 'forbidden',
+  // Access control (Backend spec 002).
+  escalation_denied: 'forbidden',
+  verification_required: 'forbidden',
+  role_in_use: 'conflict',
+  last_role_manager: 'conflict',
+  reason_required: 'validation',
   forbidden: 'forbidden',
   not_found: 'not_found',
   illegal_document_transition: 'conflict',
@@ -91,5 +106,5 @@ export function toServiceError (error: unknown): ServiceError {
   }
   const body = isBackendBody(response.data) ? response.data : null
   const code = (body && BACKEND_CODES[body.code]) ?? STATUS_CODES[response.status] ?? 'unknown'
-  return new ServiceError(code, body?.message ?? error.message, response.status, body?.errors)
+  return new ServiceError(code, body?.message ?? error.message, response.status, body?.errors, body?.code ?? null)
 }

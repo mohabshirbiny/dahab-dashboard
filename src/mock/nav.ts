@@ -53,7 +53,7 @@ export const navGroups: NavGroup[] = [
         liveBadge: 'customersPending',
         permission: 'customer.view',
       },
-      { key: 'staff', title: 'Staff and permissions', to: '/dashboard/staff', hidden: true },
+      { key: 'staff', title: 'Staff and permissions', to: '/dashboard/staff', permission: 'staff.view' },
       { key: 'audit', title: 'Audit log', to: '/dashboard/audit', hidden: true },
     ],
   },

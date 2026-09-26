@@ -39,17 +39,28 @@ export interface ApiSession {
   family_id: string
 }
 
-export type ApiStaffRole = 'ceo' | 'coo' | 'finance' | 'operations' | 'verification' | 'igi_branch'
+// A role as shown next to a staff member. Roles are Backend data managed from the
+// Dashboard (spec 002), so there is no fixed list of role names here.
+export interface ApiRoleRef {
+  name: string
+  display_name: string
+}
 
 export interface ApiStaffProfile {
   id: string
-  role: ApiStaffRole
+  // Deprecated by the Backend (spec 002): first role name alphabetically, or null.
+  // Use `roles_detail`.
+  role: string | null
   full_name: string
   email: string
   phone: string | null
   is_active: boolean
+  // Founder status is read-only; no endpoint can change it.
+  is_founder: boolean
   branch_id: number | null
+  // Role machine names, sorted.
   roles: string[]
+  roles_detail: ApiRoleRef[]
   // Effective permissions (direct and through roles), for example `identity.view`.
   permissions: string[]
   mfa_enrolled: boolean
@@ -111,4 +122,38 @@ export interface ApiCustomerVerification {
     created_at: string
     reviewed_at: string | null
   } | null
+}
+
+// Access control (spec 002). `GET /dashboard/permissions` — the code-defined catalogue.
+export interface ApiPermission {
+  code: string
+  label: string
+  group: string
+  branch_scoped: boolean
+}
+
+// `GET /dashboard/roles`, `GET|PATCH /dashboard/roles/{role}`, `POST /dashboard/roles`.
+export interface ApiRole {
+  name: string
+  display_name: string
+  description: string | null
+  requires_mfa: boolean
+  permissions: string[]
+  staff_count: number
+  created_at: string
+  updated_at: string
+}
+
+// `GET /dashboard/staff`, `GET /dashboard/staff/{staff}`, `PUT /dashboard/staff/{staff}/roles`.
+export interface ApiStaffMember {
+  id: string
+  full_name: string
+  email: string
+  phone: string | null
+  is_active: boolean
+  is_founder: boolean
+  branch_id: number | null
+  roles: ApiRoleRef[]
+  permissions: string[]
+  mfa_enrolled: boolean
 }

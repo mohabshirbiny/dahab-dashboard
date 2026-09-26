@@ -53,7 +53,7 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 |---|---|---|
 | Sign in | `POST /dashboard/auth/login` → session, **or** `mfa_required`, **or** `mfa_enrollment_required` | `staffAuthService.login`, `pages/login.vue` |
 | MFA verify | `POST /dashboard/auth/mfa/verify` `{session_ref, code}` | `pages/mfa.vue` |
-| MFA enrollment | `POST /dashboard/auth/mfa/enroll` `{session_ref, code}` | `pages/mfa-enroll.vue` (new: roles `ceo`/`coo`/`finance` cannot sign in without it) |
+| MFA enrollment | `POST /dashboard/auth/mfa/enroll` `{session_ref, code}` | `pages/mfa-enroll.vue` (founders and roles flagged `requires_mfa` cannot sign in without it — Backend spec 002) |
 | Refresh | `POST /dashboard/auth/refresh` | `src/api/axios.ts` interceptor |
 | Current staff | `GET /dashboard/auth/me` | auth store `initialize`, permissions |
 | Sign out | `POST /dashboard/auth/logout` (204) | sidebar "Sign out" |
@@ -61,6 +61,14 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 | Verify / ask again / reject | `POST /dashboard/identity-documents/{id}/review` `{action: verify\|request_resubmission\|reject, reasons[], note?}` (`identity.review`); `reasons` is required for the last two | `IdentityReviewPanel`, inside the customer's file |
 | Customers list | `GET /dashboard/customers?status=&per_page=&page=` (`customer.view`); `status` is `pending_verification\|active\|rejected\|suspended` | Users and verification page (`pages/users/index.vue`) |
 | Customer detail | `GET /dashboard/customers/{id}` (`customer.view`); every call is audited | review panel on the same page |
+| Staff list | `GET /dashboard/staff?per_page=&page=` (`staff.view`) | Staff and permissions → Staff tab (`pages/staff/index.vue`) |
+| Staff roles | `PUT /dashboard/staff/{id}/roles` `{roles[], reason}` (`roles.manage`) | "Permissions" dialog (`StaffRolesModal`) |
+| Permission catalogue | `GET /dashboard/permissions` (`roles.manage`) | role editor |
+| Roles | `GET\|POST /dashboard/roles`, `PATCH\|DELETE /dashboard/roles/{role}` (`roles.manage`); `reason` required for permission/MFA changes and delete | Roles tab (`RolesTable`, `RoleEditorModal`, `RoleDeleteModal`) — **a UI extension beyond the design reference** (approved 2026-09-26) |
+
+Staff roles are Backend data (spec 002): the profile's `role` field is deprecated, the UI shows `roles_detail`.
+The Backend refuses self-escalation (`escalation_denied`); the UI locks the same choices ahead of time.
+Not surfaced: "Create an account", "Freeze" and "Suspend" from the design — the Backend has no routes yet.
 
 Not surfaced in the UI: `POST /dashboard/auth/logout-all`, MFA `recovery_code` sign-in (the verify screen only
 takes a 6-digit code), and a QR code on the enrollment screen (the setup key and `otpauth://` link are shown).
@@ -70,9 +78,9 @@ takes a 6-digit code), and a QR code on the enrollment screen (the setup key and
 `GET /health` is the only other real route. Everything below is **not** backed by the Backend yet:
 
 - **Overview** (`services/overview.service.ts` → `mock/overview.ts`): no dashboard/statistics endpoint.
-- **Every sidebar section except Users and verification** (listings, orders, inspections, disputes, withdrawals,
+- **Every sidebar section except Users and verification and Staff and permissions** (listings, orders, inspections, disputes, withdrawals,
   transfers, statement, compensation, bank book, closing, invoices, pricing, rates, promos, market maker, karats,
-  switches, branches, app text, terms, customer file, staff, audit): no routes. They are placeholder pages.
+  switches, branches, app text, terms, customer file, audit): no routes. They are placeholder pages.
 - **Sidebar badges** other than Users and verification are fixed numbers in `mock/nav.ts`.
 - The top bar's search and Export are UI-only toasts.
 
