@@ -1,29 +1,15 @@
+// Real Backend routes, relative to `VITE_API_BASE_URL` (which ends in `/api/v1`).
+// Source: dahab-backend/routes/api.php. Only routes that exist are listed;
+// screens without a Backend route yet have no entry here.
 export const endpoints = {
-  overview: '/admin/overview',
-  listings: '/admin/listings',
-  orders: '/admin/orders',
-  inspections: '/admin/inspections',
-  disputes: '/admin/disputes',
-  withdrawals: '/admin/withdrawals',
-  transfers: '/admin/transfers',
-  statement: '/admin/wallet-statement',
-  compensation: '/admin/compensation',
-  bankbook: '/admin/bank-movements',
-  closing: '/admin/daily-closing',
-  invoices: '/admin/invoices',
-  pricing: '/admin/gold-pricing',
-  rates: '/admin/commission-rates',
-  promos: '/admin/promo-codes',
-  marketMaker: '/admin/market-maker',
-  karats: '/admin/karats',
-  switches: '/admin/switches',
-  branches: '/admin/branches',
-  content: '/admin/app-text',
-  docs: '/admin/documents',
-  customer: '/admin/customer',
-  users: '/admin/users',
-  staff: '/admin/staff',
-  audit: '/admin/audit',
+  staffLogin: '/dashboard/auth/login',
+  staffMfaVerify: '/dashboard/auth/mfa/verify',
+  staffMfaEnroll: '/dashboard/auth/mfa/enroll',
+  staffRefresh: '/dashboard/auth/refresh',
+  staffLogout: '/dashboard/auth/logout',
+  staffMe: '/dashboard/auth/me',
+  customers: '/dashboard/customers',
+  customer: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}`,
+  identityDocumentImage: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/image`,
+  identityDocumentReview: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/review`,
 } as const
-
-export type EndpointKey = keyof typeof endpoints

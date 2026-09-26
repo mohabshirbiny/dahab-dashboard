@@ -13,6 +13,7 @@
 
     <div class="d-main">
       <AppTopbar :title="currentTitle" />
+
       <div class="d-wrap">
         <router-view />
       </div>
@@ -37,7 +38,7 @@
 
   const currentTitle = computed(() => {
     const match = flatNav.value.find(item => route.path.startsWith(item.to))
-    return match?.title ?? 'Overview'
+    return match?.title ?? route.meta.title ?? 'Overview'
   })
 
   function onCloseNav () {

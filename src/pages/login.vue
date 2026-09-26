@@ -1,97 +1,181 @@
 <template>
-  <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" lg="4" md="5" sm="8">
-        <div class="text-center mb-6">
-          <v-avatar class="mb-3" color="primary" size="56">
-            <v-icon icon="mdi-shield-account" size="32" />
-          </v-avatar>
-          <h1 class="text-h5 font-weight-bold">Admin Dashboard</h1>
-          <p class="text-medium-emphasis mb-0">Sign in to continue</p>
-        </div>
+  <AuthShell subtitle="Sign in with your own staff account." title="Sign in to Dahab admin">
+    <NoteBanner
+      v-if="banner"
+      class="d-login__banner"
+      role="alert"
+      :variant="banner.variant"
+    >
+      <span><b>{{ banner.title }}</b> {{ banner.text }}</span>
+    </NoteBanner>
 
-        <v-card class="pa-4" elevation="4" rounded="lg">
-          <v-form ref="formRef" @submit.prevent="onSubmit">
-            <v-text-field
-              v-model="username"
-              autocomplete="username"
-              label="Username"
-              prepend-inner-icon="mdi-account-outline"
-              :rules="[required]"
-              variant="outlined"
-            />
+    <form novalidate @submit.prevent="onSubmit">
+      <FormField v-slot="{ controlId, describedBy, invalid }" :error="errors.email" label="Email">
+        <DInput
+          :id="controlId"
+          ref="emailEl"
+          v-model="email"
+          autocomplete="username"
+          :describedby="describedBy"
+          :disabled="submitting"
+          inputmode="email"
+          :invalid="invalid"
+          placeholder="name@dahab.eg"
+          size="lg"
+          type="email"
+          @blur="touched.email = true"
+        />
+      </FormField>
 
-            <v-text-field
-              v-model="password"
-              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-              autocomplete="current-password"
-              label="Password"
-              prepend-inner-icon="mdi-lock-outline"
-              :rules="[required]"
-              :type="showPassword ? 'text' : 'password'"
-              variant="outlined"
-              @click:append-inner="showPassword = !showPassword"
-            />
-
-            <v-alert
-              v-if="error"
-              class="mb-4"
-              density="compact"
-              :text="error"
-              type="error"
-              variant="tonal"
-            />
-
-            <v-btn
-              block
-              color="primary"
-              :loading="auth.loading"
-              size="large"
-              type="submit"
+      <FormField v-slot="{ controlId, describedBy, invalid }" :error="errors.password" label="Password">
+        <DInput
+          :id="controlId"
+          ref="passwordEl"
+          v-model="password"
+          autocomplete="current-password"
+          :describedby="describedBy"
+          :disabled="submitting"
+          :invalid="invalid"
+          size="lg"
+          :type="showPassword ? 'text' : 'password'"
+          @blur="touched.password = true"
+        >
+          <template #append>
+            <button
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-pressed="showPassword"
+              class="d-login__toggle"
+              type="button"
+              @click="showPassword = !showPassword"
             >
-              Sign In
-            </v-btn>
-          </v-form>
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </template>
+        </DInput>
+      </FormField>
 
-          <p class="text-caption text-medium-emphasis text-center mt-4 mb-0">
-            Demo credentials — <strong>admin</strong> / <strong>admin123</strong>
-          </p>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+      <DBtn
+        block
+        class="d-login__submit"
+        kind="primary"
+        :loading="submitting"
+        size="lg"
+        type="submit"
+      >
+        {{ submitting ? 'Signing in…' : 'Sign in' }}
+      </DBtn>
+    </form>
+  </AuthShell>
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue'
+  import { computed, reactive, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import AuthShell from '@/components/auth/AuthShell.vue'
+  import DBtn from '@/components/ui/DBtn.vue'
+  import DInput from '@/components/ui/DInput.vue'
+  import FormField from '@/components/ui/FormField.vue'
+  import NoteBanner from '@/components/ui/NoteBanner.vue'
+  import { mfaRouteName, safeRedirect } from '@/router/guards'
+  import { errorCodeOf, type ServiceErrorCode } from '@/services/errors'
   import { useAuthStore } from '@/stores/auth'
 
   const auth = useAuthStore()
   const router = useRouter()
   const route = useRoute()
 
-  const formRef = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
-  const username = ref('')
+  const email = ref('')
   const password = ref('')
   const showPassword = ref(false)
-  const error = ref('')
+  const submitting = ref(false)
+  const failure = ref<ServiceErrorCode | null>(null)
+  const submitted = ref(false)
+  const touched = reactive({ email: false, password: false })
 
-  function required (v: string) {
-    return !!v || 'This field is required'
-  }
+  const emailEl = ref<InstanceType<typeof DInput> | null>(null)
+  const passwordEl = ref<InstanceType<typeof DInput> | null>(null)
+
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
+
+  const errors = computed(() => {
+    const result: { email?: string, password?: string } = {}
+    if (submitted.value || touched.email) {
+      if (!email.value.trim()) result.email = 'Enter your email.'
+      else if (!EMAIL_PATTERN.test(email.value.trim())) result.email = 'Enter a valid email, for example name@dahab.eg.'
+    }
+    if ((submitted.value || touched.password) && !password.value) {
+      result.password = 'Enter your password.'
+    }
+    return result
+  })
+
+  const banner = computed(() => {
+    switch (failure.value) {
+      case null: {
+        return null
+      }
+      case 'invalid_credentials': {
+        return { variant: 'bad' as const, title: 'Sign in failed.', text: 'The email or password is not correct. Check them and try again.' }
+      }
+      case 'account_disabled': {
+        return { variant: 'wait' as const, title: 'This account is disabled or frozen.', text: 'You cannot sign in until a founder restores access.' }
+      }
+      case 'too_many_requests': {
+        return { variant: 'wait' as const, title: 'Too many attempts.', text: 'Wait a few minutes before you try to sign in again.' }
+      }
+      case 'network': {
+        return { variant: 'bad' as const, title: 'Cannot reach the server.', text: 'Check your connection and try again.' }
+      }
+      default: {
+        return { variant: 'bad' as const, title: 'Something went wrong.', text: 'We could not sign you in. Try again in a moment.' }
+      }
+    }
+  })
 
   async function onSubmit () {
-    error.value = ''
-    const result = await formRef.value?.validate()
-    if (!result?.valid) return
+    if (submitting.value) return
+    submitted.value = true
+    failure.value = null
+    if (errors.value.email) return emailEl.value?.focus()
+    if (errors.value.password) return passwordEl.value?.focus()
 
+    submitting.value = true
     try {
-      await auth.login(username.value, password.value)
-      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard/overview'
-      router.replace(redirect)
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Login failed'
+      const outcome = await auth.login({ email: email.value.trim(), password: password.value })
+      const redirect = safeRedirect(route.query.redirect)
+      // A second step means the Backend wants a code, or first-time authenticator setup.
+      await router.replace(outcome === 'authenticated'
+        ? redirect
+        : {
+          name: mfaRouteName(outcome === 'mfa_required' ? 'verify' : 'enroll'),
+          query: redirect === '/dashboard/overview' ? {} : { redirect },
+        })
+    } catch (error) {
+      failure.value = errorCodeOf(error)
+      if (failure.value === 'invalid_credentials') {
+        password.value = ''
+        submitted.value = false
+        touched.password = false
+        passwordEl.value?.focus()
+      }
+    } finally {
+      submitting.value = false
     }
   }
 </script>
+
+<style lang="scss" scoped>
+.d-login__banner { margin-bottom: 16px; }
+.d-login__submit { margin-top: 6px; }
+.d-login__toggle {
+  border: 0;
+  background: transparent;
+  padding: 0 12px;
+  align-self: stretch;
+  font: 500 11.5px Inter, system-ui, sans-serif;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.d-login__toggle:hover { color: var(--ink); }
+.d-login__toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: var(--r-input); }
+</style>

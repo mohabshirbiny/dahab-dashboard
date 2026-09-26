@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import Overview from '@/pages/dashboard/overview.vue'
 import Placeholder from '@/pages/dashboard/_placeholder.vue'
+import Overview from '@/pages/dashboard/overview.vue'
 import Login from '@/pages/login.vue'
+import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
@@ -27,25 +28,59 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
   { path: 'customer', name: 'customer', component: Placeholder, meta: { title: 'Customer file' } },
-  { path: 'users', name: 'users', component: Placeholder, meta: { title: 'Users and verification' } },
   { path: 'staff', name: 'staff', component: Placeholder, meta: { title: 'Staff and permissions' } },
   { path: 'audit', name: 'audit', component: Placeholder, meta: { title: 'Audit log' } },
-]
+].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/dashboard/overview' },
-  { path: '/login', name: 'login', component: Login, meta: { public: true } },
   {
-    path: '/dashboard',
+    path: '/login',
+    name: 'login',
+    component: Login,
+    meta: { public: true, guestOnly: true, title: 'Sign in' },
+  },
+  {
+    path: '/mfa',
+    name: 'mfa',
+    component: () => import('@/pages/mfa.vue'),
+    meta: { public: true, guestOnly: true, title: 'Verification code' },
+  },
+  {
+    path: '/mfa/setup',
+    name: 'mfa-enroll',
+    component: () => import('@/pages/mfa-enroll.vue'),
+    meta: { public: true, guestOnly: true, title: 'Set up verification' },
+  },
+  {
+    // One layout for every signed-in screen, so the sidebar survives navigation.
+    path: '/',
     component: AdminLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', redirect: '/dashboard/overview' },
-      { path: 'overview', name: 'overview', component: Overview, meta: { title: 'Overview' } },
+      { path: '', redirect: { name: 'overview' } },
+      { path: 'dashboard', redirect: { name: 'overview' } },
+      { path: 'dashboard/overview', name: 'overview', component: Overview, meta: { title: 'Overview' } },
       ...placeholderChildren,
+      {
+        path: 'dashboard/users',
+        name: 'users',
+        component: () => import('@/pages/users/index.vue'),
+        meta: { title: 'Users and verification', permissions: [PERMISSIONS.customerView] },
+      },
+      {
+        path: 'forbidden',
+        name: 'forbidden',
+        component: () => import('@/pages/forbidden.vue'),
+        meta: { title: 'Access denied' },
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/pages/not-found.vue'),
+        meta: { title: 'Page not found' },
+      },
     ],
   },
-  { path: '/:pathMatch(.*)*', redirect: '/dashboard/overview' },
 ]
 
 const router = createRouter({

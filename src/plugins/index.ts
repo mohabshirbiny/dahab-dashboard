@@ -2,6 +2,7 @@ import router from '../router'
 import i18n from './i18n'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import installSessionExpiry from './session'
 import installVueQuery from './vue-query'
 
 import type { App } from 'vue'
@@ -16,4 +17,5 @@ export function registerPlugins (app: App) {
   app.use(i18n)
   app.use(router)
   installVueQuery(app)
+  installSessionExpiry(router)
 }

@@ -1,62 +1,87 @@
 <template>
   <aside class="d-nav" :class="{ 'd-nav--open': mobileOpen }">
     <div class="d-nav__brand">
-      <svg viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg" aria-label="Dahab">
-        <text
-          x="6" y="60"
-          font-family="Didot, 'Playfair Display', 'Instrument Serif', serif"
-          font-size="60"
-          font-weight="600"
-          fill="currentColor"
-          letter-spacing="-1"
-        >Dahab</text>
-        <circle cx="198" cy="56" r="6" fill="#D4AF37" />
-      </svg>
+      <BrandMark />
       <span class="d-nav__env">LIVE</span>
     </div>
 
     <nav class="d-nav__body">
-      <template v-for="group in navGroups" :key="group.label">
+      <template v-for="group in visibleGroups" :key="group.label">
         <div class="d-nav__section">{{ group.label }}</div>
+
         <RouterLink
           v-for="item in group.items"
           :key="item.key"
+          active-class="is-active"
           class="d-nav__link"
           :to="item.to"
-          active-class="is-active"
           @click="onLinkClick"
         >
           <span class="d-nav__link-title">{{ item.title }}</span>
-          <span v-if="item.badge" class="d-nav__badge">{{ item.badge }}</span>
+          <span v-if="badgeFor(item)" class="d-nav__badge">{{ badgeFor(item) }}</span>
         </RouterLink>
       </template>
     </nav>
 
     <div class="d-nav__who">
-      <b>{{ auth.user?.name ?? 'Ahmed Ezz El-Din' }}</b>
-      <span>{{ auth.user?.role ?? 'Chief Executive Officer' }}</span>
-      <div class="d-nav__switch" @click="onSwitch">Switch role</div>
+      <b>{{ auth.user?.name }}</b>
+      <span>{{ roleLabel }}</span>
+
+      <button class="d-nav__switch" :disabled="signingOut" type="button" @click="onSignOut">
+        {{ signingOut ? 'Signing out…' : 'Sign out' }}
+      </button>
     </div>
   </aside>
 </template>
 
 <script lang="ts" setup>
-  import { RouterLink } from 'vue-router'
+  import type { NavItem } from '@/types/nav'
+  import { computed, ref } from 'vue'
+  import { RouterLink, useRouter } from 'vue-router'
+  import BrandMark from '@/components/ui/BrandMark.vue'
+  import { useCustomerWaitingCountQuery } from '@/composables/useCustomers'
+  import { usePermissions } from '@/composables/usePermissions'
   import { navGroups } from '@/mock/nav'
   import { useAuthStore } from '@/stores/auth'
-  import { useToast } from '@/composables/useToast'
+  import { PERMISSIONS, STAFF_ROLE_LABELS } from '@/types/staff'
 
   defineProps<{ mobileOpen: boolean }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
 
   const auth = useAuthStore()
-  const { ok } = useToast()
+  const router = useRouter()
+  const { can } = usePermissions()
+
+  const signingOut = ref(false)
+
+  const roleLabel = computed(() => (auth.user ? STAFF_ROLE_LABELS[auth.user.role] : ''))
+
+  // Staff only see sections that are built and that they may open. The backend still checks every call.
+  const visibleGroups = computed(() =>
+    navGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => !item.hidden && (!item.permission || can(item.permission))),
+      }))
+      .filter(group => group.items.length > 0),
+  )
+
+  const { data: customersWaiting } = useCustomerWaitingCountQuery(() => can(PERMISSIONS.customerView))
+
+  function badgeFor (item: NavItem): number | undefined {
+    if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
+    return item.badge
+  }
 
   function onLinkClick () {
     emit('close')
   }
-  function onSwitch () {
-    ok('Switching roles is for testing. In production you sign in as yourself.')
+
+  async function onSignOut () {
+    signingOut.value = true
+    await auth.logout()
+    await router.replace({ name: 'login' })
+    signingOut.value = false
   }
 </script>
 
@@ -148,11 +173,18 @@
   margin-bottom: 2px;
 }
 .d-nav__switch {
+  display: block;
   margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
   color: #6E6B60;
   cursor: pointer;
 }
-.d-nav__switch:hover { color: #E8E6DE; }
+.d-nav__switch:hover:not(:disabled) { color: #E8E6DE; }
+.d-nav__switch:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.d-nav__switch:disabled { cursor: progress; }
 
 @media (max-width: 900px) {
   .d-nav {
