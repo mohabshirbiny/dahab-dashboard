@@ -3,7 +3,7 @@
     <v-list-item
       nav
       prepend-icon="mdi-account-circle"
-      :subtitle="auth.user?.role"
+      :subtitle="auth.user ? roleSummary(auth.user.roles) : undefined"
       :title="auth.user?.name ?? 'Admin'"
     >
       <template #append>
@@ -74,6 +74,7 @@
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
+  import { roleSummary } from '@/types/staff'
 
   const auth = useAuthStore()
   const router = useRouter()

@@ -43,7 +43,7 @@
   import { usePermissions } from '@/composables/usePermissions'
   import { navGroups } from '@/mock/nav'
   import { useAuthStore } from '@/stores/auth'
-  import { PERMISSIONS, STAFF_ROLE_LABELS } from '@/types/staff'
+  import { PERMISSIONS, roleSummary } from '@/types/staff'
 
   defineProps<{ mobileOpen: boolean }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
@@ -54,7 +54,8 @@
 
   const signingOut = ref(false)
 
-  const roleLabel = computed(() => (auth.user ? STAFF_ROLE_LABELS[auth.user.role] : ''))
+  // Role names come from the Backend (spec 002); there is no fixed list here.
+  const roleLabel = computed(() => (auth.user ? roleSummary(auth.user.roles) : ''))
 
   // Staff only see sections that are built and that they may open. The backend still checks every call.
   const visibleGroups = computed(() =>

@@ -28,7 +28,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
   { path: 'customer', name: 'customer', component: Placeholder, meta: { title: 'Customer file' } },
-  { path: 'staff', name: 'staff', component: Placeholder, meta: { title: 'Staff and permissions' } },
   { path: 'audit', name: 'audit', component: Placeholder, meta: { title: 'Audit log' } },
 ].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
@@ -66,6 +65,13 @@ const routes: RouteRecordRaw[] = [
         name: 'users',
         component: () => import('@/pages/users/index.vue'),
         meta: { title: 'Users and verification', permissions: [PERMISSIONS.customerView] },
+      },
+      {
+        // Staff and roles (Backend spec 002). The Roles tab needs roles.manage too.
+        path: 'dashboard/staff',
+        name: 'staff',
+        component: () => import('@/pages/staff/index.vue'),
+        meta: { title: 'Staff and permissions', permissions: [PERMISSIONS.staffView] },
       },
       {
         path: 'forbidden',

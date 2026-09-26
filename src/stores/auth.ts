@@ -78,6 +78,20 @@ export const useAuthStore = defineStore('auth', () => {
     return initialization
   }
 
+  // Re-reads the signed-in profile (roles, permissions) without touching the
+  // session, for example after roles changed (Backend spec 002: a change applies
+  // on the next request). A failure keeps what is on screen.
+  async function refreshProfile (): Promise<void> {
+    if (!user.value) {
+      return
+    }
+    try {
+      user.value = await staffAuthService.getCurrentStaff()
+    } catch {
+      // The next navigation re-checks the session anyway.
+    }
+  }
+
   async function login (payload: StaffLoginPayload): Promise<LoginOutcome> {
     const result = await staffAuthService.login(payload)
     const email = payload.email.trim().toLowerCase()
@@ -141,6 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
     can,
     canAll,
     initialize,
+    refreshProfile,
     login,
     verifyMfa,
     enrollMfa,

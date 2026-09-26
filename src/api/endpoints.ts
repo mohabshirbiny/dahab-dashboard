@@ -12,4 +12,11 @@ export const endpoints = {
   customer: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}`,
   identityDocumentImage: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/image`,
   identityDocumentReview: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/review`,
+  // Access control (Backend spec 002).
+  permissions: '/dashboard/permissions',
+  roles: '/dashboard/roles',
+  role: (name: string) => `/dashboard/roles/${encodeURIComponent(name)}`,
+  staff: '/dashboard/staff',
+  staffMember: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}`,
+  staffRoles: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/roles`,
 } as const

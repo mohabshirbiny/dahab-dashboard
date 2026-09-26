@@ -3,30 +3,34 @@ export const PERMISSIONS = {
   identityView: 'identity.view',
   identityReview: 'identity.review',
   customerView: 'customer.view',
+  // Access control (Backend spec 002).
+  staffView: 'staff.view',
+  rolesManage: 'roles.manage',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
 
-// The Backend `role` enum (App\Enums\StaffRole).
-export type StaffRole = 'ceo' | 'coo' | 'finance' | 'operations' | 'verification' | 'igi_branch'
-
-// Roles are labels only. What a person may do comes from `permissions`.
-export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
-  ceo: 'Chief Executive Officer',
-  coo: 'Chief Operating Officer',
-  finance: 'Chief Financial Officer',
-  operations: 'Operations',
-  verification: 'Verification',
-  igi_branch: 'IGI branch',
+// Roles are Backend data managed from this Dashboard (spec 002): there is no fixed
+// list of role names in the UI. They are labels only; what a person may do comes
+// from `permissions`.
+export interface RoleRef {
+  name: string
+  displayName: string
 }
 
 export interface StaffUser {
   id: string
   name: string
   email: string
-  role: StaffRole
+  roles: readonly RoleRef[]
+  isFounder: boolean
   // Everything the Backend grants, including keys this UI does not use yet.
   permissions: readonly string[]
+}
+
+// The signed-in person's roles as one line, for the sidebar.
+export function roleSummary (roles: readonly RoleRef[]): string {
+  return roles.map(role => role.displayName).join(', ')
 }
 
 export interface StaffLoginPayload {
