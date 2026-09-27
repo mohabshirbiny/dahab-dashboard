@@ -22,9 +22,7 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'rates', name: 'rates', component: Placeholder, meta: { title: 'Commission rates' } },
   { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
   { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
-  { path: 'karats', name: 'karats', component: Placeholder, meta: { title: 'Karats' } },
   { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
-  { path: 'branches', name: 'branches', component: Placeholder, meta: { title: 'Branches and hours' } },
   { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
   { path: 'customer', name: 'customer', component: Placeholder, meta: { title: 'Customer file' } },
@@ -72,6 +70,19 @@ const routes: RouteRecordRaw[] = [
         name: 'staff',
         component: () => import('@/pages/staff/index.vue'),
         meta: { title: 'Staff and permissions', permissions: [PERMISSIONS.staffView] },
+      },
+      {
+        // Reference data (Backend spec 004). Changes need their own permissions too.
+        path: 'dashboard/karats',
+        name: 'karats',
+        component: () => import('@/pages/karats/index.vue'),
+        meta: { title: 'Karats', permissions: [PERMISSIONS.referenceView] },
+      },
+      {
+        path: 'dashboard/branches',
+        name: 'branches',
+        component: () => import('@/pages/branches/index.vue'),
+        meta: { title: 'Branches and hours', permissions: [PERMISSIONS.referenceView] },
       },
       {
         path: 'forbidden',

@@ -157,3 +157,41 @@ export interface ApiStaffMember {
   permissions: string[]
   mfa_enrolled: boolean
 }
+
+// Reference data (Backend spec 004).
+// `GET /dashboard/karats`, `POST /dashboard/karats`, `POST /dashboard/karats/{code}/toggle`.
+export interface ApiKarat {
+  code: number
+  // Decimal string with five places, e.g. "0.87500".
+  purity: string
+  is_enabled: boolean
+  sort_order: number
+}
+
+// dow: 0 = Sunday … 6 = Saturday. Times are "HH:MM" in the branch's timezone.
+export interface ApiBranchHour {
+  dow: number
+  opens_at: string
+  closes_at: string
+}
+
+// `GET|POST /dashboard/branches`, `PATCH /dashboard/branches/{branch}`.
+export interface ApiBranch {
+  id: number
+  name_en: string
+  name_ar: string
+  address_en: string
+  address_ar: string
+  timezone: string
+  is_enabled: boolean
+  hours: ApiBranchHour[]
+}
+
+// `GET|POST /dashboard/branch-closures`. branch_id null = every branch.
+export interface ApiBranchClosure {
+  id: number
+  branch_id: number | null
+  closure_date: string
+  reason_en: string | null
+  reason_ar: string | null
+}
