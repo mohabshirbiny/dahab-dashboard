@@ -17,6 +17,9 @@ export const PERMISSIONS = {
   settingsManage: 'settings.manage',
   goldPriceEnter: 'gold_price.enter',
   goldPriceConfirm: 'gold_price.confirm',
+  // Audit log (Backend spec 006).
+  auditViewAll: 'audit.view_all',
+  auditViewOwn: 'audit.view_own',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

@@ -40,6 +40,11 @@ export const useAuthStore = defineStore('auth', () => {
     return permissions.every(p => user.value?.permissions.includes(p))
   }
 
+  // At least one of these (for example the audit log: everything, or own actions).
+  function canAny (permissions: readonly Permission[]): boolean {
+    return permissions.some(p => user.value?.permissions.includes(p))
+  }
+
   function startSession (session: StaffSession) {
     pendingMfa.value = null
     setSession(session.tokens)
@@ -154,6 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     isInitializing,
     can,
     canAll,
+    canAny,
     initialize,
     refreshProfile,
     login,

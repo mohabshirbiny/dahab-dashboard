@@ -24,7 +24,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
   { path: 'customer', name: 'customer', component: Placeholder, meta: { title: 'Customer file' } },
-  { path: 'audit', name: 'audit', component: Placeholder, meta: { title: 'Audit log' } },
 ].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
 const routes: RouteRecordRaw[] = [
@@ -68,6 +67,13 @@ const routes: RouteRecordRaw[] = [
         name: 'staff',
         component: () => import('@/pages/staff/index.vue'),
         meta: { title: 'Staff and permissions', permissions: [PERMISSIONS.staffView] },
+      },
+      {
+        // Audit log (Backend spec 006): everything, or your own actions only.
+        path: 'dashboard/audit',
+        name: 'audit',
+        component: () => import('@/pages/audit/index.vue'),
+        meta: { title: 'Audit log', anyPermissions: [PERMISSIONS.auditViewAll, PERMISSIONS.auditViewOwn] },
       },
       {
         // Pricing (Backend spec 005). Changes need their own permissions too.

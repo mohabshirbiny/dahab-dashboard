@@ -13,6 +13,8 @@ export interface NavItem {
   hidden?: boolean
   // Hidden from staff who do not have this permission.
   permission?: Permission
+  // Hidden from staff who have none of these.
+  anyPermission?: Permission[]
 }
 
 export interface NavGroup {

@@ -287,6 +287,43 @@ export interface ApiSettingChange {
   changed_at: string
 }
 
+// Audit log (Backend spec 006). `GET /dashboard/audit-log`, `/{id}`.
+export type ApiAuditActor
+  = | { type: 'staff', id: string, name: string }
+    | { type: 'customer', id: string, ref: string }
+    | { type: 'system' }
+
+export interface ApiAuditEntry {
+  id: number
+  at: string
+  actor: ApiAuditActor
+  action: string
+  label: string
+  category: string
+  subject: string | null
+  before_summary: string | null
+  after_summary: string | null
+  reason: string | null
+  ip: string | null
+  outcome: string | null
+  entity: { type: string, id: string | null }
+  // Detail read only.
+  before?: unknown
+  after?: unknown
+  device_fingerprint?: string | null
+}
+
+export interface ApiAuditPage {
+  data: ApiAuditEntry[]
+  meta: { total: number, per_page: number, next_cursor: string | null, from: string, to: string, category: string | null }
+}
+
+export interface ApiAuditCategory {
+  value: string
+  label: string
+  in_everything: boolean
+}
+
 export interface ApiAdjustmentChange {
   id: number
   karat_code: number

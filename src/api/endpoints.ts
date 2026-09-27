@@ -38,4 +38,9 @@ export const endpoints = {
   manualPriceConfirm: (id: number) => `/dashboard/gold-prices/manual/${id}/confirm`,
   karatAdjustments: (code: number) => `/dashboard/karats/${code}/adjustments`,
   adjustmentHistory: '/dashboard/price-adjustments/history',
+  // Audit log (Backend spec 006).
+  auditLog: '/dashboard/audit-log',
+  auditEntry: (id: number) => `/dashboard/audit-log/${id}`,
+  auditCategories: '/dashboard/audit-log/categories',
+  auditExport: '/dashboard/audit-log/export',
 } as const
