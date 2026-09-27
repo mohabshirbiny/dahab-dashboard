@@ -71,7 +71,8 @@
 
     <StaffRolesModal
       v-model="rolesOpen"
-      :loading="setRoles.isPending.value"
+      :branches="canSeeBranches ? (branches.data.value ?? null) : null"
+      :loading="setRoles.isPending.value || setBranch.isPending.value"
       :member="editingMember"
       :my-permissions="myPermissions"
       :roles="roles.data.value ?? []"
@@ -129,9 +130,11 @@
     useUpdateRole,
   } from '@/composables/useAccessControl'
   import { usePermissions } from '@/composables/usePermissions'
+  import { useBranchesQuery, useSetStaffBranch } from '@/composables/useReference'
   import { useToast } from '@/composables/useToast'
   import { errorCodeOf } from '@/services/errors'
   import { useAuthStore } from '@/stores/auth'
+  import { sameMembers } from '@/types/access'
   import { PERMISSIONS } from '@/types/staff'
 
   type Tab = 'staff' | 'roles'
@@ -160,8 +163,13 @@
   const roles = useRolesQuery(canManage)
   const catalogue = usePermissionCatalogueQuery(canManage)
 
+  // The branch picker needs the branch list (reference.view, Backend spec 004).
+  const canSeeBranches = computed(() => canManage.value && can(PERMISSIONS.referenceView))
+  const branches = useBranchesQuery(canSeeBranches)
+
   // Staff → roles dialog
   const setRoles = useSetStaffRoles()
+  const setBranch = useSetStaffBranch()
   const rolesOpen = ref(false)
   const editingMember = ref<StaffMember | null>(null)
   const rolesError = ref<string>()
@@ -170,22 +178,29 @@
     editingMember.value = member
     rolesError.value = undefined
     setRoles.reset()
+    setBranch.reset()
     rolesOpen.value = true
   }
 
-  function saveRoles (payload: { roles: string[], reason: string }) {
-    if (!editingMember.value) return
+  // Roles and branch are two Backend calls, each audited with the same reason; only
+  // what changed is sent. If the second call fails, the first has already applied.
+  async function saveRoles (payload: { roles: string[], branchId?: number | null, reason: string }) {
+    const member = editingMember.value
+    if (!member) return
     rolesError.value = undefined
-    const name = editingMember.value.fullName
-    setRoles.mutate({ id: editingMember.value.id, ...payload }, {
-      onSuccess: () => {
-        rolesOpen.value = false
-        ok(`Roles saved for ${name}.`)
-      },
-      onError: error => {
-        rolesError.value = accessErrorMessage(error)
-      },
-    })
+    const rolesChanged = !sameMembers(payload.roles, member.roles.map(r => r.name))
+    try {
+      if (rolesChanged) {
+        await setRoles.mutateAsync({ id: member.id, roles: payload.roles, reason: payload.reason })
+      }
+      if (payload.branchId !== undefined) {
+        await setBranch.mutateAsync({ id: member.id, branchId: payload.branchId, reason: payload.reason })
+      }
+      rolesOpen.value = false
+      ok(`Permissions saved for ${member.fullName}.`)
+    } catch (error) {
+      rolesError.value = accessErrorMessage(error)
+    }
   }
 
   // Roles → editor

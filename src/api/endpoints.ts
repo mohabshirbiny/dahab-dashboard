@@ -19,4 +19,12 @@ export const endpoints = {
   staff: '/dashboard/staff',
   staffMember: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}`,
   staffRoles: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/roles`,
+  // Reference data (Backend spec 004).
+  staffBranch: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/branch`,
+  karats: '/dashboard/karats',
+  karatToggle: (code: number) => `/dashboard/karats/${code}/toggle`,
+  branches: '/dashboard/branches',
+  branch: (id: number) => `/dashboard/branches/${id}`,
+  branchClosures: '/dashboard/branch-closures',
+  branchClosure: (id: number) => `/dashboard/branch-closures/${id}`,
 } as const

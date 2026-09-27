@@ -2,7 +2,7 @@
   <DModal
     :model-value="modelValue"
     :persistent="loading"
-    :title="member ? `Roles for ${member.fullName}` : 'Roles'"
+    :title="member ? `Permissions for ${member.fullName}` : 'Permissions'"
     @update:model-value="emit('update:model-value', $event)"
   >
     <p class="d-sr__lead">
@@ -29,6 +29,12 @@
         </label>
       </fieldset>
 
+      <!-- Branch (Backend spec 004): limits branch-scoped permissions to that branch.
+           Shown only when the branch list is available (reference.view). -->
+      <FormField v-if="branches" v-slot="{ controlId }" hint="Branch-scoped permissions apply at this branch only." label="Branch">
+        <DSelect :id="controlId" v-model="branch" :disabled="loading" :options="branchOptions" />
+      </FormField>
+
       <FormField v-slot="{ controlId, describedBy, invalid }" :error="reasonError" label="Why (recorded in the audit log)">
         <DTextarea
           :id="controlId"
@@ -54,16 +60,18 @@
         kind="primary"
         :loading="loading"
         type="submit"
-      >Save roles</DBtn>
+      >Save</DBtn>
     </template>
   </DModal>
 </template>
 
 <script lang="ts" setup>
   import type { Role, StaffMember } from '@/types/access'
+  import type { Branch } from '@/types/reference'
   import { computed, ref, watch } from 'vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DModal from '@/components/ui/DModal.vue'
+  import DSelect from '@/components/ui/DSelect.vue'
   import DTextarea from '@/components/ui/DTextarea.vue'
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
@@ -76,21 +84,37 @@
     // The signed-in manager's own permissions: the Backend refuses to add or remove a
     // role that allows anything they don't hold, so those boxes are locked here.
     myPermissions: readonly string[]
+    // Every branch (enabled or not), or null when this manager cannot see them.
+    branches?: readonly Branch[] | null
     loading?: boolean
     submitError?: string
   }>()
 
   const emit = defineEmits<{
     (e: 'update:model-value', value: boolean): void
-    (e: 'confirm', payload: { roles: string[], reason: string }): void
+    // `branchId` is sent only when a branch list was shown; undefined = not changed.
+    (e: 'confirm', payload: { roles: string[], branchId?: number | null, reason: string }): void
   }>()
 
+  const NO_BRANCH = 'none'
   const picked = ref<string[]>([])
+  const branch = ref<string>(NO_BRANCH)
   const reason = ref('')
   const submitted = ref(false)
 
   const current = computed(() => props.member?.roles.map(r => r.name) ?? [])
-  const changed = computed(() => !sameMembers(picked.value, current.value))
+  const currentBranch = computed(() => (props.member?.branchId == null ? NO_BRANCH : String(props.member.branchId)))
+  const branchChanged = computed(() => Boolean(props.branches) && branch.value !== currentBranch.value)
+  const rolesChanged = computed(() => !sameMembers(picked.value, current.value))
+  const changed = computed(() => rolesChanged.value || branchChanged.value)
+
+  // Enabled branches, plus the person's current one if it has since been disabled.
+  const branchOptions = computed(() => [
+    { value: NO_BRANCH, label: 'No branch' },
+    ...(props.branches ?? [])
+      .filter(b => b.isEnabled || String(b.id) === currentBranch.value)
+      .map(b => ({ value: String(b.id), label: b.isEnabled ? b.nameEn : `${b.nameEn} (disabled)` })),
+  ])
 
   const reasonError = computed(() =>
     submitted.value && reason.value.trim().length < REASON_MIN ? `Write at least ${REASON_MIN} characters.` : undefined,
@@ -104,6 +128,7 @@
   watch(() => props.modelValue, open => {
     if (!open) return
     picked.value = [...current.value]
+    branch.value = currentBranch.value
     reason.value = ''
     submitted.value = false
   })
@@ -112,7 +137,11 @@
     if (props.loading || !changed.value) return
     submitted.value = true
     if (reasonError.value) return
-    emit('confirm', { roles: [...picked.value], reason: reason.value.trim() })
+    emit('confirm', {
+      roles: [...picked.value],
+      branchId: branchChanged.value ? (branch.value === NO_BRANCH ? null : Number(branch.value)) : undefined,
+      reason: reason.value.trim(),
+    })
   }
 </script>
 

@@ -65,10 +65,18 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 | Staff roles | `PUT /dashboard/staff/{id}/roles` `{roles[], reason}` (`roles.manage`) | "Permissions" dialog (`StaffRolesModal`) |
 | Permission catalogue | `GET /dashboard/permissions` (`roles.manage`) | role editor |
 | Roles | `GET\|POST /dashboard/roles`, `PATCH\|DELETE /dashboard/roles/{role}` (`roles.manage`); `reason` required for permission/MFA changes and delete | Roles tab (`RolesTable`, `RoleEditorModal`, `RoleDeleteModal`) — **a UI extension beyond the design reference** (approved 2026-09-26) |
+| Staff branch | `PUT /dashboard/staff/{id}/branch` `{branch_id\|null, reason}` (`roles.manage`; not on yourself) | branch select in the "Permissions" dialog, sent only when it changed (Backend spec 004) |
+| Karats | `GET /dashboard/karats` (`reference.view`), `POST /dashboard/karats` `{code, purity}` (`karats.create`, starts off), `POST /dashboard/karats/{code}/toggle` `{enabled}` (`karats.toggle`) | Karats page (`pages/karats/index.vue`, `AddKaratModal`) |
+| Branches | `GET\|POST /dashboard/branches`, `PATCH /dashboard/branches/{id}` (`reference.view` / `branches.manage`); `hours` replaces the whole week | Branches and hours page (`pages/branches/index.vue`, `BranchEditorModal` with the week editor) |
+| Closures | `GET\|POST /dashboard/branch-closures`, `DELETE /dashboard/branch-closures/{id}` (`reference.view` / `branches.manage`); `branch_id` null = every branch; `409 closure_exists`, `409 closure_in_past` | Public holidays panel on the same page (`AddClosureModal`) |
 
 Staff roles are Backend data (spec 002): the profile's `role` field is deprecated, the UI shows `roles_detail`.
 The Backend refuses self-escalation (`escalation_denied`); the UI locks the same choices ahead of time.
 Not surfaced: "Create an account", "Freeze" and "Suspend" from the design — the Backend has no routes yet.
+Reference data (spec 004): the design's "Price today", "Pieces listed", "In progress" and "Average time to a
+result" columns need pricing, listings and orders on the Backend, so they are left out, not faked. The
+branches page lists upcoming holidays only; past closures stay in the Backend. The design's note ("Thursday
+4pm + 12 working hours = Sunday afternoon") is reworded to the correct example: Monday at noon.
 
 Not surfaced in the UI: `POST /dashboard/auth/logout-all`, MFA `recovery_code` sign-in (the verify screen only
 takes a 6-digit code), and a QR code on the enrollment screen (the setup key and `otpauth://` link are shown).
@@ -78,9 +86,10 @@ takes a 6-digit code), and a QR code on the enrollment screen (the setup key and
 `GET /health` is the only other real route. Everything below is **not** backed by the Backend yet:
 
 - **Overview** (`services/overview.service.ts` → `mock/overview.ts`): no dashboard/statistics endpoint.
-- **Every sidebar section except Users and verification and Staff and permissions** (listings, orders, inspections, disputes, withdrawals,
-  transfers, statement, compensation, bank book, closing, invoices, pricing, rates, promos, market maker, karats,
-  switches, branches, app text, terms, customer file, audit): no routes. They are placeholder pages.
+- **Every sidebar section except Users and verification, Staff and permissions, Karats, and Branches and hours**
+  (listings, orders, inspections, disputes, withdrawals, transfers, statement, compensation, bank book, closing,
+  invoices, pricing, rates, promos, market maker, switches, app text, terms, customer file, audit): no routes.
+  They are placeholder pages.
 - **Sidebar badges** other than Users and verification are fixed numbers in `mock/nav.ts`.
 - The top bar's search and Export are UI-only toasts.
 

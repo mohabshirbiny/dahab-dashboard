@@ -25,7 +25,7 @@ function toRole (r: ApiRole): Role {
   }
 }
 
-function toStaffMember (s: ApiStaffMember): StaffMember {
+export function toStaffMember (s: ApiStaffMember): StaffMember {
   return {
     id: s.id,
     fullName: s.full_name,

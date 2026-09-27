@@ -6,6 +6,11 @@ export const PERMISSIONS = {
   // Access control (Backend spec 002).
   staffView: 'staff.view',
   rolesManage: 'roles.manage',
+  // Reference data (Backend spec 004).
+  referenceView: 'reference.view',
+  karatsToggle: 'karats.toggle',
+  karatsCreate: 'karats.create',
+  branchesManage: 'branches.manage',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

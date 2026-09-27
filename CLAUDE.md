@@ -74,8 +74,9 @@ and the mapped `camelCase`), the enum values and the permission strings; walk `t
 composables → stores → components/pages`; report the affected files; edit only when asked.
 
 **Current status: partly live.** Staff authentication (login, MFA verify/enrollment, refresh, `me`, logout)
-Identity documents (list, detail, image, review) and Staff and permissions (staff list, role assignment, roles
-and their permissions — Backend spec 002) call the real Backend; `src/api/endpoints.ts` lists only
+Identity documents (list, detail, image, review), Staff and permissions (staff list, role and branch assignment,
+roles and their permissions — Backend specs 002 and 004), Karats, and Branches and hours (Backend spec 004) call
+the real Backend; `src/api/endpoints.ts` lists only
 routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (Overview,
 sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
 frontend-only phase and are out of date on this point. Read `docs/06-BACKEND-API-INTEGRATION.md` for what is
