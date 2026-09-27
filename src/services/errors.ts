@@ -73,6 +73,12 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   // Reference data (Backend spec 004).
   closure_exists: 'conflict',
   closure_in_past: 'conflict',
+  // Pricing (Backend spec 005).
+  no_gold_price: 'conflict',
+  price_feed_healthy: 'conflict',
+  manual_price_not_pending: 'conflict',
+  confirmer_must_differ: 'forbidden',
+  price_inverted: 'validation',
   forbidden: 'forbidden',
   not_found: 'not_found',
   illegal_document_transition: 'conflict',

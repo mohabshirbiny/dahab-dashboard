@@ -195,3 +195,105 @@ export interface ApiBranchClosure {
   reason_en: string | null
   reason_ar: string | null
 }
+
+// Pricing (Backend spec 005). Money is a decimal string with 4 places.
+export interface ApiStaffRef {
+  id: string
+  full_name: string
+}
+
+export interface ApiAdjustment {
+  kind: 'fixed' | 'percent'
+  value: string
+}
+
+export interface ApiKaratPrice {
+  code: number
+  purity: string
+  is_enabled: boolean
+  market_bid: string
+  market_ask: string
+  sellers_get: string
+  buyers_pay: string
+  difference: string
+  adjustments: { buy: ApiAdjustment, sell: ApiAdjustment }
+  inverted: boolean
+}
+
+export interface ApiGoldPrice {
+  id: number
+  source: 'feed' | 'manual'
+  bid_24k: string
+  ask_24k: string
+  effective_at: string
+  entered_by: ApiStaffRef | null
+  confirmed_by: ApiStaffRef | null
+  reason: string | null
+}
+
+export interface ApiManualPrice {
+  id: number
+  bid_24k: string
+  ask_24k: string
+  deviation_pct: string | null
+  requires_confirmation: boolean
+  status: 'pending' | 'effective' | 'superseded' | 'lapsed'
+  reason: string
+  entered_by: ApiStaffRef
+  confirmed_by: ApiStaffRef | null
+  confirmed_at: string | null
+  expires_at: string | null
+  created_at: string
+}
+
+// `GET /dashboard/gold-prices/current`
+export interface ApiCurrentPrices {
+  price: ApiGoldPrice | null
+  feed: { state: 'healthy' | 'down' | 'not_configured', last_success_at: string | null, last_failure_at: string | null }
+  pending: ApiManualPrice | null
+  karats: ApiKaratPrice[]
+}
+
+// `POST /dashboard/gold-prices/preview`
+export interface ApiPricePreview {
+  bid_24k: string
+  ask_24k: string
+  deviation_pct: string | null
+  karats: ApiKaratPrice[]
+}
+
+// `GET /dashboard/settings`
+export interface ApiSetting {
+  key: string
+  group: 'rates' | 'operations'
+  type: 'numeric' | 'bool'
+  value: string | boolean
+  unit: string
+  description: string
+  min: string | null
+  max: string | null
+  integer: boolean
+  updated_by: ApiStaffRef | null
+  updated_at: string
+}
+
+export interface ApiSettingChange {
+  id: number
+  key: string
+  old_value: string | boolean | null
+  new_value: string | boolean
+  changed_by: ApiStaffRef
+  reason: string
+  changed_at: string
+}
+
+export interface ApiAdjustmentChange {
+  id: number
+  karat_code: number
+  side: 'buy' | 'sell'
+  old: ApiAdjustment
+  new: ApiAdjustment
+  changed_by: ApiStaffRef
+  reason: string
+  changed_at: string
+}

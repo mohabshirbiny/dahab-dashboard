@@ -21,12 +21,13 @@
 
       <EmptyState v-else-if="!karats.data.value || karats.data.value.length === 0" title="No karats yet" />
 
-      <!-- The design's "Price today" and "Pieces listed" columns wait for pricing and
-           listings on the Backend (spec 004 scope): they are left out, not faked. -->
+      <!-- "Price today, sellers get" comes from pricing (Backend spec 005), shown with
+           pricing.view. "Pieces listed" waits for listings: left out, not faked. -->
       <DataTable v-else>
         <template #head>
           <th>Karat</th>
           <th>Purity</th>
+          <th v-if="canSeePrices" class="r">Price today, sellers get</th>
           <th>Available</th>
           <th v-if="canToggle" aria-label="Action" class="r" />
         </template>
@@ -34,6 +35,7 @@
         <tr v-for="karat in karats.data.value" :key="karat.code">
           <td class="d-karats__code">{{ karat.code }}K</td>
           <td class="mono">{{ purityPerMille(karat.purity) }}</td>
+          <td v-if="canSeePrices" class="r mono">{{ priceOf(karat.code) }}</td>
 
           <td>
             <StatusTag :label="karat.isEnabled ? 'On' : 'Off'" :variant="karat.isEnabled ? 'ok' : 'off'" />
@@ -86,9 +88,11 @@
   import Panel from '@/components/ui/Panel.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
   import { usePermissions } from '@/composables/usePermissions'
+  import { useCurrentPricesQuery } from '@/composables/usePricing'
   import { useCreateKarat, useKaratsQuery, useToggleKarat } from '@/composables/useReference'
   import { useToast } from '@/composables/useToast'
   import { errorCodeOf } from '@/services/errors'
+  import { formatEgp } from '@/types/pricing'
   import { purityPerMille } from '@/types/reference'
   import { PERMISSIONS } from '@/types/staff'
 
@@ -100,6 +104,16 @@
   const canCreate = computed(() => can(PERMISSIONS.karatsCreate))
 
   const karats = useKaratsQuery()
+
+  // Today's price per karat (Backend spec 005), for staff who may see prices.
+  const canSeePrices = computed(() => can(PERMISSIONS.pricingView))
+  const prices = useCurrentPricesQuery(canSeePrices)
+
+  function priceOf (code: number): string {
+    if (prices.isPending.value) return '…'
+    const row = prices.data.value?.karats.find(k => k.code === code)
+    return row ? formatEgp(row.sellersGet) : 'No price yet'
+  }
 
   const toggle = useToggleKarat()
   const toggling = ref<number | null>(null)

@@ -11,6 +11,12 @@ export const PERMISSIONS = {
   karatsToggle: 'karats.toggle',
   karatsCreate: 'karats.create',
   branchesManage: 'branches.manage',
+  // Pricing (Backend spec 005).
+  pricingView: 'pricing.view',
+  pricingRatesManage: 'pricing.rates.manage',
+  settingsManage: 'settings.manage',
+  goldPriceEnter: 'gold_price.enter',
+  goldPriceConfirm: 'gold_price.confirm',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

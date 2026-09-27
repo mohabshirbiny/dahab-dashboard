@@ -27,4 +27,15 @@ export const endpoints = {
   branch: (id: number) => `/dashboard/branches/${id}`,
   branchClosures: '/dashboard/branch-closures',
   branchClosure: (id: number) => `/dashboard/branch-closures/${id}`,
+  // Pricing (Backend spec 005).
+  settings: '/dashboard/settings',
+  setting: (key: string) => `/dashboard/settings/${encodeURIComponent(key)}`,
+  settingsHistory: '/dashboard/settings/history',
+  goldPrices: '/dashboard/gold-prices',
+  goldPricesCurrent: '/dashboard/gold-prices/current',
+  goldPricesPreview: '/dashboard/gold-prices/preview',
+  manualPrice: '/dashboard/gold-prices/manual',
+  manualPriceConfirm: (id: number) => `/dashboard/gold-prices/manual/${id}/confirm`,
+  karatAdjustments: (code: number) => `/dashboard/karats/${code}/adjustments`,
+  adjustmentHistory: '/dashboard/price-adjustments/history',
 } as const
