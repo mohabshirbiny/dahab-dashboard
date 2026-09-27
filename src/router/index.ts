@@ -18,8 +18,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
   { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
   { path: 'invoices', name: 'invoices', component: Placeholder, meta: { title: 'Invoices' } },
-  { path: 'pricing', name: 'pricing', component: Placeholder, meta: { title: 'Gold pricing' } },
-  { path: 'rates', name: 'rates', component: Placeholder, meta: { title: 'Commission rates' } },
   { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
   { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
   { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
@@ -70,6 +68,19 @@ const routes: RouteRecordRaw[] = [
         name: 'staff',
         component: () => import('@/pages/staff/index.vue'),
         meta: { title: 'Staff and permissions', permissions: [PERMISSIONS.staffView] },
+      },
+      {
+        // Pricing (Backend spec 005). Changes need their own permissions too.
+        path: 'dashboard/pricing',
+        name: 'pricing',
+        component: () => import('@/pages/pricing/index.vue'),
+        meta: { title: 'Gold pricing', permissions: [PERMISSIONS.pricingView] },
+      },
+      {
+        path: 'dashboard/rates',
+        name: 'rates',
+        component: () => import('@/pages/rates/index.vue'),
+        meta: { title: 'Commission rates', permissions: [PERMISSIONS.pricingView] },
       },
       {
         // Reference data (Backend spec 004). Changes need their own permissions too.

@@ -69,6 +69,9 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 | Karats | `GET /dashboard/karats` (`reference.view`), `POST /dashboard/karats` `{code, purity}` (`karats.create`, starts off), `POST /dashboard/karats/{code}/toggle` `{enabled}` (`karats.toggle`) | Karats page (`pages/karats/index.vue`, `AddKaratModal`) |
 | Branches | `GET\|POST /dashboard/branches`, `PATCH /dashboard/branches/{id}` (`reference.view` / `branches.manage`); `hours` replaces the whole week | Branches and hours page (`pages/branches/index.vue`, `BranchEditorModal` with the week editor) |
 | Closures | `GET\|POST /dashboard/branch-closures`, `DELETE /dashboard/branch-closures/{id}` (`reference.view` / `branches.manage`); `branch_id` null = every branch; `409 closure_exists`, `409 closure_in_past` | Public holidays panel on the same page (`AddClosureModal`) |
+| Gold prices | `GET /dashboard/gold-prices/current`, `GET /dashboard/gold-prices`, `POST /dashboard/gold-prices/preview` (`pricing.view`); `POST /dashboard/gold-prices/manual` (`gold_price.enter`; 201 effective / 202 pending `manual_price_confirm_required`; `409 price_feed_healthy`); `POST /dashboard/gold-prices/manual/{id}/confirm` (`gold_price.confirm`; `403 confirmer_must_differ`, `409 manual_price_not_pending`) | Gold pricing page (`pages/pricing/index.vue`, `KaratPricesTable`, `ManualPricePanel`) and the Karats "Price today" column (Backend spec 005) |
+| Price adjustments | `PUT /dashboard/karats/{code}/adjustments` `{buy, sell: {kind: fixed\|percent, value}, reason}` (`pricing.rates.manage`; `422 price_inverted`), `GET /dashboard/price-adjustments/history` (`pricing.view`) | `AdjustmentModal` on Gold pricing; previews come from the Backend, never computed in the UI |
+| Settings | `GET /dashboard/settings`, `GET /dashboard/settings/history` (`pricing.view`); `PATCH /dashboard/settings/{key}` `{value, reason}` (`pricing.rates.manage` for rates keys, `settings.manage` for operations keys) | Commission rates page (`pages/rates/index.vue`, `ReasonModal`); an "Other rules" panel lists the settings the design has no place for |
 
 Staff roles are Backend data (spec 002): the profile's `role` field is deprecated, the UI shows `roles_detail`.
 The Backend refuses self-escalation (`escalation_denied`); the UI locks the same choices ahead of time.
@@ -86,10 +89,10 @@ takes a 6-digit code), and a QR code on the enrollment screen (the setup key and
 `GET /health` is the only other real route. Everything below is **not** backed by the Backend yet:
 
 - **Overview** (`services/overview.service.ts` → `mock/overview.ts`): no dashboard/statistics endpoint.
-- **Every sidebar section except Users and verification, Staff and permissions, Karats, and Branches and hours**
-  (listings, orders, inspections, disputes, withdrawals, transfers, statement, compensation, bank book, closing,
-  invoices, pricing, rates, promos, market maker, switches, app text, terms, customer file, audit): no routes.
-  They are placeholder pages.
+- **Every sidebar section except Users and verification, Staff and permissions, Gold pricing, Commission rates,
+  Karats, and Branches and hours** (listings, orders, inspections, disputes, withdrawals, transfers, statement,
+  compensation, bank book, closing, invoices, promos, market maker, switches, app text, terms, customer file, audit):
+  no routes. They are placeholder pages. The Gold pricing page leaves out the design's Rapaport panel (not built).
 - **Sidebar badges** other than Users and verification are fixed numbers in `mock/nav.ts`.
 - The top bar's search and Export are UI-only toasts.
 

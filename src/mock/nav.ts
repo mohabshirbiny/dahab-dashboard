@@ -31,8 +31,8 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Controls',
     items: [
-      { key: 'pricing', title: 'Gold pricing', to: '/dashboard/pricing', hidden: true },
-      { key: 'rates', title: 'Commission rates', to: '/dashboard/rates', hidden: true },
+      { key: 'pricing', title: 'Gold pricing', to: '/dashboard/pricing', permission: 'pricing.view' },
+      { key: 'rates', title: 'Commission rates', to: '/dashboard/rates', permission: 'pricing.view' },
       { key: 'promos', title: 'Promo codes', to: '/dashboard/promos', hidden: true },
       { key: 'mm', title: 'Market maker approvals', to: '/dashboard/market-maker', badge: 2, hidden: true },
       { key: 'karats', title: 'Karats', to: '/dashboard/karats', permission: 'reference.view' },
