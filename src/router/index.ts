@@ -23,7 +23,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
   { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
-  { path: 'customer', name: 'customer', component: Placeholder, meta: { title: 'Customer file' } },
 ].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
 const routes: RouteRecordRaw[] = [
@@ -60,6 +59,19 @@ const routes: RouteRecordRaw[] = [
         name: 'users',
         component: () => import('@/pages/users/index.vue'),
         meta: { title: 'Users and verification', permissions: [PERMISSIONS.customerView] },
+      },
+      {
+        // Customer file (Backend spec 007): find a customer, then open their file.
+        path: 'dashboard/customer',
+        name: 'customer',
+        component: () => import('@/pages/customer/index.vue'),
+        meta: { title: 'Customer file', permissions: [PERMISSIONS.customerView] },
+      },
+      {
+        path: 'dashboard/customers/:id',
+        name: 'customer-file',
+        component: () => import('@/pages/customers/[id].vue'),
+        meta: { title: 'Customer file', permissions: [PERMISSIONS.customerView] },
       },
       {
         // Staff and roles (Backend spec 002). The Roles tab needs roles.manage too.

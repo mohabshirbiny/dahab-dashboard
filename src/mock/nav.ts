@@ -45,7 +45,7 @@ export const navGroups: NavGroup[] = [
   {
     label: 'People',
     items: [
-      { key: 'customer', title: 'Customer file', to: '/dashboard/customer', hidden: true },
+      { key: 'customer', title: 'Customer file', to: '/dashboard/customer', permission: 'customer.view' },
       {
         key: 'users',
         title: 'Users and verification',

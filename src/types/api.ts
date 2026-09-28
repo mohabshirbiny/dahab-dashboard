@@ -124,6 +124,62 @@ export interface ApiCustomerVerification {
   } | null
 }
 
+// Customer file (Backend spec 007). `GET /dashboard/customers/{id}` returns
+// ApiCustomerVerification plus these fields; the suspension note is staff-only.
+export type ApiSuspendedReason
+  = | 'piece_misrepresented'
+    | 'off_platform_dealing'
+    | 'repeated_disputes'
+    | 'reported_by_users'
+    | 'identity_unconfirmed'
+    | 'customer_request'
+    | 'other'
+
+// `GET /dashboard/customers/{id}/sessions`: every device, and the open sessions
+// (one per token family). Ended sessions are deleted by sign-out; they are in History.
+export interface ApiCustomerDevice {
+  device_ref: string
+  first_seen_at: string
+  last_seen_at: string
+}
+
+export interface ApiCustomerSession {
+  session_id: string
+  started_at: string
+  last_active_at: string
+  expires_at: string | null
+}
+
+export interface ApiCustomerSessions {
+  data: { devices: ApiCustomerDevice[], sessions: ApiCustomerSession[] }
+  meta: { current_page: number, per_page: number, total: number, last_page: number }
+}
+
+// `GET /dashboard/customers/{id}/activity`: Audit log entries, keyset-paged.
+export interface ApiCustomerActivityPage {
+  data: ApiAuditEntry[]
+  meta: { per_page: number, next_cursor: string | null }
+}
+
+// `reviewed_by` / `suspended_by` use the Backend's DashboardStaffRef (ApiStaffRef below).
+export type ApiCustomerFileDocument = NonNullable<ApiCustomerVerification['latest_document']> & {
+  reviewed_by: ApiStaffRef | null
+}
+
+export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_document'> {
+  latest_document: ApiCustomerFileDocument | null
+  preferred_lang: 'ar' | 'en'
+  joined_at: string
+  documents: ApiCustomerFileDocument[]
+  suspension: {
+    reason: ApiSuspendedReason
+    note: string | null
+    status_before: Exclude<ApiCustomerStatus, 'suspended'>
+    suspended_at: string
+    suspended_by: ApiStaffRef | null
+  } | null
+}
+
 // Access control (spec 002). `GET /dashboard/permissions` — the code-defined catalogue.
 export interface ApiPermission {
   code: string

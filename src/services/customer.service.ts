@@ -1,14 +1,30 @@
-import type { ApiCustomerVerification, ApiEnvelope, ApiPaginated } from '@/types/api'
+import type {
+  ApiCustomerActivityPage,
+  ApiCustomerFile,
+  ApiCustomerFileDocument,
+  ApiCustomerSessions,
+  ApiCustomerVerification,
+  ApiEnvelope,
+  ApiPaginated,
+  ApiStaffRef,
+} from '@/types/api'
+import type { AuditEntry } from '@/types/audit'
 import type {
   CustomerCounts,
+  CustomerFile,
+  CustomerFileDocument,
   CustomerListParams,
   CustomerListResult,
+  CustomerSessionsResult,
   CustomerStatus,
   CustomerVerification,
+  StaffRef,
+  SuspendedReason,
 } from '@/types/customer'
 import { http } from '@/api/axios'
 import { endpoints } from '@/api/endpoints'
 import { CUSTOMER_STATUSES } from '@/types/customer'
+import { toEntry } from './audit.service'
 
 function toCustomer (customer: ApiCustomerVerification): CustomerVerification {
   const doc = customer.latest_document
@@ -36,6 +52,42 @@ function toCustomer (customer: ApiCustomerVerification): CustomerVerification {
   }
 }
 
+function toStaffRef (ref: ApiStaffRef | null): StaffRef | null {
+  return ref && { id: ref.id, name: ref.full_name }
+}
+
+function toFileDocument (doc: ApiCustomerFileDocument): CustomerFileDocument {
+  return {
+    id: doc.document_id,
+    type: doc.doc_kind,
+    status: doc.status,
+    hasBack: doc.has_back,
+    reviewReasons: doc.review_reasons ?? [],
+    reviewNote: doc.review_note,
+    submittedAt: doc.created_at,
+    reviewedAt: doc.reviewed_at,
+    reviewedBy: toStaffRef(doc.reviewed_by),
+  }
+}
+
+function toCustomerFile (file: ApiCustomerFile): CustomerFile {
+  const documents = file.documents.map(doc => toFileDocument(doc))
+  return {
+    ...toCustomer({ ...file, latest_document: file.latest_document }),
+    latestDocument: documents[0] ?? null,
+    preferredLang: file.preferred_lang,
+    joinedAt: file.joined_at,
+    documents,
+    suspension: file.suspension && {
+      reason: file.suspension.reason,
+      note: file.suspension.note,
+      statusBefore: file.suspension.status_before,
+      suspendedAt: file.suspension.suspended_at,
+      suspendedBy: toStaffRef(file.suspension.suspended_by),
+    },
+  }
+}
+
 // One row per page is enough: the Backend reports the total of the whole filtered set.
 async function countWithStatus (status: CustomerStatus): Promise<number> {
   const { data } = await http.get<ApiPaginated<ApiCustomerVerification>>(endpoints.customers, {
@@ -59,11 +111,63 @@ export const customerService = {
     }
   },
 
+  // GET /dashboard/customers?q=   (customer.view)
+  // Exact match on the customer reference or the E.164 phone, in any status (Backend spec 007).
+  async searchCustomers (q: string): Promise<CustomerVerification[]> {
+    const { data } = await http.get<ApiPaginated<ApiCustomerVerification>>(endpoints.customers, {
+      params: { q, per_page: 10 },
+    })
+    return data.data.map(customer => toCustomer(customer))
+  },
+
   // GET /dashboard/customers/{id}   (customer.view)
-  // The Backend records every call as "verification details viewed".
-  async getCustomer (id: string): Promise<CustomerVerification> {
-    const { data } = await http.get<ApiEnvelope<ApiCustomerVerification>>(endpoints.customer(id))
-    return toCustomer(data.data)
+  // The customer file (Backend spec 007). The Backend records every call as
+  // "verification details viewed", so callers load it once per opening.
+  async getCustomer (id: string): Promise<CustomerFile> {
+    const { data } = await http.get<ApiEnvelope<ApiCustomerFile>>(endpoints.customer(id))
+    return toCustomerFile(data.data)
+  },
+
+  // POST /dashboard/customers/{id}/suspend   (customer.suspend, Idempotency-Key)
+  // `idempotencyKey` stays the same when the same submission is retried, so the
+  // Backend replays it instead of suspending twice. Returns the updated file.
+  async suspend (id: string, input: { reason: SuspendedReason, note: string }, idempotencyKey: string): Promise<CustomerFile> {
+    const { data } = await http.post<ApiEnvelope<ApiCustomerFile>>(endpoints.customerSuspend(id), input, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    })
+    return toCustomerFile(data.data)
+  },
+
+  // POST /dashboard/customers/{id}/reinstate   (customer.suspend, Idempotency-Key)
+  async reinstate (id: string, input: { note: string }, idempotencyKey: string): Promise<CustomerFile> {
+    const { data } = await http.post<ApiEnvelope<ApiCustomerFile>>(endpoints.customerReinstate(id), input, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    })
+    return toCustomerFile(data.data)
+  },
+
+  // GET /dashboard/customers/{id}/activity?cursor=   (customer.view + audit.view_all | audit.view_own)
+  // The file's History: Audit log entries about the customer, newest first. Not audited.
+  async getActivity (id: string, cursor: string | null): Promise<{ entries: AuditEntry[], nextCursor: string | null }> {
+    const { data } = await http.get<ApiCustomerActivityPage>(endpoints.customerActivity(id), {
+      params: { per_page: 20, ...(cursor ? { cursor } : {}) },
+    })
+    return { entries: data.data.map(entry => toEntry(entry)), nextCursor: data.meta.next_cursor }
+  },
+
+  // GET /dashboard/customers/{id}/sessions?page=   (customer.view)
+  // Every device, and the sessions still open. Not audited.
+  async getSessions (id: string, page: number): Promise<CustomerSessionsResult> {
+    const { data } = await http.get<ApiCustomerSessions>(endpoints.customerSessions(id), {
+      params: { page, per_page: 10 },
+    })
+    return {
+      devices: data.data.devices.map(d => ({ ref: d.device_ref, firstSeenAt: d.first_seen_at, lastSeenAt: d.last_seen_at })),
+      sessions: data.data.sessions.map(s => ({ id: s.session_id, startedAt: s.started_at, lastActiveAt: s.last_active_at, expiresAt: s.expires_at })),
+      page: data.meta.current_page,
+      pageSize: data.meta.per_page,
+      total: data.meta.total,
+    }
   },
 
   // The Backend has no counts endpoint, so each tab is counted from the

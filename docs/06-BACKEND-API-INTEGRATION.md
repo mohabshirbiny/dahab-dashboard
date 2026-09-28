@@ -72,11 +72,13 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 | Gold prices | `GET /dashboard/gold-prices/current`, `GET /dashboard/gold-prices`, `POST /dashboard/gold-prices/preview` (`pricing.view`); `POST /dashboard/gold-prices/manual` (`gold_price.enter`; 201 effective / 202 pending `manual_price_confirm_required`; `409 price_feed_healthy`); `POST /dashboard/gold-prices/manual/{id}/confirm` (`gold_price.confirm`; `403 confirmer_must_differ`, `409 manual_price_not_pending`) | Gold pricing page (`pages/pricing/index.vue`, `KaratPricesTable`, `ManualPricePanel`) and the Karats "Price today" column (Backend spec 005) |
 | Price adjustments | `PUT /dashboard/karats/{code}/adjustments` `{buy, sell: {kind: fixed\|percent, value}, reason}` (`pricing.rates.manage`; `422 price_inverted`), `GET /dashboard/price-adjustments/history` (`pricing.view`) | `AdjustmentModal` on Gold pricing; previews come from the Backend, never computed in the UI |
 | Audit log | `GET /dashboard/audit-log` (cursor pages, filters), `GET /dashboard/audit-log/{id}`, `GET /dashboard/audit-log/export` (CSV), `GET /dashboard/audit-log/categories` (`audit.view_all` or `audit.view_own`; own-only is enforced by the Backend) | Audit log page (`pages/audit/index.vue`, `AuditTable`, `AuditEntryModal`); the design's "Device" column is "Origin" (IP) because no device model or city is recorded |
+| Customer file | `GET /dashboard/customers?q=` (search, any status), `GET /dashboard/customers/{id}` (the file: `documents[]`, `suspension`; one audit entry per call, so it is loaded once per opening), `POST /dashboard/customers/{id}/suspend` `{reason, note}` and `/reinstate` `{note}` (`customer.suspend`; `Idempotency-Key` from `useIdempotencyKey`; `409 customer_already_suspended` / `customer_not_suspended`), `GET /dashboard/customers/{id}/activity` (cursor pages; `customer.view` + `audit.view_all` or `audit.view_own`), `GET /dashboard/customers/{id}/sessions` (devices + open sessions) | People → Customer file (`pages/customer/index.vue` search, `pages/customers/[id].vue` file, `components/customer-file/*`); Users review panel → "Open file". The design's orders, wallet, listings, payout account, weight difference, customer type and "Full case file" are left out (no Backend routes); signed-out sessions are not listed because the Backend deletes them (they are in History) |
 | Settings | `GET /dashboard/settings`, `GET /dashboard/settings/history` (`pricing.view`); `PATCH /dashboard/settings/{key}` `{value, reason}` (`pricing.rates.manage` for rates keys, `settings.manage` for operations keys) | Commission rates page (`pages/rates/index.vue`, `ReasonModal`); an "Other rules" panel lists the settings the design has no place for |
 
 Staff roles are Backend data (spec 002): the profile's `role` field is deprecated, the UI shows `roles_detail`.
 The Backend refuses self-escalation (`escalation_denied`); the UI locks the same choices ahead of time.
-Not surfaced: "Create an account", "Freeze" and "Suspend" from the design — the Backend has no routes yet.
+Not surfaced: "Create an account" and "Freeze" from the design — the Backend has no routes yet. ("Suspend" lives
+in the Customer file since Backend spec 007.)
 Reference data (spec 004): the design's "Price today", "Pieces listed", "In progress" and "Average time to a
 result" columns need pricing, listings and orders on the Backend, so they are left out, not faked. The
 branches page lists upcoming holidays only; past closures stay in the Backend. The design's note ("Thursday
@@ -90,9 +92,9 @@ takes a 6-digit code), and a QR code on the enrollment screen (the setup key and
 `GET /health` is the only other real route. Everything below is **not** backed by the Backend yet:
 
 - **Overview** (`services/overview.service.ts` → `mock/overview.ts`): no dashboard/statistics endpoint.
-- **Every sidebar section except Users and verification, Staff and permissions, Gold pricing, Commission rates,
-  Karats, Branches and hours, and Audit log** (listings, orders, inspections, disputes, withdrawals, transfers,
-  statement, compensation, bank book, closing, invoices, promos, market maker, switches, app text, terms, customer file):
+- **Every sidebar section except Customer file, Users and verification, Staff and permissions, Gold pricing,
+  Commission rates, Karats, Branches and hours, and Audit log** (listings, orders, inspections, disputes, withdrawals,
+  transfers, statement, compensation, bank book, closing, invoices, promos, market maker, switches, app text, terms):
   no routes. They are placeholder pages. The Gold pricing page leaves out the design's Rapaport panel (not built).
 - **Sidebar badges** other than Users and verification are fixed numbers in `mock/nav.ts`.
 - The top bar's search and Export are UI-only toasts.

@@ -76,7 +76,8 @@ composables → stores → components/pages`; report the affected files; edit on
 **Current status: partly live.** Staff authentication (login, MFA verify/enrollment, refresh, `me`, logout)
 Identity documents (list, detail, image, review), Staff and permissions (staff list, role and branch assignment,
 roles and their permissions — Backend specs 002 and 004), Karats, Branches and hours (Backend spec 004), Gold
-pricing and Commission rates (Backend spec 005), and the Audit log (Backend spec 006) call
+pricing and Commission rates (Backend spec 005), the Audit log (Backend spec 006), and the Customer file —
+search, the file, suspend/reinstate, History and sign-ins (Backend spec 007) call
 the real Backend; `src/api/endpoints.ts` lists only
 routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (Overview,
 sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier

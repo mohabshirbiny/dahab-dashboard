@@ -13,6 +13,7 @@
   <template v-else-if="customer">
     <Panel :subtitle="doc ? IDENTITY_TYPE_LABELS[doc.type] : undefined" :title="customer.fullName ?? `Customer ${customer.displayRef}`">
       <template #actions>
+        <DBtn @click="openFile">Open file</DBtn>
         <DBtn aria-label="Close" @click="emit('close')">Close</DBtn>
       </template>
 
@@ -51,7 +52,7 @@
           <StatusTag :label="CUSTOMER_STATUS_META[customer.status].label" :variant="CUSTOMER_STATUS_META[customer.status].variant" />
         </KeyValueRow>
 
-        <KeyValueRow v-if="customer.suspendedReason" label="Suspended because" :value="reasonText(customer.suspendedReason)" />
+        <KeyValueRow v-if="customer.suspendedReason" label="Suspended because" :value="suspendedReasonLabel(customer.suspendedReason)" />
         <KeyValueRow label="Joined" :value="formatDateTime(customer.submittedAt)" />
       </template>
     </Panel>
@@ -62,6 +63,7 @@
 
 <script lang="ts" setup>
   import { computed } from 'vue'
+  import { useRouter } from 'vue-router'
   import DocumentPreview from '@/components/identity/DocumentPreview.vue'
   import IdentityReviewPanel from '@/components/identity/IdentityReviewPanel.vue'
   import DBtn from '@/components/ui/DBtn.vue'
@@ -74,7 +76,7 @@
   import { useCustomerQuery } from '@/composables/useCustomers'
   import { formatDateTime } from '@/composables/useFormatters'
   import { errorCodeOf } from '@/services/errors'
-  import { CUSTOMER_STATUS_META, CUSTOMER_TYPE_LABELS, governorateLabel } from '@/types/customer'
+  import { CUSTOMER_STATUS_META, CUSTOMER_TYPE_LABELS, governorateLabel, suspendedReasonLabel } from '@/types/customer'
   import { IDENTITY_TYPE_LABELS, type IdentityReviewTarget } from '@/types/identity'
 
   const props = defineProps<{ customerId: string }>()
@@ -107,10 +109,10 @@
     }
   })
 
-  // `suspended_reason` is a Backend code such as `fraud_review`.
-  function reasonText (code: string): string {
-    const words = code.replaceAll('_', ' ')
-    return words.charAt(0).toUpperCase() + words.slice(1)
+  // The whole file (Backend spec 007): History, sessions and suspension live there.
+  const router = useRouter()
+  function openFile () {
+    router.push({ name: 'customer-file', params: { id: props.customerId } })
   }
 </script>
 
