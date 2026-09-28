@@ -22,6 +22,8 @@ export const PERMISSIONS = {
   // Audit log (Backend spec 006).
   auditViewAll: 'audit.view_all',
   auditViewOwn: 'audit.view_own',
+  // Wallets (Backend spec 008): CEO and Finance by default, never the COO.
+  walletView: 'wallet.view',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

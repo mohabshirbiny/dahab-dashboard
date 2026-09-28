@@ -73,6 +73,7 @@ components/pages → composables (TanStack Query) / stores (Pinia)
 | Price adjustments | `PUT /dashboard/karats/{code}/adjustments` `{buy, sell: {kind: fixed\|percent, value}, reason}` (`pricing.rates.manage`; `422 price_inverted`), `GET /dashboard/price-adjustments/history` (`pricing.view`) | `AdjustmentModal` on Gold pricing; previews come from the Backend, never computed in the UI |
 | Audit log | `GET /dashboard/audit-log` (cursor pages, filters), `GET /dashboard/audit-log/{id}`, `GET /dashboard/audit-log/export` (CSV), `GET /dashboard/audit-log/categories` (`audit.view_all` or `audit.view_own`; own-only is enforced by the Backend) | Audit log page (`pages/audit/index.vue`, `AuditTable`, `AuditEntryModal`); the design's "Device" column is "Origin" (IP) because no device model or city is recorded |
 | Customer file | `GET /dashboard/customers?q=` (search, any status), `GET /dashboard/customers/{id}` (the file: `documents[]`, `suspension`; one audit entry per call, so it is loaded once per opening), `POST /dashboard/customers/{id}/suspend` `{reason, note}` and `/reinstate` `{note}` (`customer.suspend`; `Idempotency-Key` from `useIdempotencyKey`; `409 customer_already_suspended` / `customer_not_suspended`), `GET /dashboard/customers/{id}/activity` (cursor pages; `customer.view` + `audit.view_all` or `audit.view_own`), `GET /dashboard/customers/{id}/sessions` (devices + open sessions) | People → Customer file (`pages/customer/index.vue` search, `pages/customers/[id].vue` file, `components/customer-file/*`); Users review panel → "Open file". The design's orders, wallet, listings, payout account, weight difference, customer type and "Full case file" are left out (no Backend routes); signed-out sessions are not listed because the Backend deletes them (they are in History) |
+| Wallets | `GET /dashboard/wallets/overview` (available, held, total owed, the bank's cash, headroom, system total), `GET /dashboard/customers/{id}/wallet`, `GET /dashboard/wallet-statement` (`view=customer\|customers\|dahab`, `from`/`to` Cairo dates, `grain=each\|day\|month`, cursor pages, oldest first; the first page of a one-customer view is audited), `GET /dashboard/wallet-statement/export` (CSV, audited) — all `wallet.view` (CEO + Finance; never the COO). Money is a 4-place string, shown with `formatMoney`, never computed | Money → Wallet statement (`pages/statement/index.vue`, `components/wallet/*`; `?customer=<id>` opens one wallet), the customer file's `CustomerWalletPanel`, and on the Overview the safety figure, "Held on open orders" and `CustomerWalletsPanel` (Backend spec 008). Hidden, not zeroed, without `wallet.view`. Finding a customer on the statement page uses the customer search, which needs `customer.view` (seeded to Finance since spec 008; without it the page explains how to open a wallet from the customer file). "Dahab earned this month" is hidden until Settlement exists |
 | Settings | `GET /dashboard/settings`, `GET /dashboard/settings/history` (`pricing.view`); `PATCH /dashboard/settings/{key}` `{value, reason}` (`pricing.rates.manage` for rates keys, `settings.manage` for operations keys) | Commission rates page (`pages/rates/index.vue`, `ReasonModal`); an "Other rules" panel lists the settings the design has no place for |
 
 Staff roles are Backend data (spec 002): the profile's `role` field is deprecated, the UI shows `roles_detail`.
@@ -91,10 +92,12 @@ takes a 6-digit code), and a QR code on the enrollment screen (the setup key and
 
 `GET /health` is the only other real route. Everything below is **not** backed by the Backend yet:
 
-- **Overview** (`services/overview.service.ts` → `mock/overview.ts`): no dashboard/statistics endpoint.
+- **Overview** (`services/overview.service.ts` → `mock/overview.ts`), except its money figures (see Wallets above):
+  no dashboard/statistics endpoint.
 - **Every sidebar section except Customer file, Users and verification, Staff and permissions, Gold pricing,
-  Commission rates, Karats, Branches and hours, and Audit log** (listings, orders, inspections, disputes, withdrawals,
-  transfers, statement, compensation, bank book, closing, invoices, promos, market maker, switches, app text, terms):
+  Commission rates, Karats, Branches and hours, Audit log and Wallet statement** (listings, orders, inspections,
+  disputes, withdrawals, transfers, compensation, bank book, closing, invoices, promos, market maker, switches, app
+  text, terms):
   no routes. They are placeholder pages. The Gold pricing page leaves out the design's Rapaport panel (not built).
 - **Sidebar badges** other than Users and verification are fixed numbers in `mock/nav.ts`.
 - The top bar's search and Export are UI-only toasts.

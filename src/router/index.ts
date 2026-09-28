@@ -13,7 +13,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
   { path: 'withdrawals', name: 'withdrawals', component: Placeholder, meta: { title: 'Withdrawals' } },
   { path: 'transfers', name: 'transfers', component: Placeholder, meta: { title: 'Incoming transfers' } },
-  { path: 'statement', name: 'statement', component: Placeholder, meta: { title: 'Wallet statement' } },
   { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
   { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
   { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
@@ -86,6 +85,13 @@ const routes: RouteRecordRaw[] = [
         name: 'audit',
         component: () => import('@/pages/audit/index.vue'),
         meta: { title: 'Audit log', anyPermissions: [PERMISSIONS.auditViewAll, PERMISSIONS.auditViewOwn] },
+      },
+      {
+        // Wallet statement (Backend spec 008): one customer, all customers, or the Dahab wallet.
+        path: 'dashboard/statement',
+        name: 'statement',
+        component: () => import('@/pages/statement/index.vue'),
+        meta: { title: 'Wallet statement', permissions: [PERMISSIONS.walletView] },
       },
       {
         // Pricing (Backend spec 005). Changes need their own permissions too.

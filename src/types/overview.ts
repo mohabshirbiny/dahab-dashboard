@@ -38,17 +38,18 @@ export interface NeedsDecisionRow {
   ctaTarget: string
 }
 
+// Live from the ledger (Backend spec 008): 4-place decimal strings.
 export interface CustomerWallets {
-  available: number
-  heldOnOpenOrders: number
-  totalOwed: number
+  available: string
+  heldOnOpenOrders: string
+  totalOwed: string
 }
 
 export interface GoldPriceSnapshot {
   sellersGet21k: number
   buyersPay21k: number
   differencePerGram: number
-  feedStatus: { label: string; variant: StatusVariant }
+  feedStatus: { label: string, variant: StatusVariant }
   lastUpdated: string
 }
 
@@ -60,12 +61,12 @@ export interface ThisMonth {
   moneyReachesSellersIn: string
 }
 
+// The mock parts of the Overview. The safety figure (hero), "Held on open
+// orders" and the Customer wallets panel come from the Backend (spec 008).
 export interface OverviewData {
-  hero: OverviewHeroStat
   stats: OverviewStat[]
   transactions: TransactionRow[]
   needsDecision: NeedsDecisionRow[]
-  wallets: CustomerWallets
   goldPrice: GoldPriceSnapshot
   thisMonth: ThisMonth
 }

@@ -21,7 +21,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { key: 'withdrawals', title: 'Withdrawals', to: '/dashboard/withdrawals', badge: 5, hidden: true },
       { key: 'transfers', title: 'Incoming transfers', to: '/dashboard/transfers', badge: 8, hidden: true },
-      { key: 'statement', title: 'Wallet statement', to: '/dashboard/statement', hidden: true },
+      { key: 'statement', title: 'Wallet statement', to: '/dashboard/statement', permission: 'wallet.view' },
       { key: 'compensation', title: 'Compensation', to: '/dashboard/compensation', hidden: true },
       { key: 'bankbook', title: 'Bank movements', to: '/dashboard/bankbook', hidden: true },
       { key: 'closing', title: 'Daily closing', to: '/dashboard/closing', hidden: true },
