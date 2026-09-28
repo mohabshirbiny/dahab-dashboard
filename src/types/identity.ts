@@ -1,6 +1,8 @@
 // The identity document is the one sent with a customer's registration. It is never
 // listed on its own: staff reach it from the customer's file (`types/customer.ts`).
 
+import type { StatusVariant } from './status'
+
 export type IdentityDocumentType = 'egyptian_id' | 'passport'
 export type IdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected'
 export type IdentityDocumentSide = 'front' | 'back'
@@ -8,6 +10,14 @@ export type IdentityDocumentSide = 'front' | 'back'
 export const IDENTITY_TYPE_LABELS: Record<IdentityDocumentType, string> = {
   egyptian_id: 'Egyptian ID',
   passport: 'Passport',
+}
+
+// The review outcome of one document, as the Customer file lists it (Backend spec 007).
+export const IDENTITY_STATUS_META: Record<IdentityDocumentStatus, { label: string, variant: StatusVariant }> = {
+  pending: { label: 'Waiting', variant: 'wait' },
+  verified: { label: 'Verified', variant: 'ok' },
+  needs_resubmission: { label: 'New upload asked', variant: 'info' },
+  rejected: { label: 'Rejected', variant: 'bad' },
 }
 
 // What a reviewer can say is wrong with a document. The values are the Backend enum

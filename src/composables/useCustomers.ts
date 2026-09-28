@@ -31,13 +31,15 @@ export function useCustomersQuery (filters: MaybeRefOrGetter<ListFilters>) {
   })
 }
 
-// Every load of the detail is logged by the Backend, so it is not refetched just
-// because the window regained focus.
+// The customer file (Backend spec 007). Every load is logged by the Backend, so it
+// is loaded once per opening (on mount) and never just because the window regained
+// focus or the network came back.
 export function useCustomerQuery (id: MaybeRefOrGetter<string>) {
   return useQuery({
     queryKey: computed(() => customerKeys.detail(toValue(id))),
     queryFn: () => customerService.getCustomer(toValue(id)),
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: retryTransient,
   })
 }

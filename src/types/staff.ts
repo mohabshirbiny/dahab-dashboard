@@ -3,6 +3,8 @@ export const PERMISSIONS = {
   identityView: 'identity.view',
   identityReview: 'identity.review',
   customerView: 'customer.view',
+  // Customer file (Backend spec 007).
+  customerSuspend: 'customer.suspend',
   // Access control (Backend spec 002).
   staffView: 'staff.view',
   rolesManage: 'roles.manage',

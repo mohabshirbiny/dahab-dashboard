@@ -3,7 +3,8 @@ import type { AuditCategory, AuditEntry, AuditEntryDetail, AuditFilters, AuditPa
 import { http } from '@/api/axios'
 import { endpoints } from '@/api/endpoints'
 
-function toEntry (e: ApiAuditEntry): AuditEntry {
+// Also used by the Customer file's History (Backend spec 007), which returns the same entries.
+export function toEntry (e: ApiAuditEntry): AuditEntry {
   return {
     id: e.id,
     at: e.at,

@@ -84,6 +84,12 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   illegal_document_transition: 'conflict',
   document_image_deleted: 'gone',
   validation_failed: 'validation',
+  // Customer file (Backend spec 007).
+  customer_already_suspended: 'conflict',
+  customer_not_suspended: 'conflict',
+  idempotency_in_progress: 'conflict',
+  idempotency_key_mismatch: 'validation',
+  idempotency_key_required: 'validation',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

@@ -10,6 +10,11 @@ export const endpoints = {
   staffMe: '/dashboard/auth/me',
   customers: '/dashboard/customers',
   customer: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}`,
+  // Customer file (Backend spec 007).
+  customerSuspend: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/suspend`,
+  customerReinstate: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/reinstate`,
+  customerActivity: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/activity`,
+  customerSessions: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/sessions`,
   identityDocumentImage: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/image`,
   identityDocumentReview: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/review`,
   // Access control (Backend spec 002).
