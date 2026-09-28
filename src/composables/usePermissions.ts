@@ -14,5 +14,6 @@ export function usePermissions () {
     permissions: computed<readonly string[]>(() => user.value?.permissions ?? []),
     can: (permission: Permission) => auth.can(permission),
     canAll: (permissions: readonly Permission[]) => auth.canAll(permissions),
+    canAny: (permissions: readonly Permission[]) => auth.canAny(permissions),
   }
 }

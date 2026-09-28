@@ -50,7 +50,7 @@
 
   const auth = useAuthStore()
   const router = useRouter()
-  const { can } = usePermissions()
+  const { can, canAny } = usePermissions()
 
   const signingOut = ref(false)
 
@@ -62,7 +62,9 @@
     navGroups
       .map(group => ({
         ...group,
-        items: group.items.filter(item => !item.hidden && (!item.permission || can(item.permission))),
+        items: group.items.filter(item => !item.hidden
+          && (!item.permission || can(item.permission))
+          && (!item.anyPermission || canAny(item.anyPermission))),
       }))
       .filter(group => group.items.length > 0),
   )

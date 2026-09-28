@@ -39,6 +39,11 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
     return { name: 'forbidden', query: { from: to.fullPath } }
   }
 
+  const anyOf = to.matched.flatMap(r => r.meta.anyPermissions ?? [])
+  if (anyOf.length > 0 && !auth.canAny(anyOf)) {
+    return { name: 'forbidden', query: { from: to.fullPath } }
+  }
+
   return true
 }
 

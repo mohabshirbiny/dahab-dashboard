@@ -10,5 +10,7 @@ declare module 'vue-router' {
     guestOnly?: boolean
     // The signed-in staff member needs every one of these.
     permissions?: Permission[]
+    // ...and at least one of these, when set.
+    anyPermissions?: Permission[]
   }
 }

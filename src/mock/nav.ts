@@ -54,7 +54,7 @@ export const navGroups: NavGroup[] = [
         permission: 'customer.view',
       },
       { key: 'staff', title: 'Staff and permissions', to: '/dashboard/staff', permission: 'staff.view' },
-      { key: 'audit', title: 'Audit log', to: '/dashboard/audit', hidden: true },
+      { key: 'audit', title: 'Audit log', to: '/dashboard/audit', anyPermission: ['audit.view_all', 'audit.view_own'] },
     ],
   },
 ]
