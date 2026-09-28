@@ -1,29 +1,32 @@
 <template>
   <div class="d-ovstats">
     <StatCard
+      v-if="hero"
       hero
+      :hint="hero.hint"
       :label="hero.label"
       :value="hero.value"
       :value-color="hero.valueColor"
-      :hint="hero.hint"
     />
+
     <StatCard
       v-for="s in stats"
       :key="s.label"
+      :hint="s.hint"
       :label="s.label"
       :value="s.value"
       :value-color="s.valueColor"
-      :hint="s.hint"
     />
   </div>
 </template>
 
 <script lang="ts" setup>
-  import StatCard from '@/components/ui/StatCard.vue'
   import type { OverviewHeroStat, OverviewStat } from '@/types/overview'
+  import StatCard from '@/components/ui/StatCard.vue'
 
+  // The hero (the safety figure) is shown only to staff holding wallet.view.
   defineProps<{
-    hero: OverviewHeroStat
+    hero?: OverviewHeroStat | null
     stats: OverviewStat[]
   }>()
 </script>

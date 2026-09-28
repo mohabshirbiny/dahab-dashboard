@@ -48,4 +48,9 @@ export const endpoints = {
   auditEntry: (id: number) => `/dashboard/audit-log/${id}`,
   auditCategories: '/dashboard/audit-log/categories',
   auditExport: '/dashboard/audit-log/export',
+  // Wallets (Backend spec 008): reads only, permission wallet.view.
+  walletOverview: '/dashboard/wallets/overview',
+  customerWallet: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/wallet`,
+  walletStatement: '/dashboard/wallet-statement',
+  walletStatementExport: '/dashboard/wallet-statement/export',
 } as const

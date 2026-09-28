@@ -1,28 +1,15 @@
 import type { OverviewData } from '@/types/overview'
 
 export const overviewMock: OverviewData = {
-  hero: {
-    label: 'Bank balance minus customer wallets',
-    value: '+ 184,320 EGP',
-    valueColor: '#7FD0A8',
-    hint: 'Bank 3,142,880  ·  wallets 2,958,560. A negative figure here means customer money is short.',
-  },
+  // The safety figure, "Held on open orders" and the Customer wallets panel are
+  // live (Backend spec 008, /dashboard/wallets/overview). "Dahab earned this
+  // month" is hidden until Settlement exists.
   stats: [
-    {
-      label: 'Held on open orders',
-      value: '612,400',
-      hint: 'Across 23 orders',
-    },
     {
       label: 'Paid out ahead of buyers',
       value: '184,900',
       valueColor: 'var(--wait)',
       hint: '6 first gold sales, cap 100,000 each',
-    },
-    {
-      label: 'Dahab earned this month',
-      value: '78,240',
-      hint: 'Commission 61,900 · spread 16,340',
     },
   ],
   transactions: [
@@ -41,11 +28,6 @@ export const overviewMock: OverviewData = {
     { id: 'nd-4', what: 'ID verification, 9 waiting', whoSub: 'Oldest submitted yesterday', waitingLabel: '9 hours', waitingVariant: 'info', onWho: 'Verification', ctaLabel: 'Open', ctaTarget: '/dashboard/users' },
     { id: 'nd-5', what: 'Rapaport matrix is 9 days old', whoSub: 'Uploaded 24 Aug', waitingLabel: 'Weekly', waitingVariant: 'wait', onWho: 'Finance', ctaLabel: 'Upload', ctaTarget: '/dashboard/pricing' },
   ],
-  wallets: {
-    available: 2346160,
-    heldOnOpenOrders: 612400,
-    totalOwed: 2958560,
-  },
   goldPrice: {
     sellersGet21k: 6951,
     buyersPay21k: 6975,

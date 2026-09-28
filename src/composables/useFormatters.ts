@@ -12,6 +12,19 @@ export function formatCurrency (value: number | null | undefined, suffix = 'EGP'
   return `${value.toLocaleString('en-US')} ${suffix}`
 }
 
+// Money arrives as a 4-place decimal string ("56760.0000"). Shown with separators,
+// and with piastres only when there are any. Display only: never compute with it.
+export function formatMoney (value: string | null | undefined): string {
+  if (value === null || value === undefined || value.length === 0) {
+    return '—'
+  }
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) {
+    return value
+  }
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const pad = (n: number) => String(n).padStart(2, '0')

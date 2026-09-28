@@ -77,10 +77,12 @@ composables → stores → components/pages`; report the affected files; edit on
 Identity documents (list, detail, image, review), Staff and permissions (staff list, role and branch assignment,
 roles and their permissions — Backend specs 002 and 004), Karats, Branches and hours (Backend spec 004), Gold
 pricing and Commission rates (Backend spec 005), the Audit log (Backend spec 006), and the Customer file —
-search, the file, suspend/reinstate, History and sign-ins (Backend spec 007) call
+search, the file, suspend/reinstate, History and sign-ins (Backend spec 007), and wallets — the Wallet statement
+(one customer, all customers, the Dahab wallet; export), the customer file's wallet panel and the Overview's safety
+figure, "Held on open orders" and Customer wallets panel, all behind `wallet.view` (Backend spec 008) — call
 the real Backend; `src/api/endpoints.ts` lists only
-routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (Overview,
-sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
+routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (the rest of the
+Overview, sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
 frontend-only phase and are out of date on this point. Read `docs/06-BACKEND-API-INTEGRATION.md` for what is
 wired, how the client behaves (base URL, refresh, errors) and the Backend gaps before touching a service.
 The API base URL comes from `VITE_API_BASE_URL` (see `.env.example`).
