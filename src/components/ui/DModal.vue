@@ -59,8 +59,15 @@
   box-shadow: 0 18px 48px rgba(23, 22, 15, .22);
   color: var(--ink);
   font-family: Inter, system-ui, sans-serif;
+  // A tall form (e.g. a role's permissions) must fit the screen: the body
+  // scrolls, the title and the actions stay in view.
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
 }
 .d-modal__head {
+  flex: none;
   padding: 13px 16px;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -86,8 +93,17 @@
 }
 .d-modal__close:hover:not(:disabled) { background: var(--bg); color: var(--ink); }
 .d-modal__close:disabled { opacity: .4; cursor: not-allowed; }
-.d-modal__body { padding: 16px; font-size: 12.5px; line-height: 1.6; }
+.d-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
 .d-modal__foot {
+  flex: none;
   padding: 12px 16px;
   border-top: 1px solid var(--line);
   background: var(--row-head);
