@@ -6,99 +6,97 @@
     title="Credit a transfer by hand"
     @update:model-value="emit('update:model-value', $event)"
   >
-    <div class="d-scroll">
-      <p class="d-cb__lead">For money that reached Dahab with no notice, or without the reference. Only after you see it in Dahab's own statement.</p>
+    <p class="d-cb__lead">For money that reached Dahab with no notice, or without the reference. Only after you see it in Dahab's own statement.</p>
 
-      <form v-if="customer === null" class="d-cb__find" role="search" @submit.prevent="searchTerm = term.trim()">
-        <FormField v-slot="{ controlId }" label="Customer reference or phone">
+    <form v-if="customer === null" class="d-cb__find" role="search" @submit.prevent="searchTerm = term.trim()">
+      <FormField v-slot="{ controlId }" label="Customer reference or phone">
+        <DInput
+          :id="controlId"
+          v-model="term"
+          autocomplete="off"
+          :maxlength="32"
+          placeholder="004417 or +20 10 1234 5678"
+        />
+      </FormField>
+
+      <DBtn :disabled="term.trim() === ''" type="submit">Find</DBtn>
+    </form>
+
+    <template v-if="customer === null && searchTerm !== ''">
+      <LoadingState v-if="results.isPending.value" label="Searching…" />
+      <p v-else-if="(results.data.value ?? []).length === 0" class="who2">No customer with that reference or phone.</p>
+
+      <div v-else class="d-cb__picks">
+        <DBtn v-for="c in results.data.value" :key="c.id" @click="customer = c">
+          Wallet {{ c.displayRef }}{{ c.fullName ? ` · ${c.fullName}` : '' }} · {{ CUSTOMER_STATUS_META[c.status].label }}
+        </DBtn>
+      </div>
+    </template>
+
+    <form v-if="customer" id="credit-by-hand-form" novalidate @submit.prevent="onSubmit">
+      <div class="d-cb__who">
+        <span>Wallet {{ customer.displayRef }}{{ customer.fullName ? ` · ${customer.fullName}` : '' }}</span>
+        <StatusTag :label="CUSTOMER_STATUS_META[customer.status].label" :variant="CUSTOMER_STATUS_META[customer.status].variant" />
+        <DBtn :disabled="busy" @click="customer = null">Change</DBtn>
+      </div>
+
+      <NoteBanner v-if="notCreditable" class="d-cb__banner" variant="bad">
+        This customer is not verified, so money cannot be credited to them. Return it outside the app.
+      </NoteBanner>
+
+      <NoteBanner v-else-if="customer.status === 'suspended'" class="d-cb__banner" variant="wait">
+        This customer is suspended. You may credit money that has already arrived, with the transaction reference. They still cannot add money themselves.
+      </NoteBanner>
+
+      <template v-if="!notCreditable">
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="amountFieldError" label="Amount that arrived (EGP)">
           <DInput
             :id="controlId"
-            v-model="term"
-            autocomplete="off"
-            :maxlength="32"
-            placeholder="004417 or +20 10 1234 5678"
+            v-model="amount"
+            :describedby="describedBy"
+            :disabled="busy"
+            inputmode="numeric"
+            :invalid="invalid"
+            :maxlength="14"
           />
         </FormField>
 
-        <DBtn :disabled="term.trim() === ''" type="submit">Find</DBtn>
-      </form>
+        <FormField v-slot="{ controlId }" :error="fieldError(mutation.error.value, 'receiving_account_id')" label="It arrived in">
+          <DSelect :id="controlId" v-model="accountId" :disabled="busy" :options="accountOptions" />
+        </FormField>
 
-      <template v-if="customer === null && searchTerm !== ''">
-        <LoadingState v-if="results.isPending.value" label="Searching…" />
-        <p v-else-if="(results.data.value ?? []).length === 0" class="who2">No customer with that reference or phone.</p>
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="noteError" label="How you identified the customer">
+          <DTextarea
+            :id="controlId"
+            v-model="note"
+            :describedby="describedBy"
+            :disabled="busy"
+            :invalid="invalid"
+            :maxlength="1000"
+            placeholder="Required. e.g. Phone matches 01x…8842, no reference."
+            :rows="2"
+          />
+        </FormField>
 
-        <div v-else class="d-cb__picks">
-          <DBtn v-for="c in results.data.value" :key="c.id" @click="customer = c">
-            Wallet {{ c.displayRef }}{{ c.fullName ? ` · ${c.fullName}` : '' }} · {{ CUSTOMER_STATUS_META[c.status].label }}
-          </DBtn>
-        </div>
+        <FormField
+          v-slot="{ controlId, describedBy, invalid }"
+          :error="referenceError"
+          :hint="customer.status === 'suspended' ? 'Required: the transaction reference from Dahab\'s statement.' : 'Optional: the bank or wallet transaction reference.'"
+          :label="customer.status === 'suspended' ? 'Transaction reference (required)' : 'Transaction reference'"
+        >
+          <DInput
+            :id="controlId"
+            v-model="arrivalReference"
+            :describedby="describedBy"
+            :disabled="busy"
+            :invalid="invalid"
+            :maxlength="100"
+          />
+        </FormField>
       </template>
+    </form>
 
-      <form v-if="customer" id="credit-by-hand-form" novalidate @submit.prevent="onSubmit">
-        <div class="d-cb__who">
-          <span>Wallet {{ customer.displayRef }}{{ customer.fullName ? ` · ${customer.fullName}` : '' }}</span>
-          <StatusTag :label="CUSTOMER_STATUS_META[customer.status].label" :variant="CUSTOMER_STATUS_META[customer.status].variant" />
-          <DBtn :disabled="busy" @click="customer = null">Change</DBtn>
-        </div>
-
-        <NoteBanner v-if="notCreditable" class="d-cb__banner" variant="bad">
-          This customer is not verified, so money cannot be credited to them. Return it outside the app.
-        </NoteBanner>
-
-        <NoteBanner v-else-if="customer.status === 'suspended'" class="d-cb__banner" variant="wait">
-          This customer is suspended. You may credit money that has already arrived, with the transaction reference. They still cannot add money themselves.
-        </NoteBanner>
-
-        <template v-if="!notCreditable">
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="amountFieldError" label="Amount that arrived (EGP)">
-            <DInput
-              :id="controlId"
-              v-model="amount"
-              :describedby="describedBy"
-              :disabled="busy"
-              inputmode="numeric"
-              :invalid="invalid"
-              :maxlength="14"
-            />
-          </FormField>
-
-          <FormField v-slot="{ controlId }" :error="fieldError(mutation.error.value, 'receiving_account_id')" label="It arrived in">
-            <DSelect :id="controlId" v-model="accountId" :disabled="busy" :options="accountOptions" />
-          </FormField>
-
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="noteError" label="How you identified the customer">
-            <DTextarea
-              :id="controlId"
-              v-model="note"
-              :describedby="describedBy"
-              :disabled="busy"
-              :invalid="invalid"
-              :maxlength="1000"
-              placeholder="Required. e.g. Phone matches 01x…8842, no reference."
-              :rows="2"
-            />
-          </FormField>
-
-          <FormField
-            v-slot="{ controlId, describedBy, invalid }"
-            :error="referenceError"
-            :hint="customer.status === 'suspended' ? 'Required: the transaction reference from Dahab\'s statement.' : 'Optional: the bank or wallet transaction reference.'"
-            :label="customer.status === 'suspended' ? 'Transaction reference (required)' : 'Transaction reference'"
-          >
-            <DInput
-              :id="controlId"
-              v-model="arrivalReference"
-              :describedby="describedBy"
-              :disabled="busy"
-              :invalid="invalid"
-              :maxlength="100"
-            />
-          </FormField>
-        </template>
-      </form>
-
-      <NoteBanner v-if="submitError" class="d-cb__banner" role="alert" variant="bad">{{ submitError }}</NoteBanner>
-    </div>
+    <NoteBanner v-if="submitError" class="d-cb__banner" role="alert" variant="bad">{{ submitError }}</NoteBanner>
 
     <template #actions>
       <DBtn :disabled="busy" @click="emit('update:model-value', false)">Cancel</DBtn>
@@ -209,9 +207,6 @@
 </script>
 
 <style lang="scss" scoped>
-// The shared DModal does not limit its height yet: the body scrolls here so the
-// title and the actions stay on screen.
-.d-scroll { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); overflow-y: auto; overscroll-behavior: contain; margin: -4px -8px; padding: 4px 8px; }
 .d-cb__lead { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); }
 .d-cb__find { display: flex; align-items: flex-end; gap: 8px; }
 .d-cb__picks { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }

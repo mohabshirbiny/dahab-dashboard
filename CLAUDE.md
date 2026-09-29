@@ -42,6 +42,9 @@ Backend API
   the Backend's `code` into `ServiceErrorCode` (extend the union only if a Backend code truly has no match).
 - Reusable UI primitives live in `src/components/ui/` (`DBtn`, `DInput`, `DModal`, `DataTable`, `StatCard`,
   `StatusTag`, `Panel`, `Pagination`, `EmptyState`, `ErrorState`, `LoadingState`, `ConfirmDialog`, …). Reuse them.
+- Every modal is a `DModal` (or `ConfirmDialog`, built on it) — never a bare `v-dialog` (ESLint
+  `vue/no-restricted-syntax` enforces it). `DModal` caps the height to the screen and scrolls its body while the
+  title and actions stay in view, so don't add your own max-height/scroll wrapper inside a modal.
 - Authorization: the UI gates on the Backend's **permission strings** (`src/types/staff.ts` `PERMISSIONS`,
   `usePermissions`, router guards) — never on role names.
 

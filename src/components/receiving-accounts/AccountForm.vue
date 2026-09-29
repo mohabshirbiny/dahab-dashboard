@@ -6,18 +6,29 @@
     :title="account ? `Edit ${account.label}` : 'Add a receiving account'"
     @update:model-value="emit('update:model-value', $event)"
   >
-    <div class="d-scroll">
-      <p class="d-af__lead">Customers copy these details into their bank or wallet app. A wrong digit sends their money to the wrong place, so check them twice. Every change is logged with your name.</p>
+    <p class="d-af__lead">Customers copy these details into their bank or wallet app. A wrong digit sends their money to the wrong place, so check them twice. Every change is logged with your name.</p>
 
-      <form id="receiving-account-form" novalidate @submit.prevent="onSubmit">
-        <FormField v-slot="{ controlId }" :hint="account ? 'An account\'s method never changes; add a new account instead.' : undefined" label="Method">
-          <DSelect :id="controlId" v-model="method" :disabled="loading || account !== null" :options="METHOD_OPTIONS" />
-        </FormField>
+    <form id="receiving-account-form" novalidate @submit.prevent="onSubmit">
+      <FormField v-slot="{ controlId }" :hint="account ? 'An account\'s method never changes; add a new account instead.' : undefined" label="Method">
+        <DSelect :id="controlId" v-model="method" :disabled="loading || account !== null" :options="METHOD_OPTIONS" />
+      </FormField>
 
-        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('label')" hint="Staff-facing name, e.g. CIB main" label="Name">
+      <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('label')" hint="Staff-facing name, e.g. CIB main" label="Name">
+        <DInput
+          :id="controlId"
+          v-model="form.label"
+          :describedby="describedBy"
+          :disabled="loading"
+          :invalid="invalid"
+          :maxlength="80"
+        />
+      </FormField>
+
+      <template v-if="method === 'bank_transfer'">
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('bankName')" label="Bank">
           <DInput
             :id="controlId"
-            v-model="form.label"
+            v-model="form.bankName"
             :describedby="describedBy"
             :disabled="loading"
             :invalid="invalid"
@@ -25,95 +36,7 @@
           />
         </FormField>
 
-        <template v-if="method === 'bank_transfer'">
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('bankName')" label="Bank">
-            <DInput
-              :id="controlId"
-              v-model="form.bankName"
-              :describedby="describedBy"
-              :disabled="loading"
-              :invalid="invalid"
-              :maxlength="80"
-            />
-          </FormField>
-
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('accountHolder')" label="Account holder">
-            <DInput
-              :id="controlId"
-              v-model="form.accountHolder"
-              :describedby="describedBy"
-              :disabled="loading"
-              :invalid="invalid"
-              :maxlength="120"
-            />
-          </FormField>
-
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('accountNumber')" hint="Digits and spaces, 6 to 34" label="Account number">
-            <DInput
-              :id="controlId"
-              v-model="form.accountNumber"
-              :describedby="describedBy"
-              :disabled="loading"
-              inputmode="numeric"
-              :invalid="invalid"
-              :maxlength="34"
-            />
-          </FormField>
-
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('iban')" hint="Optional. EG followed by 27 digits" label="IBAN">
-            <DInput
-              :id="controlId"
-              v-model="form.iban"
-              :describedby="describedBy"
-              :disabled="loading"
-              :invalid="invalid"
-              :maxlength="29"
-            />
-          </FormField>
-        </template>
-
-        <FormField
-          v-if="method === 'instapay'"
-          v-slot="{ controlId, describedBy, invalid }"
-          :error="err('instapayAddress')"
-          hint="e.g. dahab@instapay"
-          label="InstaPay address"
-        >
-          <DInput
-            :id="controlId"
-            v-model="form.instapayAddress"
-            :describedby="describedBy"
-            :disabled="loading"
-            :invalid="invalid"
-            :maxlength="120"
-          />
-        </FormField>
-
-        <FormField
-          v-if="method === 'vodafone_cash'"
-          v-slot="{ controlId, describedBy, invalid }"
-          :error="err('walletNumber')"
-          hint="11 digits, e.g. 01012345678"
-          label="Wallet number"
-        >
-          <DInput
-            :id="controlId"
-            v-model="form.walletNumber"
-            :describedby="describedBy"
-            :disabled="loading"
-            inputmode="numeric"
-            :invalid="invalid"
-            :maxlength="11"
-          />
-        </FormField>
-
-        <FormField
-          v-if="method !== 'bank_transfer'"
-          v-slot="{ controlId, describedBy, invalid }"
-          :error="err('accountHolder')"
-          hint="Optional"
-          label="Account holder"
-        >
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('accountHolder')" label="Account holder">
           <DInput
             :id="controlId"
             v-model="form.accountHolder"
@@ -124,67 +47,142 @@
           />
         </FormField>
 
-        <div class="d-af__two">
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('dailyLimit')" hint="Shown only; never checked" label="Daily limit (EGP)">
-            <DInput
-              :id="controlId"
-              v-model="form.dailyLimit"
-              :describedby="describedBy"
-              :disabled="loading"
-              inputmode="numeric"
-              :invalid="invalid"
-              :maxlength="16"
-            />
-          </FormField>
-
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('providerFeePercent')" hint="Shown only, e.g. 0.5" label="Provider fee %">
-            <DInput
-              :id="controlId"
-              v-model="form.providerFeePercent"
-              :describedby="describedBy"
-              :disabled="loading"
-              inputmode="numeric"
-              :invalid="invalid"
-              :maxlength="7"
-            />
-          </FormField>
-        </div>
-
-        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('customerNote')" label="Note customers see">
-          <DTextarea
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('accountNumber')" hint="Digits and spaces, 6 to 34" label="Account number">
+          <DInput
             :id="controlId"
-            v-model="form.customerNote"
+            v-model="form.accountNumber"
             :describedby="describedBy"
             :disabled="loading"
+            inputmode="numeric"
             :invalid="invalid"
-            :maxlength="300"
-            placeholder="e.g. The fee is charged by InstaPay, not by Dahab."
-            :rows="2"
+            :maxlength="34"
           />
         </FormField>
 
-        <div class="d-af__two">
-          <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('sortOrder')" hint="Lower comes first" label="Order">
-            <DInput
-              :id="controlId"
-              v-model="form.sortOrder"
-              :describedby="describedBy"
-              :disabled="loading"
-              inputmode="numeric"
-              :invalid="invalid"
-              :maxlength="3"
-            />
-          </FormField>
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('iban')" hint="Optional. EG followed by 27 digits" label="IBAN">
+          <DInput
+            :id="controlId"
+            v-model="form.iban"
+            :describedby="describedBy"
+            :disabled="loading"
+            :invalid="invalid"
+            :maxlength="29"
+          />
+        </FormField>
+      </template>
 
-          <label class="d-af__check">
-            <input v-model="form.isActive" :disabled="loading" type="checkbox">
-            Shown to customers
-          </label>
-        </div>
-      </form>
+      <FormField
+        v-if="method === 'instapay'"
+        v-slot="{ controlId, describedBy, invalid }"
+        :error="err('instapayAddress')"
+        hint="e.g. dahab@instapay"
+        label="InstaPay address"
+      >
+        <DInput
+          :id="controlId"
+          v-model="form.instapayAddress"
+          :describedby="describedBy"
+          :disabled="loading"
+          :invalid="invalid"
+          :maxlength="120"
+        />
+      </FormField>
 
-      <NoteBanner v-if="submitError" class="d-af__banner" role="alert" variant="bad">{{ submitError }}</NoteBanner>
-    </div>
+      <FormField
+        v-if="method === 'vodafone_cash'"
+        v-slot="{ controlId, describedBy, invalid }"
+        :error="err('walletNumber')"
+        hint="11 digits, e.g. 01012345678"
+        label="Wallet number"
+      >
+        <DInput
+          :id="controlId"
+          v-model="form.walletNumber"
+          :describedby="describedBy"
+          :disabled="loading"
+          inputmode="numeric"
+          :invalid="invalid"
+          :maxlength="11"
+        />
+      </FormField>
+
+      <FormField
+        v-if="method !== 'bank_transfer'"
+        v-slot="{ controlId, describedBy, invalid }"
+        :error="err('accountHolder')"
+        hint="Optional"
+        label="Account holder"
+      >
+        <DInput
+          :id="controlId"
+          v-model="form.accountHolder"
+          :describedby="describedBy"
+          :disabled="loading"
+          :invalid="invalid"
+          :maxlength="120"
+        />
+      </FormField>
+
+      <div class="d-af__two">
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('dailyLimit')" hint="Shown only; never checked" label="Daily limit (EGP)">
+          <DInput
+            :id="controlId"
+            v-model="form.dailyLimit"
+            :describedby="describedBy"
+            :disabled="loading"
+            inputmode="numeric"
+            :invalid="invalid"
+            :maxlength="16"
+          />
+        </FormField>
+
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('providerFeePercent')" hint="Shown only, e.g. 0.5" label="Provider fee %">
+          <DInput
+            :id="controlId"
+            v-model="form.providerFeePercent"
+            :describedby="describedBy"
+            :disabled="loading"
+            inputmode="numeric"
+            :invalid="invalid"
+            :maxlength="7"
+          />
+        </FormField>
+      </div>
+
+      <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('customerNote')" label="Note customers see">
+        <DTextarea
+          :id="controlId"
+          v-model="form.customerNote"
+          :describedby="describedBy"
+          :disabled="loading"
+          :invalid="invalid"
+          :maxlength="300"
+          placeholder="e.g. The fee is charged by InstaPay, not by Dahab."
+          :rows="2"
+        />
+      </FormField>
+
+      <div class="d-af__two">
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="err('sortOrder')" hint="Lower comes first" label="Order">
+          <DInput
+            :id="controlId"
+            v-model="form.sortOrder"
+            :describedby="describedBy"
+            :disabled="loading"
+            inputmode="numeric"
+            :invalid="invalid"
+            :maxlength="3"
+          />
+        </FormField>
+
+        <label class="d-af__check">
+          <input v-model="form.isActive" :disabled="loading" type="checkbox">
+          Shown to customers
+        </label>
+      </div>
+    </form>
+
+    <NoteBanner v-if="submitError" class="d-af__banner" role="alert" variant="bad">{{ submitError }}</NoteBanner>
 
     <template #actions>
       <DBtn :disabled="loading" @click="emit('update:model-value', false)">Cancel</DBtn>
@@ -296,9 +294,6 @@
 </script>
 
 <style lang="scss" scoped>
-// The shared DModal does not limit its height yet: the body scrolls here so the
-// title and the actions stay on screen.
-.d-scroll { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); overflow-y: auto; overscroll-behavior: contain; margin: -4px -8px; padding: 4px 8px; }
 .d-af__lead { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); }
 .d-af__two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
 .d-af__check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding-bottom: 14px; }

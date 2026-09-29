@@ -1,6 +1,6 @@
 <template>
   <DModal :max-width="720" :model-value="topUp !== null" :title="topUp ? `${topUp.number} · ${TOPUP_METHOD_LABELS[topUp.method]}` : ''" @update:model-value="close">
-    <div v-if="topUp" class="d-scroll">
+    <template v-if="topUp">
       <div class="d-td__head">
         <StatusTag :label="TOPUP_STATUS_META[topUp.status].label" :variant="TOPUP_STATUS_META[topUp.status].variant" />
         <span v-if="topUp.origin === 'by_hand'" class="who2">Credited by hand</span>
@@ -54,7 +54,7 @@
       <RejectForm v-else-if="mode === 'reject'" :top-up-id="topUp.id" @cancel="mode = null" @done="close" />
 
       <NoteBanner v-if="unholdError" class="d-td__banner" role="alert" variant="bad">{{ unholdError }}</NoteBanner>
-    </div>
+    </template>
 
     <template v-if="topUp && mode === null && topUp.allowedActions.length > 0" #actions>
       <DBtn v-if="canWalletStatement" @click="openStatement">Wallet statement</DBtn>
@@ -129,9 +129,6 @@
 </script>
 
 <style lang="scss" scoped>
-// The shared DModal does not limit its height yet: the body scrolls here so the
-// title and the actions stay on screen.
-.d-scroll { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); overflow-y: auto; overscroll-behavior: contain; margin: -4px -8px; padding: 4px 8px; }
 .d-td__head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .d-td__banner { margin-bottom: 12px; }
 .d-td__grid { display: grid; gap: 2px; margin-bottom: 12px; }
