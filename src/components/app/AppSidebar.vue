@@ -41,6 +41,7 @@
   import BrandMark from '@/components/ui/BrandMark.vue'
   import { useCustomerWaitingCountQuery } from '@/composables/useCustomers'
   import { usePermissions } from '@/composables/usePermissions'
+  import { useOpenTopUpCountQuery } from '@/composables/useTopUps'
   import { navGroups } from '@/mock/nav'
   import { useAuthStore } from '@/stores/auth'
   import { PERMISSIONS, roleSummary } from '@/types/staff'
@@ -70,9 +71,11 @@
   )
 
   const { data: customersWaiting } = useCustomerWaitingCountQuery(() => can(PERMISSIONS.customerView))
+  const { data: topUpsToMatch } = useOpenTopUpCountQuery(() => can(PERMISSIONS.topupMatch))
 
   function badgeFor (item: NavItem): number | undefined {
     if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
+    if (item.liveBadge === 'topupsToMatch') return topUpsToMatch.value || undefined
     return item.badge
   }
 

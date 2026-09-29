@@ -24,6 +24,9 @@ export const PERMISSIONS = {
   auditViewOwn: 'audit.view_own',
   // Wallets (Backend spec 008): CEO and Finance by default, never the COO.
   walletView: 'wallet.view',
+  // Wallet top-up (Backend spec 009): CEO and Finance by default, never the COO.
+  topupMatch: 'topup.match',
+  topupAccountsManage: 'topup.accounts.manage',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

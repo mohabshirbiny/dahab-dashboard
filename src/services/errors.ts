@@ -90,6 +90,8 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   idempotency_in_progress: 'conflict',
   idempotency_key_mismatch: 'validation',
   idempotency_key_required: 'validation',
+  // Wallet top-up (Backend spec 009).
+  illegal_topup_transition: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

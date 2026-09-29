@@ -3,7 +3,8 @@
     <template #head>
       <th>{{ grain === 'each' ? 'When' : grain === 'day' ? 'Day' : 'Month' }}</th>
       <th>What</th>
-      <th>Order</th>
+      <!-- An order number, or a top-up's TOP-n (Backend spec 009). -->
+      <th>Reference</th>
       <th class="r">Before</th>
       <th class="r">In</th>
       <th class="r">Out</th>

@@ -53,4 +53,12 @@ export const endpoints = {
   customerWallet: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/wallet`,
   walletStatement: '/dashboard/wallet-statement',
   walletStatementExport: '/dashboard/wallet-statement/export',
+  // Wallet top-up (Backend spec 009): topup.match / topup.accounts.manage.
+  topUps: '/dashboard/topups',
+  topUpsExport: '/dashboard/topups/export',
+  topUp: (id: string) => `/dashboard/topups/${encodeURIComponent(id)}`,
+  topUpReceipt: (id: string) => `/dashboard/topups/${encodeURIComponent(id)}/receipt`,
+  topUpAction: (id: string, action: 'match' | 'hold' | 'unhold' | 'reject') => `/dashboard/topups/${encodeURIComponent(id)}/${action}`,
+  receivingAccounts: '/dashboard/receiving-accounts',
+  receivingAccount: (id: number) => `/dashboard/receiving-accounts/${id}`,
 } as const
