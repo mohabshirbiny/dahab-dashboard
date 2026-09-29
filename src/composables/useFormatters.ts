@@ -22,7 +22,9 @@ export function formatMoney (value: string | null | undefined): string {
   if (!Number.isFinite(amount)) {
     return value
   }
-  return amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  // Piastres only when there are any, then always two digits ("19,900.50").
+  const digits = Math.round(amount * 100) % 100 === 0 ? 0 : 2
+  return amount.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

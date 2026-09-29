@@ -79,7 +79,9 @@ roles and their permissions — Backend specs 002 and 004), Karats, Branches and
 pricing and Commission rates (Backend spec 005), the Audit log (Backend spec 006), and the Customer file —
 search, the file, suspend/reinstate, History and sign-ins (Backend spec 007), and wallets — the Wallet statement
 (one customer, all customers, the Dahab wallet; export), the customer file's wallet panel and the Overview's safety
-figure, "Held on open orders" and Customer wallets panel, all behind `wallet.view` (Backend spec 008) — call
+figure, "Held on open orders" and Customer wallets panel, all behind `wallet.view` (Backend spec 008), and wallet
+top-up — Incoming transfers (match, hold, reject, credit by hand, receipt, export; `topup.match`) and Controls →
+Receiving accounts (`topup.accounts.manage`; not in the design) (Backend spec 009) — call
 the real Backend; `src/api/endpoints.ts` lists only
 routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (the rest of the
 Overview, sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier

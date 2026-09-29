@@ -12,7 +12,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'inspections', name: 'inspections', component: Placeholder, meta: { title: 'Inspections' } },
   { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
   { path: 'withdrawals', name: 'withdrawals', component: Placeholder, meta: { title: 'Withdrawals' } },
-  { path: 'transfers', name: 'transfers', component: Placeholder, meta: { title: 'Incoming transfers' } },
   { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
   { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
   { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
@@ -92,6 +91,20 @@ const routes: RouteRecordRaw[] = [
         name: 'statement',
         component: () => import('@/pages/statement/index.vue'),
         meta: { title: 'Wallet statement', permissions: [PERMISSIONS.walletView] },
+      },
+      {
+        // Incoming transfers (Backend spec 009): match, hold, reject, credit by hand.
+        path: 'dashboard/transfers',
+        name: 'transfers',
+        component: () => import('@/pages/transfers/index.vue'),
+        meta: { title: 'Incoming transfers', permissions: [PERMISSIONS.topupMatch] },
+      },
+      {
+        // Dahab's receiving accounts (Backend spec 009). Changes need topup.accounts.manage.
+        path: 'dashboard/receiving-accounts',
+        name: 'receiving-accounts',
+        component: () => import('@/pages/receiving-accounts/index.vue'),
+        meta: { title: 'Receiving accounts', anyPermissions: [PERMISSIONS.topupMatch, PERMISSIONS.topupAccountsManage] },
       },
       {
         // Pricing (Backend spec 005). Changes need their own permissions too.
