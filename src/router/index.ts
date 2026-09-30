@@ -7,7 +7,6 @@ import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'listings', name: 'listings', component: Placeholder, meta: { title: 'Listings to review' } },
   { path: 'orders', name: 'orders', component: Placeholder, meta: { title: 'Orders' } },
   { path: 'inspections', name: 'inspections', component: Placeholder, meta: { title: 'Inspections' } },
   { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
@@ -98,6 +97,13 @@ const routes: RouteRecordRaw[] = [
         name: 'transfers',
         component: () => import('@/pages/transfers/index.vue'),
         meta: { title: 'Incoming transfers', permissions: [PERMISSIONS.topupMatch] },
+      },
+      {
+        // Listings to review (Backend spec 010): any listing permission opens it; each decision needs its own.
+        path: 'dashboard/listings',
+        name: 'listings',
+        component: () => import('@/pages/listings/index.vue'),
+        meta: { title: 'Listings to review', anyPermissions: [PERMISSIONS.listingReview, PERMISSIONS.listingRequestChanges, PERMISSIONS.listingTakedown] },
       },
       {
         // Dahab's receiving accounts (Backend spec 009). Changes need topup.accounts.manage.

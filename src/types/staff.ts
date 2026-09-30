@@ -27,6 +27,10 @@ export const PERMISSIONS = {
   // Wallet top-up (Backend spec 009): CEO and Finance by default, never the COO.
   topupMatch: 'topup.match',
   topupAccountsManage: 'topup.accounts.manage',
+  // Listings to review (Backend spec 010): CEO, COO and Operations by default.
+  listingReview: 'listing.review',
+  listingRequestChanges: 'listing.request_changes',
+  listingTakedown: 'listing.takedown',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
