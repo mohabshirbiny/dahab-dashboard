@@ -40,6 +40,7 @@
   import { RouterLink, useRouter } from 'vue-router'
   import BrandMark from '@/components/ui/BrandMark.vue'
   import { useCustomerWaitingCountQuery } from '@/composables/useCustomers'
+  import { useWaitingListingCountQuery } from '@/composables/useListings'
   import { usePermissions } from '@/composables/usePermissions'
   import { useOpenTopUpCountQuery } from '@/composables/useTopUps'
   import { navGroups } from '@/mock/nav'
@@ -72,10 +73,14 @@
 
   const { data: customersWaiting } = useCustomerWaitingCountQuery(() => can(PERMISSIONS.customerView))
   const { data: topUpsToMatch } = useOpenTopUpCountQuery(() => can(PERMISSIONS.topupMatch))
+  const { data: listingsToReview } = useWaitingListingCountQuery(
+    () => canAny([PERMISSIONS.listingReview, PERMISSIONS.listingRequestChanges, PERMISSIONS.listingTakedown]),
+  )
 
   function badgeFor (item: NavItem): number | undefined {
     if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
     if (item.liveBadge === 'topupsToMatch') return topUpsToMatch.value || undefined
+    if (item.liveBadge === 'listingsToReview') return listingsToReview.value || undefined
     return item.badge
   }
 

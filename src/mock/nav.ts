@@ -10,7 +10,7 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Daily work',
     items: [
-      { key: 'listings', title: 'Listings to review', to: '/dashboard/listings', badge: 14, hidden: true },
+      { key: 'listings', title: 'Listings to review', to: '/dashboard/listings', liveBadge: 'listingsToReview', anyPermission: ['listing.review', 'listing.request_changes', 'listing.takedown'] },
       { key: 'orders', title: 'Orders', to: '/dashboard/orders', badge: 6, hidden: true },
       { key: 'inspections', title: 'Inspections', to: '/dashboard/inspections', badge: 3, hidden: true },
       { key: 'disputes', title: 'Disputes and reports', to: '/dashboard/disputes', badge: 2, hidden: true },

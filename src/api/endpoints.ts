@@ -61,4 +61,9 @@ export const endpoints = {
   topUpAction: (id: string, action: 'match' | 'hold' | 'unhold' | 'reject') => `/dashboard/topups/${encodeURIComponent(id)}/${action}`,
   receivingAccounts: '/dashboard/receiving-accounts',
   receivingAccount: (id: number) => `/dashboard/receiving-accounts/${id}`,
+  // Listings to review (Backend spec 010): listing.review / listing.request_changes / listing.takedown.
+  listings: '/dashboard/listings',
+  listing: (id: string) => `/dashboard/listings/${encodeURIComponent(id)}`,
+  listingMedia: (id: string, mediaId: string) => `/dashboard/listings/${encodeURIComponent(id)}/media/${encodeURIComponent(mediaId)}`,
+  listingAction: (id: string, action: 'approve' | 'request-changes' | 'reject' | 'takedown') => `/dashboard/listings/${encodeURIComponent(id)}/${action}`,
 } as const
