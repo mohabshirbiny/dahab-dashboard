@@ -150,6 +150,7 @@
       fields: [
         { key: 'deposit.buyer_pct', label: 'Buyer deposit', hint: 'Percent of the price, held' },
         { key: 'deadline.seller_reply_hours', label: 'Seller reply window', hint: 'Hours to accept or decline' },
+        { key: 'buyrequest.price_tolerance_pct', label: 'Price may move before a request is refused', hint: 'Percent. Within it the buyer locks the fresh price' },
         { key: 'deadline.reach_branch_working_hours', label: 'Time to reach IGI', hint: 'Working hours after accepting' },
         { key: 'deadline.collect_weeks', label: 'Weeks the piece waits at the branch', hint: 'After paying, they collect whenever they like within this' },
         { key: 'deadline.free_relist_working_hours', label: 'Free relist window', hint: 'Working hours after collection, 0% commission' },

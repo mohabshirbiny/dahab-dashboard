@@ -64,6 +64,8 @@
     in_review: { title: 'Waiting for review', subtitle: 'Oldest first', empty: 'Nothing is waiting for review' },
     changes_requested: { title: 'Changes asked', subtitle: 'Waiting for the seller', empty: 'No listing is waiting for its seller' },
     live: { title: 'Live on the market', subtitle: 'Most recent first', empty: 'Nothing is live' },
+    reserved: { title: 'Buyers in line', subtitle: 'Most recent first', empty: 'No piece has buyers in line' },
+    accepted: { title: 'Accepted', subtitle: 'A seller chose a buyer; waiting for delivery', empty: 'No accepted sale' },
     rejected: { title: 'Rejected', subtitle: 'Most recent first', empty: 'No listing was rejected' },
   }
 
@@ -89,6 +91,9 @@
     { value: 'approved_today' as const, label: 'Approved today', count: counts.value?.approvedToday, disabled: true, title: 'A count for today. Open Live to see the pieces on the market.' },
     { value: 'rejected' as const, label: 'Rejected', count: counts.value?.rejected },
     { value: 'live' as const, label: 'Live', count: counts.value?.live },
+    // Backend spec 011: pieces with buyers in line, and sales a seller accepted.
+    { value: 'reserved' as const, label: 'Buyers in line', count: counts.value?.reserved },
+    { value: 'accepted' as const, label: 'Accepted', count: counts.value?.accepted },
   ])
 
   function setQueue (value: string) {

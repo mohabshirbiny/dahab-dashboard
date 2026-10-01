@@ -5,13 +5,16 @@
 import type { StatusVariant } from './status'
 import type { Money } from './wallet'
 
-// The states this screen works with. The Backend has more (reserved, accepted, …) for
+// The states this screen works with. The Backend has more (at_inspection, sold, …) for
 // later modules, so an unknown one is kept as a plain string and shown as it is.
+// reserved (buyers in line) and accepted (a buyer chosen) come with buy requests (spec 011).
 export type KnownListingState
   = | 'draft'
     | 'in_review'
     | 'changes_requested'
     | 'live'
+    | 'reserved'
+    | 'accepted'
     | 'rejected'
     | 'withdrawn'
     | 'suspended_hold'
@@ -21,14 +24,17 @@ export type ListingCategory = 'gold' | 'diamond' | 'gold_with_diamond'
 export type ListingMediaKind = 'photo' | 'video' | 'invoice' | 'stone_certificate'
 export type ListingDecision = 'approve' | 'request-changes' | 'reject' | 'takedown'
 
-// The queues of the screen: the design's chips, plus Live as the way to the take-down.
-export type ListingQueue = 'in_review' | 'changes_requested' | 'live' | 'rejected'
+// The queues of the screen: the design's chips, plus Live as the way to the take-down,
+// and (spec 011) Reserved and Accepted to follow the buyers in line and the accepted sales.
+export type ListingQueue = 'in_review' | 'changes_requested' | 'live' | 'reserved' | 'accepted' | 'rejected'
 
 const STATE_META: Record<KnownListingState, { label: string, variant: StatusVariant }> = {
   draft: { label: 'Draft', variant: 'off' },
   in_review: { label: 'Waiting', variant: 'wait' },
   changes_requested: { label: 'Changes asked', variant: 'warn' },
   live: { label: 'Live', variant: 'ok' },
+  reserved: { label: 'Buyers in line', variant: 'info' },
+  accepted: { label: 'Accepted', variant: 'ok' },
   rejected: { label: 'Rejected', variant: 'bad' },
   withdrawn: { label: 'Taken down', variant: 'off' },
   suspended_hold: { label: 'On hold', variant: 'warn' },
@@ -105,13 +111,46 @@ export interface Listing {
   canTakeDown: boolean
 }
 
-// The detail endpoint adds the history and the "sent back" counters.
+// One buyer in line (Backend spec 011), read-only: the buyer by reference only.
+export interface ListingQueueItem {
+  id: string
+  placeInLine: number
+  buyer: { id: string, displayRef: string }
+  lockedTotalPrice: Money
+  depositAmount: Money
+  requestedAt: string
+  sellerReplyDeadline: string
+}
+
+// The latest order on a piece (Backend spec 011): created when the seller accepted;
+// cancelled_staff when Dahab cancelled it (then with when and why).
+export type OrderState = 'awaiting_delivery' | 'cancelled_staff' | (string & {})
+
+export interface ListingOrder {
+  id: string
+  orderRef: string
+  state: OrderState
+  branch: { id: number, nameEn: string } | null
+  buyer: { id: string, displayRef: string }
+  acceptedAt: string
+  reachBranchDeadline: string
+  lockedTotalPrice: Money
+  depositAmount: Money | null
+  cancelledAt: string | null
+  cancelReason: string | null
+  canCancel: boolean
+}
+
+// The detail endpoint adds the history, the "sent back" counters and (spec 011) the
+// line and the latest order.
 export interface ListingDetail extends Listing {
   history: ListingHistoryEntry[]
   sentBackCount: number
   sellerListingsSentBack: number
   sellerListingsSubmitted: number
   sellerListingNumber: number
+  queue: ListingQueueItem[]
+  order: ListingOrder | null
 }
 
 export interface ListingCounts {
@@ -120,6 +159,8 @@ export interface ListingCounts {
   approvedToday: number
   rejected: number
   live: number
+  reserved: number
+  accepted: number
 }
 
 export interface ListingPage {

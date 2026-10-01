@@ -31,6 +31,8 @@ export const PERMISSIONS = {
   listingReview: 'listing.review',
   listingRequestChanges: 'listing.request_changes',
   listingTakedown: 'listing.takedown',
+  // Buy requests (Backend spec 011): cancel an acceptance, refunding the buyer. CEO, COO and Operations by default.
+  orderCancel: 'order.cancel',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

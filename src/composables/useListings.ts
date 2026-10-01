@@ -65,6 +65,20 @@ export function useListingMediaQuery (id: MaybeRefOrGetter<string>, mediaId: May
   })
 }
 
+// Cancel an acceptance (Backend spec 011, order.cancel). The listing is refetched with
+// its history; every queue and the badge refresh.
+export function useCancelOrder () {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { orderId: string, listingId: string, reason: string, relist: boolean, idempotencyKey: string }) =>
+      listingService.cancelOrder(input.orderId, input.reason, input.relist, input.idempotencyKey),
+    onSettled: (_data, _error, input) => {
+      queryClient.invalidateQueries({ queryKey: listingKeys.one(input.listingId) })
+      queryClient.invalidateQueries({ queryKey: [...listingKeys.all, 'list'] })
+    },
+  })
+}
+
 // Approve, ask for changes, reject or take down. The result replaces the listing in
 // the cache and every queue (and the badge) is refreshed.
 export function useDecideListing () {

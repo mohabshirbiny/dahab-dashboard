@@ -66,4 +66,6 @@ export const endpoints = {
   listing: (id: string) => `/dashboard/listings/${encodeURIComponent(id)}`,
   listingMedia: (id: string, mediaId: string) => `/dashboard/listings/${encodeURIComponent(id)}/media/${encodeURIComponent(mediaId)}`,
   listingAction: (id: string, action: 'approve' | 'request-changes' | 'reject' | 'takedown') => `/dashboard/listings/${encodeURIComponent(id)}/${action}`,
+  // Buy requests (Backend spec 011): cancel an acceptance — order.cancel.
+  orderCancel: (orderId: string) => `/dashboard/orders/${encodeURIComponent(orderId)}/cancel`,
 } as const
