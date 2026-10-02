@@ -11,8 +11,10 @@ export const navGroups: NavGroup[] = [
     label: 'Daily work',
     items: [
       { key: 'listings', title: 'Listings to review', to: '/dashboard/listings', liveBadge: 'listingsToReview', anyPermission: ['listing.review', 'listing.request_changes', 'listing.takedown'] },
-      { key: 'orders', title: 'Orders', to: '/dashboard/orders', badge: 6, hidden: true },
-      { key: 'inspections', title: 'Inspections', to: '/dashboard/inspections', badge: 3, hidden: true },
+      { key: 'orders', title: 'Orders', to: '/dashboard/orders', permission: 'order.view' },
+      // Not in the design: Backend spec 012 US10 asked for a read-only view of every buyer in line.
+      { key: 'buy-requests', title: 'Buy requests', to: '/dashboard/buy-requests', permission: 'buy_request.view' },
+      { key: 'inspections', title: 'Inspections', to: '/dashboard/inspections', anyPermission: ['order.receive', 'inspection.enter', 'order.handover', 'order.view'] },
       { key: 'disputes', title: 'Disputes and reports', to: '/dashboard/disputes', badge: 2, hidden: true },
     ],
   },

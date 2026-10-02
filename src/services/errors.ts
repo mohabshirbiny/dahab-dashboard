@@ -27,14 +27,17 @@ export class ServiceError extends Error {
   // a UI code (for example `escalation_denied` vs `permission_denied`). Null when
   // the failure did not come from the Backend.
   readonly backendCode: string | null
+  // The Backend's optional `details` (for example `attempts_left`, `retry_after`).
+  readonly details: Readonly<Record<string, unknown>>
 
-  constructor (code: ServiceErrorCode, message: string, status = 400, fields: Record<string, string[]> = {}, backendCode: string | null = null) {
+  constructor (code: ServiceErrorCode, message: string, status = 400, fields: Record<string, string[]> = {}, backendCode: string | null = null, details: Record<string, unknown> = {}) {
     super(message)
     this.name = 'ServiceError'
     this.code = code
     this.status = status
     this.fields = fields
     this.backendCode = backendCode
+    this.details = details
   }
 }
 
@@ -92,6 +95,16 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   idempotency_key_required: 'validation',
   // Wallet top-up (Backend spec 009).
   illegal_topup_transition: 'conflict',
+  // Orders (Backend spec 012).
+  illegal_order_transition: 'conflict',
+  wrong_branch: 'forbidden',
+  inspection_correction_not_allowed: 'conflict',
+  invalid_collection_code: 'validation',
+  handover_locked: 'too_many_requests',
+  order_not_open: 'conflict',
+  branch_not_in_options: 'conflict',
+  deadline_must_move_forward: 'validation',
+  deadline_not_running: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {
@@ -123,5 +136,5 @@ export function toServiceError (error: unknown): ServiceError {
   }
   const body = isBackendBody(response.data) ? response.data : null
   const code = (body && BACKEND_CODES[body.code]) ?? STATUS_CODES[response.status] ?? 'unknown'
-  return new ServiceError(code, body?.message ?? error.message, response.status, body?.errors, body?.code ?? null)
+  return new ServiceError(code, body?.message ?? error.message, response.status, body?.errors, body?.code ?? null, body?.details ?? {})
 }

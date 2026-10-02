@@ -75,6 +75,8 @@ export function useCancelOrder () {
     onSettled: (_data, _error, input) => {
       queryClient.invalidateQueries({ queryKey: listingKeys.one(input.listingId) })
       queryClient.invalidateQueries({ queryKey: [...listingKeys.all, 'list'] })
+      // The Orders page (Backend spec 012): orderKeys.all, spelled out to avoid an import cycle.
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
     },
   })
 }

@@ -69,11 +69,16 @@ export const SUSPENDED_REASON_LABELS: Record<SuspendedReason, string> = {
   other: 'Something else',
 }
 
+// Reasons only the system sets (Backend spec 012): never offered in the suspend form.
+const SYSTEM_SUSPENDED_REASON_LABELS: Readonly<Record<string, string>> = {
+  repeated_cancellations: 'Cancelled too many accepted sales',
+}
+
 export function suspendedReasonLabel (code: string | null): string {
   if (!code) {
     return ''
   }
-  return SUSPENDED_REASON_LABELS[code as SuspendedReason] ?? code
+  return SUSPENDED_REASON_LABELS[code as SuspendedReason] ?? SYSTEM_SUSPENDED_REASON_LABELS[code] ?? code
 }
 
 export interface StaffRef {

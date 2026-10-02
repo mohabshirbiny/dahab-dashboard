@@ -80,7 +80,8 @@
   // Cancel an accepted sale (Backend spec 011 FR-020a, order.cancel): the order becomes
   // cancelled_staff, the buyer is refunded in full, the piece is relisted or withdrawn.
   // Sent once (Idempotency-Key) and audited by the Backend.
-  const props = defineProps<{ open: boolean, order: ListingOrder, listingId: string, title: string }>()
+  // Also opened from an order on the Orders page (Backend spec 012), hence the narrow order type.
+  const props = defineProps<{ open: boolean, order: Pick<ListingOrder, 'id' | 'orderRef' | 'depositAmount'>, listingId: string, title: string }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
 
   const mutation = useCancelOrder()

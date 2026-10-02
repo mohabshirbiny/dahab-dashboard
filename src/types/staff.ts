@@ -33,6 +33,17 @@ export const PERMISSIONS = {
   listingTakedown: 'listing.takedown',
   // Buy requests (Backend spec 011): cancel an acceptance, refunding the buyer. CEO, COO and Operations by default.
   orderCancel: 'order.cancel',
+  // Orders (Backend spec 012). order.view: CEO, COO, Finance, Operations; order.receive: COO,
+  // Operations, IGI; inspection.enter and order.handover: IGI; the rest COO and Operations.
+  orderView: 'order.view',
+  orderReceive: 'order.receive',
+  inspectionEnter: 'inspection.enter',
+  orderHandover: 'order.handover',
+  orderPriceAdjust: 'order.price_adjust',
+  orderChangeBranch: 'order.change_branch',
+  orderExtendDeadline: 'order.extend_deadline',
+  // Buy requests across listings (Backend spec 012 US10), read-only.
+  buyRequestView: 'buy_request.view',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

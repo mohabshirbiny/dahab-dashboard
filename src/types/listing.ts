@@ -5,8 +5,7 @@
 import type { StatusVariant } from './status'
 import type { Money } from './wallet'
 
-// The states this screen works with. The Backend has more (at_inspection, sold, …) for
-// later modules, so an unknown one is kept as a plain string and shown as it is.
+// Every state the Backend has; a new one is kept as a plain string and shown as it is.
 // reserved (buyers in line) and accepted (a buyer chosen) come with buy requests (spec 011).
 export type KnownListingState
   = | 'draft'
@@ -18,6 +17,13 @@ export type KnownListingState
     | 'rejected'
     | 'withdrawn'
     | 'suspended_hold'
+    // After acceptance (Backend spec 012): the piece at the branch, settled, sold, or back with its seller.
+    | 'at_inspection'
+    | 'settling'
+    | 'sold'
+    | 'uncollected_expired'
+    | 'awaiting_seller_return'
+    | 'seller_unclaimed'
 export type ListingState = KnownListingState | (string & {})
 
 export type ListingCategory = 'gold' | 'diamond' | 'gold_with_diamond'
@@ -38,6 +44,12 @@ const STATE_META: Record<KnownListingState, { label: string, variant: StatusVari
   rejected: { label: 'Rejected', variant: 'bad' },
   withdrawn: { label: 'Taken down', variant: 'off' },
   suspended_hold: { label: 'On hold', variant: 'warn' },
+  at_inspection: { label: 'At inspection', variant: 'info' },
+  settling: { label: 'Settling', variant: 'info' },
+  sold: { label: 'Sold', variant: 'ok' },
+  uncollected_expired: { label: 'Not collected', variant: 'bad' },
+  awaiting_seller_return: { label: 'Held for the seller', variant: 'wait' },
+  seller_unclaimed: { label: 'Seller never collected', variant: 'bad' },
 }
 
 export function listingStateMeta (state: ListingState): { label: string, variant: StatusVariant } {
