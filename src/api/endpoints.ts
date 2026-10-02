@@ -66,4 +66,16 @@ export const endpoints = {
   listing: (id: string) => `/dashboard/listings/${encodeURIComponent(id)}`,
   listingMedia: (id: string, mediaId: string) => `/dashboard/listings/${encodeURIComponent(id)}/media/${encodeURIComponent(mediaId)}`,
   listingAction: (id: string, action: 'approve' | 'request-changes' | 'reject' | 'takedown') => `/dashboard/listings/${encodeURIComponent(id)}/${action}`,
+  // Buy requests (Backend spec 011): cancel an acceptance — order.cancel.
+  orderCancel: (orderId: string) => `/dashboard/orders/${encodeURIComponent(orderId)}/cancel`,
+  // Orders (Backend spec 012): each action has its own permission (order.view, order.receive,
+  // inspection.enter, order.price_adjust, order.change_branch, order.extend_deadline, order.handover).
+  orders: '/dashboard/orders',
+  order: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}`,
+  orderAction: (id: string, action: 'receive' | 'inspection-results' | 'propose-price' | 'change-branch' | 'extend-deadline' | 'handover' | 'seller-return/handover') =>
+    `/dashboard/orders/${encodeURIComponent(id)}/${action}`,
+  inspections: '/dashboard/inspections',
+  workList: '/dashboard/inspections/work-list',
+  // Buy requests (Backend spec 012 US10): buy_request.view, read-only.
+  buyRequests: '/dashboard/buy-requests',
 } as const

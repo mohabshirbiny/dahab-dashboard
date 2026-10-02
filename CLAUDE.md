@@ -87,7 +87,13 @@ top-up — Incoming transfers (match, hold, reject, credit by hand, receipt, exp
 Receiving accounts (`topup.accounts.manage`; not in the design) (Backend spec 009), and Listings to review — the
 queue with its chips, the review panel (photos, video, invoice, seller, "sent back" counters, history) and the four
 decisions: approve, ask for changes, reject, take down (`listing.review`, `listing.request_changes`,
-`listing.takedown`; Backend spec 010) — call
+`listing.takedown`; Backend spec 010), with — since Backend spec 011 — the read-only line of buyers, the order box,
+Cancel acceptance (`order.cancel`) and the Buyers in line / Accepted chips, and (Backend spec 012) Orders — groups
+with counts, past deadline, search, the order with its settlement, results, money and history, and the actions the
+Backend allows (`can`): receive, enter/correct a result, propose a price, change branch, extend a deadline, hand
+over to the buyer or back to the seller, cancel (`order.view` and one permission per action) — Inspections (the
+branch work list and the results; `order.receive` / `inspection.enter` / `order.handover` / `order.view`) and the
+read-only Buy requests (`buy_request.view`; not in the design) — call
 the real Backend; `src/api/endpoints.ts` lists only
 routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (the rest of the
 Overview, sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier

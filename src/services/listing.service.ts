@@ -5,6 +5,7 @@ import type {
   ListingDecision,
   ListingDetail,
   ListingMediaKind,
+  ListingOrder,
   ListingPage,
   ListingQueue,
   ListingState,
@@ -54,6 +55,32 @@ interface ApiListingDetail extends ApiListing {
   seller_listings_sent_back: number
   seller_listings_submitted: number
   seller_listing_number: number
+  // Backend spec 011: present on the detail.
+  queue?: Array<{
+    id: string
+    place_in_line: number
+    buyer: { id: string, display_ref: string }
+    locked_total_price: string
+    deposit_amount: string
+    requested_at: string
+    seller_reply_deadline: string
+  }>
+  order?: ApiOrder | null
+}
+
+interface ApiOrder {
+  id: string
+  order_ref: string
+  state: string
+  branch: { id: number, name_en: string, name_ar: string } | null
+  buyer: { id: string, display_ref: string }
+  accepted_at: string
+  reach_branch_deadline: string
+  locked_total_price: string
+  deposit_amount: string | null
+  cancelled_at: string | null
+  cancel_reason: string | null
+  can_cancel: boolean
 }
 
 interface ApiListingPage {
@@ -61,7 +88,7 @@ interface ApiListingPage {
   meta: {
     per_page: number
     next_cursor: string | null
-    counts: { in_review: number, changes_requested: number, approved_today: number, rejected: number, live: number }
+    counts: { in_review: number, changes_requested: number, approved_today: number, rejected: number, live: number, reserved?: number, accepted?: number }
   }
 }
 
@@ -108,6 +135,33 @@ function toDetail (l: ApiListingDetail): ListingDetail {
     sellerListingsSentBack: l.seller_listings_sent_back,
     sellerListingsSubmitted: l.seller_listings_submitted,
     sellerListingNumber: l.seller_listing_number,
+    queue: (l.queue ?? []).map(q => ({
+      id: q.id,
+      placeInLine: q.place_in_line,
+      buyer: { id: q.buyer.id, displayRef: q.buyer.display_ref },
+      lockedTotalPrice: q.locked_total_price,
+      depositAmount: q.deposit_amount,
+      requestedAt: q.requested_at,
+      sellerReplyDeadline: q.seller_reply_deadline,
+    })),
+    order: l.order ? toOrder(l.order) : null,
+  }
+}
+
+function toOrder (o: ApiOrder): ListingOrder {
+  return {
+    id: o.id,
+    orderRef: o.order_ref,
+    state: o.state,
+    branch: o.branch ? { id: o.branch.id, nameEn: o.branch.name_en } : null,
+    buyer: { id: o.buyer.id, displayRef: o.buyer.display_ref },
+    acceptedAt: o.accepted_at,
+    reachBranchDeadline: o.reach_branch_deadline,
+    lockedTotalPrice: o.locked_total_price,
+    depositAmount: o.deposit_amount,
+    cancelledAt: o.cancelled_at,
+    cancelReason: o.cancel_reason,
+    canCancel: o.can_cancel,
   }
 }
 
@@ -130,6 +184,8 @@ export const listingService = {
         approvedToday: counts.approved_today,
         rejected: counts.rejected,
         live: counts.live,
+        reserved: counts.reserved ?? 0,
+        accepted: counts.accepted ?? 0,
       },
     }
   },
@@ -157,5 +213,13 @@ export const listingService = {
     const body = decision === 'approve' ? {} : (decision === 'request-changes' ? { message: note } : { reason: note })
     const { data } = await http.post<ApiEnvelope<ApiListingDetail>>(endpoints.listingAction(id, decision), body, keyHeader(idempotencyKey))
     return toDetail(data.data)
+  },
+
+  // POST /dashboard/orders/{id}/cancel   (order.cancel, Backend spec 011)
+  // The order becomes cancelled_staff, the buyer's deposit is refunded in full and the
+  // piece is relisted or withdrawn. The caller refetches the listing with its history.
+  async cancelOrder (orderId: string, reason: string, relist: boolean, idempotencyKey: string): Promise<{ refunded: string }> {
+    const { data } = await http.post<ApiEnvelope<{ refunded: string }>>(endpoints.orderCancel(orderId), { reason, relist }, keyHeader(idempotencyKey))
+    return { refunded: data.data.refunded }
   },
 }

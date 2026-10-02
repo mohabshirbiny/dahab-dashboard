@@ -28,6 +28,8 @@ export interface ApiErrorBody {
   code: string
   // Only on `validation_failed`: field name to messages.
   errors?: Record<string, string[]>
+  // Extra facts for some codes, for example `attempts_left` or `retry_after`.
+  details?: Record<string, unknown>
 }
 
 export interface ApiSession {

@@ -59,7 +59,7 @@
   // The four decisions on a listing (Backend spec 010): approve, ask for changes,
   // reject, take down. Each is confirmed here, sent once (Idempotency-Key) and logged
   // by the Backend; the seller is told by SMS and email.
-  const props = defineProps<{ listingId: string, title: string, decision: ListingDecision | null }>()
+  const props = defineProps<{ listingId: string, title: string, decision: ListingDecision | null, queueCount?: number }>()
   const emit = defineEmits<{ (e: 'close' | 'done'): void }>()
 
   // The design's tick-boxes: each adds a ready sentence to the message.
@@ -122,7 +122,11 @@
 
   const copy = computed(() => {
     const base = COPY[props.decision ?? 'approve']
-    return { ...base, lead: `${props.title} ${base.lead}` }
+    // Backend spec 011: taking down a piece with buyers in line releases them and refunds their deposits.
+    const queued = props.decision === 'takedown' && (props.queueCount ?? 0) > 0
+      ? ` ${props.queueCount} ${props.queueCount === 1 ? 'buyer' : 'buyers'} in line get their deposits back at once and are told.`
+      : ''
+    return { ...base, lead: `${props.title} ${base.lead}${queued}` }
   })
 
   const text = ref('')

@@ -44,6 +44,9 @@
       <KeyValueRow v-if="listing.category !== 'gold'" label="Stone certificate" :value="has('stone_certificate') ? 'Uploaded' : 'None'" />
       <KeyValueRow v-if="listing.listedAt" label="Went live" :value="formatDateTime(listing.listedAt)" />
 
+      <ListingQueuePanel v-if="listing.state === 'reserved' || listing.queue.length > 0" :queue="listing.queue" />
+      <ListingOrderBox v-if="listing.order" :listing-id="listing.id" :order="listing.order" :title="listingTitle(listing)" />
+
       <div class="d-lrp__label">Description</div>
       <div class="d-lrp__text">{{ listing.description || 'No description.' }}</div>
 
@@ -67,6 +70,7 @@
     <ListingDecisionModal
       :decision="decision"
       :listing-id="listing.id"
+      :queue-count="listing.queue.length"
       :title="listingTitle(listing)"
       @close="decision = null"
       @done="decision = null"
@@ -88,6 +92,8 @@
   import { formatWeight, makingShareOfGold } from './listingFormat'
   import ListingHistory from './ListingHistory.vue'
   import ListingMediaGrid from './ListingMediaGrid.vue'
+  import ListingOrderBox from './ListingOrderBox.vue'
+  import ListingQueuePanel from './ListingQueuePanel.vue'
 
   // The review panel of the design (Backend spec 010): the piece, its files, the seller
   // and how often their listings are sent back, then the decisions this person may take.

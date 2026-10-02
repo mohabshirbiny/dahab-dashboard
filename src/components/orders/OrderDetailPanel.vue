@@ -1,0 +1,252 @@
+<template>
+  <Panel :subtitle="title" :title="order.orderRef">
+    <template #actions>
+      <StatusTag :label="orderStateMeta(order.state).label" :variant="orderStateMeta(order.state).variant" />
+    </template>
+
+    <template #body>
+      <div v-if="hasActions" class="d-odp__actions">
+        <DBtn v-if="order.can.receive" kind="primary" @click="receiving = true">Mark received</DBtn>
+        <DBtn v-if="order.can.inspect" kind="primary" @click="openInspection(null)">Enter result</DBtn>
+        <DBtn v-if="order.can.correct && latest" @click="openInspection(latest)">Correct the result</DBtn>
+        <DBtn v-if="order.can.proposePrice" kind="primary" @click="modal = 'price'">Propose a price</DBtn>
+        <DBtn v-if="order.can.handover" kind="primary" @click="handoverTo = 'buyer'">Hand to the buyer</DBtn>
+        <DBtn v-if="order.can.returnHandover" @click="handoverTo = 'seller'">Hand back to the seller</DBtn>
+        <DBtn v-if="order.can.changeBranch" @click="modal = 'branch'">Change branch</DBtn>
+        <DBtn v-if="order.can.extend" @click="modal = 'extend'">Extend a deadline</DBtn>
+        <DBtn v-if="order.can.cancel" kind="danger" @click="modal = 'cancel'">Cancel acceptance</DBtn>
+      </div>
+
+      <div class="d-odp__label">Sale</div>
+
+      <KeyValueRow label="Seller">
+        <RouterLink v-if="canOpenCustomer" :to="{ name: 'customer-file', params: { id: order.seller.customerId } }">{{ order.seller.displayRef }}</RouterLink>
+        <template v-else>{{ order.seller.displayRef ?? '—' }}</template>
+      </KeyValueRow>
+
+      <KeyValueRow label="Buyer">
+        <RouterLink v-if="canOpenCustomer" :to="{ name: 'customer-file', params: { id: order.buyer.customerId } }">{{ order.buyer.displayRef }}</RouterLink>
+        <template v-else>{{ order.buyer.displayRef ?? '—' }}</template>
+      </KeyValueRow>
+
+      <KeyValueRow label="Branch" :value="order.branch.nameEn ?? '—'" />
+      <KeyValueRow label="Accepted" :value="formatDateTime(order.acceptedAt)" />
+      <KeyValueRow label="Price locked" :value="`${formatMoney(order.lockedTotalPrice)} EGP`" />
+      <KeyValueRow label="Deposit" :value="`${formatMoney(order.depositAmount)} EGP`" />
+      <KeyValueRow label="Held now" :value="`${formatMoney(order.held)} EGP`" />
+      <KeyValueRow v-if="order.proposedPrice" label="Price proposed" :value="`${formatMoney(order.proposedPrice)} EGP`" />
+
+      <KeyValueRow v-if="order.deadline" :label="`Deadline · ${DEADLINE_LABELS[order.deadline.kind] ?? order.deadline.kind}`">
+        <span :class="{ 'd-odp__late': order.deadline.overdue }">{{ formatDateTime(order.deadline.at) }}<template v-if="order.deadline.overdue"> · passed</template></span>
+      </KeyValueRow>
+
+      <div v-if="order.cancelReason" class="d-odp__text">{{ order.cancelReason }}</div>
+
+      <template v-if="order.settlement">
+        <div class="d-odp__label">Settlement</div>
+        <KeyValueRow v-if="order.settlement.finalWeightG" label="Final weight" :value="`${formatWeight(order.settlement.finalWeightG)} g`" />
+        <KeyValueRow label="Buyer pays" :value="`${formatMoney(order.settlement.finalBuyerTotal)} EGP`" />
+        <KeyValueRow label="Balance after the deposit" :value="`${formatMoney(order.settlement.balanceAmount)} EGP`" />
+        <KeyValueRow label="Seller gross" :value="`${formatMoney(order.settlement.finalSellerGross)} EGP`" />
+        <KeyValueRow label="Commission" :value="`${formatMoney(order.settlement.commissionAmount)} EGP`" />
+        <KeyValueRow label="VAT" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
+        <KeyValueRow label="Spread" :value="`${formatMoney(order.settlement.spreadAmount)} EGP`" />
+        <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
+      </template>
+
+      <template v-if="order.inspections.length > 0">
+        <div class="d-odp__label">Inspection results</div>
+
+        <div v-for="r in order.inspections" :key="r.id" class="d-odp__result" :class="{ 'd-odp__result--old': r.superseded }">
+          <div class="d-odp__result-head">
+            <StatusTag :label="outcomeMeta(r.outcome).label" :variant="outcomeMeta(r.outcome).variant" />
+            <span class="who2">{{ formatDateTime(r.inspectedAt) }}<template v-if="r.supersedesId"> · correction</template><template v-if="r.superseded"> · replaced</template></span>
+          </div>
+
+          <div class="d-odp__result-body">
+            <span v-if="r.statedKarat !== null || r.measuredKarat !== null">Karat {{ r.measuredKarat ?? '—' }}K (stated {{ r.statedKarat ?? '—' }}K)</span>
+            <span v-if="r.measuredWeightG">Weight {{ formatWeight(r.measuredWeightG) }} g (stated {{ formatWeight(r.statedWeightG) }} g<template v-if="r.weightDiffPct">, {{ formatPct(r.weightDiffPct) }}</template>)</span>
+            <span v-if="r.measuredStoneGrade">Stone {{ r.measuredStoneGrade }}</span>
+            <span v-if="r.certificateNumber">Certificate {{ r.certificateNumber }}</span>
+          </div>
+
+          <div v-if="r.inspectorNote" class="d-odp__text">{{ r.inspectorNote }}</div>
+        </div>
+      </template>
+
+      <template v-if="order.collection">
+        <div class="d-odp__label">Collection</div>
+        <KeyValueRow label="Collected" :value="order.collection.collectedAt ? formatDateTime(order.collection.collectedAt) : 'Not yet'" />
+        <KeyValueRow v-if="order.collection.failedAttempts > 0" label="Wrong codes" :value="order.collection.failedAttempts" />
+        <KeyValueRow v-if="order.collection.lockedUntil && !isPast(order.collection.lockedUntil)" label="Locked until" :value="formatDateTime(order.collection.lockedUntil)" />
+      </template>
+
+      <template v-if="order.sellerReturn">
+        <div class="d-odp__label">Piece held for its seller</div>
+        <KeyValueRow label="Seller collects by" :value="formatDateTime(order.sellerReturn.returnDeadline)" />
+        <KeyValueRow v-if="order.sellerReturn.collectedAt" label="Collected" :value="formatDateTime(order.sellerReturn.collectedAt)" />
+        <KeyValueRow v-if="order.sellerReturn.relistedAt" label="Put back on the market" :value="formatDateTime(order.sellerReturn.relistedAt)" />
+        <KeyValueRow v-if="order.sellerReturn.lockedUntil && !isPast(order.sellerReturn.lockedUntil)" label="Locked until" :value="formatDateTime(order.sellerReturn.lockedUntil)" />
+      </template>
+
+      <template v-if="order.ledger.length > 0">
+        <div class="d-odp__label">Money moved</div>
+
+        <DataTable>
+          <template #head>
+            <th>When</th>
+            <th>Entry</th>
+            <th>Lines</th>
+          </template>
+
+          <tr v-for="e in order.ledger" :key="e.id">
+            <td class="mono">{{ formatDateTime(e.createdAt) }}</td>
+            <td>{{ e.eventKind.replaceAll('_', ' ') }}</td>
+
+            <td>
+              <div v-for="(l, i) in e.lines" :key="i" class="mono">{{ l.party }} · {{ l.account.replaceAll('_', ' ') }} {{ formatMoney(l.amount) }}</div>
+            </td>
+          </tr>
+        </DataTable>
+      </template>
+
+      <div class="d-odp__label">History</div>
+      <OrderTimeline :events="order.timeline" />
+    </template>
+  </Panel>
+
+  <ConfirmDialog
+    v-model="receiving"
+    confirm-label="Mark received"
+    :error="receiveError"
+    :loading="receive.isPending.value"
+    :message="`The piece for ${order.orderRef} is at ${order.branch.nameEn ?? 'the branch'}. The reach-branch deadline stops and the piece goes to inspection.`"
+    title="Piece received"
+    @confirm="onReceive"
+  />
+
+  <InspectionResultModal :open="inspection !== null" :target="inspection" @close="inspection = null" />
+  <ProposePriceModal :open="modal === 'price'" :order="order" @close="modal = null" />
+  <ChangeBranchModal :open="modal === 'branch'" :order="order" @close="modal = null" />
+  <ExtendDeadlineModal :open="modal === 'extend'" :order="order" @close="modal = null" />
+
+  <HandoverModal
+    :open="handoverTo !== null"
+    :order-id="order.id"
+    :order-ref="order.orderRef"
+    :to="handoverTo ?? 'buyer'"
+    @close="handoverTo = null"
+  />
+
+  <CancelAcceptanceModal
+    :listing-id="order.piece.listingId"
+    :open="modal === 'cancel'"
+    :order="order"
+    :title="title"
+    @close="modal = null"
+  />
+</template>
+
+<script lang="ts" setup>
+  import type { InspectionResult, InspectionTarget, OrderDetail } from '@/types/order'
+  import { computed, ref, watch } from 'vue'
+  import { RouterLink } from 'vue-router'
+  import CancelAcceptanceModal from '@/components/listings/CancelAcceptanceModal.vue'
+  import { formatWeight } from '@/components/listings/listingFormat'
+  import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+  import DataTable from '@/components/ui/DataTable.vue'
+  import DBtn from '@/components/ui/DBtn.vue'
+  import KeyValueRow from '@/components/ui/KeyValueRow.vue'
+  import Panel from '@/components/ui/Panel.vue'
+  import StatusTag from '@/components/ui/StatusTag.vue'
+  import { formatDateTime, formatMoney, isPast } from '@/composables/useFormatters'
+  import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
+  import { useOrderAction } from '@/composables/useOrders'
+  import { usePermissions } from '@/composables/usePermissions'
+  import { useToast } from '@/composables/useToast'
+  import { DEADLINE_LABELS, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
+  import { PERMISSIONS } from '@/types/staff'
+  import ChangeBranchModal from './ChangeBranchModal.vue'
+  import ExtendDeadlineModal from './ExtendDeadlineModal.vue'
+  import HandoverModal from './HandoverModal.vue'
+  import InspectionResultModal from './InspectionResultModal.vue'
+  import { orderErrorMessage } from './orderErrors'
+  import { formatPct } from './orderFormat'
+  import OrderTimeline from './OrderTimeline.vue'
+  import ProposePriceModal from './ProposePriceModal.vue'
+
+  // One order for staff (Backend spec 012 FR-022): the figures, every inspection result,
+  // the money moved, its history, and the actions the Backend says apply now (`can`).
+  const props = defineProps<{ order: OrderDetail }>()
+
+  const { can } = usePermissions()
+  const canOpenCustomer = computed(() => can(PERMISSIONS.customerView))
+  const title = computed(() => pieceTitle(props.order.piece.category, props.order.piece.pieceType.nameEn, props.order.piece.karat))
+  const latest = computed(() => props.order.inspections.find(r => r.id === props.order.latestInspectionId) ?? null)
+  const hasActions = computed(() => Object.values(props.order.can).some(Boolean))
+
+  const modal = ref<'price' | 'branch' | 'extend' | 'cancel' | null>(null)
+  const handoverTo = ref<'buyer' | 'seller' | null>(null)
+  const inspection = ref<InspectionTarget | null>(null)
+
+  function openInspection (correcting: InspectionResult | null) {
+    inspection.value = {
+      orderId: props.order.id,
+      orderRef: props.order.orderRef,
+      category: props.order.piece.category,
+      pieceName: title.value,
+      statedKarat: props.order.piece.karat,
+      statedWeightG: props.order.piece.weightG,
+      correcting,
+    }
+  }
+
+  // Receive: one confirmation, sent once.
+  const receiving = ref(false)
+  const receive = useOrderAction()
+  const receiveKey = useIdempotencyKey()
+  const toast = useToast()
+  const receiveError = computed(() => (receive.error.value ? orderErrorMessage(receive.error.value) : ''))
+
+  watch(() => [receiving.value, props.order.id], () => {
+    if (!receiving.value) {
+      receive.reset()
+      receiveKey.reset()
+    }
+  })
+
+  async function onReceive () {
+    if (receive.isPending.value) return
+    const payload = { orderId: props.order.id, action: { kind: 'receive' as const } }
+    try {
+      await receive.mutateAsync({ ...payload, idempotencyKey: receiveKey.keyFor(payload) })
+      receiveKey.reset()
+      toast.ok('Received. Both sides are told the piece is at inspection.')
+      receiving.value = false
+    } catch {
+      // Shown in the dialog.
+    }
+  }
+</script>
+
+<style lang="scss" scoped>
+.d-odp__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.d-odp__label { margin: 16px 0 6px; font-size: 11.5px; color: var(--ink-2); }
+.d-odp__text {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  background: var(--bg);
+  padding: 9px 11px;
+  border-radius: 7px;
+  white-space: pre-wrap;
+}
+.d-odp__late { color: var(--bad); }
+.d-odp__result { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.d-odp__result:last-child { border-bottom: 0; }
+.d-odp__result--old { opacity: .6; }
+.d-odp__result-head { display: flex; gap: 8px; align-items: center; }
+.d-odp__result-body { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; font-size: 12.5px; }
+.who2 { font-size: 11px; color: var(--ink-3); }
+.mono { font-variant-numeric: tabular-nums; font-size: 12px; }
+</style>

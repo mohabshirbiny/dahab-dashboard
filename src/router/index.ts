@@ -7,8 +7,6 @@ import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'orders', name: 'orders', component: Placeholder, meta: { title: 'Orders' } },
-  { path: 'inspections', name: 'inspections', component: Placeholder, meta: { title: 'Inspections' } },
   { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
   { path: 'withdrawals', name: 'withdrawals', component: Placeholder, meta: { title: 'Withdrawals' } },
   { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
@@ -97,6 +95,27 @@ const routes: RouteRecordRaw[] = [
         name: 'transfers',
         component: () => import('@/pages/transfers/index.vue'),
         meta: { title: 'Incoming transfers', permissions: [PERMISSIONS.topupMatch] },
+      },
+      {
+        // Orders (Backend spec 012): order.view; each action needs its own permission too.
+        path: 'dashboard/orders',
+        name: 'orders',
+        component: () => import('@/pages/orders/index.vue'),
+        meta: { title: 'Orders', permissions: [PERMISSIONS.orderView] },
+      },
+      {
+        // Inspections (Backend spec 012): the branch work list and the results.
+        path: 'dashboard/inspections',
+        name: 'inspections',
+        component: () => import('@/pages/inspections/index.vue'),
+        meta: { title: 'Inspections', anyPermissions: [PERMISSIONS.orderReceive, PERMISSIONS.inspectionEnter, PERMISSIONS.orderHandover, PERMISSIONS.orderView] },
+      },
+      {
+        // Buy requests across listings (Backend spec 012 US10), read-only.
+        path: 'dashboard/buy-requests',
+        name: 'buy-requests',
+        component: () => import('@/pages/buy-requests/index.vue'),
+        meta: { title: 'Buy requests', permissions: [PERMISSIONS.buyRequestView] },
       },
       {
         // Listings to review (Backend spec 010): any listing permission opens it; each decision needs its own.

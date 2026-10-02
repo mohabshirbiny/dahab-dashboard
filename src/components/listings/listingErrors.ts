@@ -40,6 +40,9 @@ export function listingErrorMessage (error: unknown): string {
     case 'karat_disabled': {
       return 'This karat has been turned off, so the piece cannot go live. It stays waiting; turn the karat on again, send it back or reject it.'
     }
+    case 'order_not_cancellable': {
+      return 'This sale is no longer waiting for delivery, so it cannot be cancelled here. It has been refreshed.'
+    }
     case 'idempotency_in_progress': {
       return 'The first attempt is still being processed. Wait a moment and try again.'
     }
