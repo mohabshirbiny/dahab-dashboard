@@ -52,7 +52,10 @@
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ink-2);
+  white-space: nowrap;
 }
+// References, money and dates stay on one line; the table scrolls sideways instead.
+:deep(.nowrap) { white-space: nowrap; }
 :deep(.who2) {
   font-size: 11px;
   color: var(--ink-3);

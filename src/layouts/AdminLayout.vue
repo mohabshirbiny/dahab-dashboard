@@ -60,7 +60,8 @@
 }
 .d-wrap {
   padding: 22px 24px 60px;
-  max-width: 1400px;
+  // Wide screens get the room: a list and its detail side by side need it.
+  max-width: 1840px;
   width: 100%;
 }
 .d-navtoggle {
