@@ -14,6 +14,8 @@ import { endpoints } from '@/api/endpoints'
 interface ApiWalletOverview {
   available: string
   held: string
+  held_on_orders?: string
+  pending_withdrawals?: string
   total_owed: string
   bank: string
   headroom: string
@@ -23,6 +25,8 @@ interface ApiWalletOverview {
 interface ApiCustomerWallet {
   available: string
   held: string
+  held_on_orders?: string
+  pending_withdrawals?: string
   total: string
 }
 
@@ -125,6 +129,8 @@ export const walletService = {
     return {
       available: data.data.available,
       held: data.data.held,
+      heldOnOrders: data.data.held_on_orders ?? data.data.held,
+      pendingWithdrawals: data.data.pending_withdrawals ?? '0.0000',
       totalOwed: data.data.total_owed,
       bank: data.data.bank,
       headroom: data.data.headroom,
@@ -135,7 +141,13 @@ export const walletService = {
   // GET /dashboard/customers/{id}/wallet — the customer file panel.
   async customerWallet (id: string): Promise<CustomerWallet> {
     const { data } = await http.get<ApiEnvelope<ApiCustomerWallet>>(endpoints.customerWallet(id))
-    return { available: data.data.available, held: data.data.held, total: data.data.total }
+    return {
+      available: data.data.available,
+      held: data.data.held,
+      heldOnOrders: data.data.held_on_orders ?? data.data.held,
+      pendingWithdrawals: data.data.pending_withdrawals ?? '0.0000',
+      total: data.data.total,
+    }
   },
 
   // GET /dashboard/wallet-statement — oldest first, keyset pages. The Backend

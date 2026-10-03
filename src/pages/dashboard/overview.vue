@@ -65,12 +65,12 @@
   })
 
   const stats = computed<OverviewStat[]>(() => [
-    ...(live.value ? [{ label: 'Held on open orders', value: formatMoney(live.value.held), hint: 'Set aside against open orders' }] : []),
+    ...(live.value ? [{ label: 'Held on open orders', value: formatMoney(live.value.heldOnOrders), hint: 'Set aside against open orders' }] : []),
     ...(data.value?.stats ?? []),
   ])
 
   const wallets = computed<CustomerWallets | null>(() => live.value
-    ? { available: live.value.available, heldOnOpenOrders: live.value.held, totalOwed: live.value.totalOwed }
+    ? { available: live.value.available, heldOnOpenOrders: live.value.heldOnOrders, pendingWithdrawals: live.value.pendingWithdrawals, totalOwed: live.value.totalOwed }
     : null)
 </script>
 

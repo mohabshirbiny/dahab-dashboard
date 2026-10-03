@@ -25,6 +25,7 @@ import { http } from '@/api/axios'
 import { endpoints } from '@/api/endpoints'
 import { CUSTOMER_STATUSES } from '@/types/customer'
 import { toEntry } from './audit.service'
+import { toPayoutAccount } from './withdrawal.service'
 
 function toCustomer (customer: ApiCustomerVerification): CustomerVerification {
   const doc = customer.latest_document
@@ -85,6 +86,8 @@ function toCustomerFile (file: ApiCustomerFile): CustomerFile {
       suspendedAt: file.suspension.suspended_at,
       suspendedBy: toStaffRef(file.suspension.suspended_by),
     },
+    payoutAccounts: (file.payout_accounts ?? []).map(a => toPayoutAccount(a)),
+    withdrawalPauseUntil: file.withdrawal_pause?.until ?? null,
   }
 }
 

@@ -168,6 +168,23 @@ export type ApiCustomerFileDocument = NonNullable<ApiCustomerVerification['lates
   reviewed_by: ApiStaffRef | null
 }
 
+// A payout account (Backend spec 013). `number` is null without payout_account.verify /
+// withdrawal.release; `customer` only in the "Payout accounts to check" list.
+export interface ApiPayoutAccount {
+  id: string
+  bank_name: string
+  account_name: string
+  number: string | null
+  number_masked: string
+  kind: 'iban' | 'account_number'
+  state: 'pending_review' | 'active' | 'refused' | 'removing' | 'removed'
+  in_use: boolean
+  added_at: string | null
+  checked: { by: string | null, at: string } | null
+  refusal: { reason: 'name_mismatch' | 'name_shortened' | 'not_in_customer_name' | 'details_invalid' | 'other', note: string | null } | null
+  customer?: { id: string, display_ref: string, full_name: string | null, identity_verified: boolean, suspended: boolean } | null
+}
+
 export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_document'> {
   latest_document: ApiCustomerFileDocument | null
   preferred_lang: 'ar' | 'en'
@@ -180,6 +197,9 @@ export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_d
     suspended_at: string
     suspended_by: ApiStaffRef | null
   } | null
+  // Backend spec 013.
+  payout_accounts?: ApiPayoutAccount[]
+  withdrawal_pause?: { until: string } | null
 }
 
 // Access control (spec 002). `GET /dashboard/permissions` — the code-defined catalogue.

@@ -21,7 +21,8 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Money',
     items: [
-      { key: 'withdrawals', title: 'Withdrawals', to: '/dashboard/withdrawals', badge: 5, hidden: true },
+      // Backend spec 013: the queue (withdrawal.release, read-only with wallet.view) and payout accounts to check.
+      { key: 'withdrawals', title: 'Withdrawals', to: '/dashboard/withdrawals', liveBadge: 'withdrawalsWaiting', anyPermission: ['withdrawal.release', 'wallet.view', 'payout_account.verify'] },
       { key: 'transfers', title: 'Incoming transfers', to: '/dashboard/transfers', liveBadge: 'topupsToMatch', permission: 'topup.match' },
       { key: 'statement', title: 'Wallet statement', to: '/dashboard/statement', permission: 'wallet.view' },
       { key: 'compensation', title: 'Compensation', to: '/dashboard/compensation', hidden: true },

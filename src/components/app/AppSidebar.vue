@@ -43,6 +43,7 @@
   import { useWaitingListingCountQuery } from '@/composables/useListings'
   import { usePermissions } from '@/composables/usePermissions'
   import { useOpenTopUpCountQuery } from '@/composables/useTopUps'
+  import { useWaitingWithdrawalCountQuery } from '@/composables/useWithdrawals'
   import { navGroups } from '@/mock/nav'
   import { useAuthStore } from '@/stores/auth'
   import { PERMISSIONS, roleSummary } from '@/types/staff'
@@ -77,10 +78,13 @@
     () => canAny([PERMISSIONS.listingReview, PERMISSIONS.listingRequestChanges, PERMISSIONS.listingTakedown]),
   )
 
+  const { data: withdrawalsWaiting } = useWaitingWithdrawalCountQuery(() => can(PERMISSIONS.withdrawalRelease))
+
   function badgeFor (item: NavItem): number | undefined {
     if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
     if (item.liveBadge === 'topupsToMatch') return topUpsToMatch.value || undefined
     if (item.liveBadge === 'listingsToReview') return listingsToReview.value || undefined
+    if (item.liveBadge === 'withdrawalsWaiting') return withdrawalsWaiting.value || undefined
     return item.badge
   }
 

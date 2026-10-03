@@ -26,5 +26,19 @@ html, body {
 .v-btn.dahab-btn { text-transform: none; letter-spacing: 0; box-shadow: none; }
 .v-btn.dahab-btn:hover { box-shadow: none; }
 
+// A list beside its detail (Orders, Listings, Withdrawals, Pricing…). Pages may set
+// their own proportions; below 1360px the detail goes under the list so the
+// table keeps a readable width.
+.d-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.d-split > * { min-width: 0; scroll-margin-top: 72px; } // clear the sticky top bar when scrolled to
+@media (max-width: 1360px) {
+  .d-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+
 // Basic tap targets on mobile.
 button, a, .navlink, .chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

@@ -78,4 +78,11 @@ export const endpoints = {
   workList: '/dashboard/inspections/work-list',
   // Buy requests (Backend spec 012 US10): buy_request.view, read-only.
   buyRequests: '/dashboard/buy-requests',
+  // Withdrawals (Backend spec 013): withdrawal.release (reads also wallet.view); payout_account.verify.
+  withdrawals: '/dashboard/withdrawals',
+  withdrawalsExport: '/dashboard/withdrawals/export',
+  withdrawal: (id: string) => `/dashboard/withdrawals/${encodeURIComponent(id)}`,
+  withdrawalAction: (id: string, action: 'review' | 'hold' | 'unhold' | 'release' | 'reject') => `/dashboard/withdrawals/${encodeURIComponent(id)}/${action}`,
+  payoutAccounts: '/dashboard/payout-accounts',
+  payoutAccountAction: (id: string, action: 'verify' | 'refuse') => `/dashboard/payout-accounts/${encodeURIComponent(id)}/${action}`,
 } as const

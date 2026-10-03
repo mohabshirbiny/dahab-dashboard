@@ -44,6 +44,10 @@ export const PERMISSIONS = {
   orderExtendDeadline: 'order.extend_deadline',
   // Buy requests across listings (Backend spec 012 US10), read-only.
   buyRequestView: 'buy_request.view',
+  // Withdrawals (Backend spec 013). withdrawal.release: CEO and Finance, never the COO;
+  // payout_account.verify: CEO, Finance and Verification.
+  withdrawalRelease: 'withdrawal.release',
+  payoutAccountVerify: 'payout_account.verify',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

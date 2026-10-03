@@ -20,7 +20,11 @@
         </KeyValueRow>
 
         <KeyValueRow label="Held on open orders">
-          <span class="num">{{ formatMoney(wallet.data.value.held) }}</span>
+          <span class="num">{{ formatMoney(wallet.data.value.heldOnOrders) }}</span>
+        </KeyValueRow>
+
+        <KeyValueRow label="Withdrawals waiting for review">
+          <span class="num">{{ formatMoney(wallet.data.value.pendingWithdrawals) }}</span>
         </KeyValueRow>
 
         <KeyValueRow big label="Total">

@@ -39,6 +39,8 @@
 
         <CustomerWalletPanel v-if="can(PERMISSIONS.walletView)" :customer-id="customer.id" />
 
+        <PayoutAccountsPanel :accounts="customer.payoutAccounts" :customer-id="customer.id" :pause-until="customer.withdrawalPauseUntil" />
+
         <CustomerHistoryPanel v-if="canSeeHistory" :customer-id="customer.id" :own-only="!can(PERMISSIONS.auditViewAll)" />
       </div>
     </div>
@@ -53,6 +55,7 @@
   import CustomerSessionsPanel from '@/components/customer-file/CustomerSessionsPanel.vue'
   import CustomerWalletPanel from '@/components/customer-file/CustomerWalletPanel.vue'
   import IdentityDocumentsPanel from '@/components/customer-file/IdentityDocumentsPanel.vue'
+  import PayoutAccountsPanel from '@/components/customer-file/PayoutAccountsPanel.vue'
   import ReinstateForm from '@/components/customer-file/ReinstateForm.vue'
   import SuspendForm from '@/components/customer-file/SuspendForm.vue'
   import DBtn from '@/components/ui/DBtn.vue'
@@ -66,7 +69,7 @@
   import { PERMISSIONS } from '@/types/staff'
 
   // Customer file (Backend spec 007). Panels for features the Backend does not have
-  // yet (orders, listings, payout account) are left out, not faked. The wallet
+  // yet (orders, listings) are left out, not faked; payout accounts are live (spec 013). The wallet
   // panel (spec 008) shows only to staff holding wallet.view.
   const route = useRoute()
   const customerId = computed(() => String(route.params.id ?? ''))

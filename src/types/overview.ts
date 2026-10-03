@@ -42,6 +42,8 @@ export interface NeedsDecisionRow {
 export interface CustomerWallets {
   available: string
   heldOnOpenOrders: string
+  // Backend spec 013: requested or under review, not yet sent to the bank.
+  pendingWithdrawals: string
   totalOwed: string
 }
 
