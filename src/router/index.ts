@@ -8,7 +8,6 @@ import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
   { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
-  { path: 'withdrawals', name: 'withdrawals', component: Placeholder, meta: { title: 'Withdrawals' } },
   { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
   { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
   { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
@@ -88,6 +87,13 @@ const routes: RouteRecordRaw[] = [
         name: 'statement',
         component: () => import('@/pages/statement/index.vue'),
         meta: { title: 'Wallet statement', permissions: [PERMISSIONS.walletView] },
+      },
+      {
+        // Withdrawals (Backend spec 013): the queue and payout accounts to check.
+        path: 'dashboard/withdrawals',
+        name: 'withdrawals',
+        component: () => import('@/pages/withdrawals/index.vue'),
+        meta: { title: 'Withdrawals', anyPermissions: [PERMISSIONS.withdrawalRelease, PERMISSIONS.walletView, PERMISSIONS.payoutAccountVerify] },
       },
       {
         // Incoming transfers (Backend spec 009): match, hold, reject, credit by hand.

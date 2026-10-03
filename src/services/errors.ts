@@ -105,6 +105,13 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   branch_not_in_options: 'conflict',
   deadline_must_move_forward: 'validation',
   deadline_not_running: 'conflict',
+  // Withdrawals (Backend spec 013).
+  illegal_withdrawal_transition: 'conflict',
+  illegal_payout_account_transition: 'conflict',
+  withdrawal_on_hold: 'conflict',
+  payout_account_not_active: 'conflict',
+  withdrawals_paused: 'conflict',
+  insufficient_funds: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

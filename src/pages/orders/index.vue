@@ -23,7 +23,7 @@
       <ErrorState :message="orderErrorMessage(list.error.value)" :retryable="errorCodeOf(list.error.value) !== 'forbidden'" title="Could not load the orders" @retry="list.refetch()" />
     </Panel>
 
-    <div v-else class="d-split">
+    <div v-else class="d-split" :class="{ 'd-split--solo': !selectedId }">
       <Panel :subtitle="subtitle" :title="GROUP_TITLES[filters.group]">
         <EmptyState v-if="rows.length === 0" title="No order matches" />
 
@@ -36,18 +36,14 @@
         </template>
       </Panel>
 
-      <div>
-        <LoadingState v-if="selectedId && selected.isPending.value" label="Loading the order…" />
+      <div v-if="selectedId" ref="detail">
+        <LoadingState v-if="selected.isPending.value" label="Loading the order…" />
 
-        <Panel v-else-if="selectedId && selected.isError.value">
+        <Panel v-else-if="selected.isError.value">
           <ErrorState :message="orderErrorMessage(selected.error.value)" title="Could not load this order" @retry="selected.refetch()" />
         </Panel>
 
         <OrderDetailPanel v-else-if="selected.data.value" :order="selected.data.value" />
-
-        <Panel v-else>
-          <EmptyState description="Pick an order to see its figures, inspection, money and history." title="No order open" />
-        </Panel>
       </div>
     </div>
   </div>
@@ -73,6 +69,7 @@
   import { useOrderQuery, useOrdersQuery } from '@/composables/useOrders'
   import { usePermissions } from '@/composables/usePermissions'
   import { useBranchesQuery } from '@/composables/useReference'
+  import { useSplitDetail } from '@/composables/useSplitDetail'
   import { errorCodeOf } from '@/services/errors'
   import { PERMISSIONS } from '@/types/staff'
 
@@ -159,8 +156,12 @@
     router.replace({ query: { ...route.query, id: undefined, q: q === '' ? undefined : q } })
   }
 
-  function select (id: string) {
-    router.replace({ query: { ...route.query, id } })
+  // The detail opens beside the list on wide screens, under it below 1700px.
+  const { detail, reveal } = useSplitDetail(1700, () => Boolean(selected.data.value) || selected.isError.value)
+
+  async function select (id: string) {
+    await router.replace({ query: { ...route.query, id } })
+    reveal()
   }
 </script>
 
@@ -170,13 +171,15 @@
 .d-ord__tools > :first-child { flex: 1 1 260px; max-width: 360px; }
 .d-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
 .d-split > * { min-width: 0; }
 .d-ord__more { display: flex; justify-content: center; padding: 12px; }
-@media (max-width: 1100px) {
-  .d-split { grid-template-columns: 1fr; gap: 14px; }
+// Nothing open: the list takes the whole width.
+.d-split--solo { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1700px) {
+  .d-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 </style>

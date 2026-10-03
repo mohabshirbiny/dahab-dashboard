@@ -6,6 +6,9 @@ export type Money = string
 export interface WalletOverview {
   available: Money
   held: Money
+  // Backend spec 013: held = heldOnOrders + pendingWithdrawals.
+  heldOnOrders: Money
+  pendingWithdrawals: Money
   totalOwed: Money
   // The cash in the bank (always shown as a positive figure).
   bank: Money
@@ -18,6 +21,8 @@ export interface WalletOverview {
 export interface CustomerWallet {
   available: Money
   held: Money
+  heldOnOrders: Money
+  pendingWithdrawals: Money
   total: Money
 }
 

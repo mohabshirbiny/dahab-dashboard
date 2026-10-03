@@ -13,12 +13,16 @@
         <span class="num">{{ formatMoney(wallets.heldOnOpenOrders) }}</span>
       </KeyValueRow>
 
+      <KeyValueRow label="On its way to banks">
+        <span class="num">{{ formatMoney(wallets.pendingWithdrawals) }}</span>
+      </KeyValueRow>
+
       <KeyValueRow big label="Total owed to customers">
         <span class="num">{{ formatMoney(wallets.totalOwed) }}</span>
       </KeyValueRow>
 
       <NoteBanner class="d-wallets__note" variant="info">
-        <span>Held money is set aside against a specific order. It is still the customer's, and it returns to available if the order is cancelled.</span>
+        <span>Held money is set aside against a specific order or a withdrawal waiting for review. It is still the customer's, and it returns to available if the order or the withdrawal is cancelled.</span>
       </NoteBanner>
     </div>
   </Panel>

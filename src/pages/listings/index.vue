@@ -10,7 +10,7 @@
       <ErrorState :message="listingErrorMessage(list.error.value)" :retryable="errorCodeOf(list.error.value) !== 'forbidden'" title="Could not load the listings" @retry="list.refetch()" />
     </Panel>
 
-    <div v-else class="d-split">
+    <div v-else class="d-split" :class="{ 'd-split--solo': !selectedId }">
       <Panel :subtitle="QUEUES[queue].subtitle" :title="QUEUES[queue].title">
         <EmptyState v-if="rows.length === 0" :title="QUEUES[queue].empty" />
 
@@ -23,18 +23,14 @@
         </template>
       </Panel>
 
-      <div>
-        <LoadingState v-if="selectedId && selected.isPending.value" label="Loading the listing…" />
+      <div v-if="selectedId" ref="detail">
+        <LoadingState v-if="selected.isPending.value" label="Loading the listing…" />
 
-        <Panel v-else-if="selectedId && selected.isError.value">
+        <Panel v-else-if="selected.isError.value">
           <ErrorState :message="listingErrorMessage(selected.error.value)" title="Could not load this listing" @retry="selected.refetch()" />
         </Panel>
 
         <ListingReviewPanel v-else-if="selected.data.value" :listing="selected.data.value" />
-
-        <Panel v-else>
-          <EmptyState description="Pick a piece from the list to see its photos, the seller and what you can do." title="No listing open" />
-        </Panel>
       </div>
     </div>
   </div>
@@ -55,6 +51,7 @@
   import PageLead from '@/components/ui/PageLead.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { useListingQuery, useListingsQuery } from '@/composables/useListings'
+  import { useSplitDetail } from '@/composables/useSplitDetail'
   import { errorCodeOf } from '@/services/errors'
 
   // Listings to review (Backend spec 010). The route needs any listing permission;
@@ -102,8 +99,12 @@
     }
   }
 
-  function select (id: string) {
-    router.replace({ query: { ...route.query, id } })
+  // The detail opens beside the list on wide screens, under it below 1360px.
+  const { detail, reveal } = useSplitDetail(1360, () => Boolean(selected.data.value) || selected.isError.value)
+
+  async function select (id: string) {
+    await router.replace({ query: { ...route.query, id } })
+    reveal()
   }
 </script>
 
@@ -117,7 +118,9 @@
 }
 .d-split > * { min-width: 0; }
 .d-lst__more { display: flex; justify-content: center; padding: 12px; }
-@media (max-width: 1100px) {
-  .d-split { grid-template-columns: 1fr; gap: 14px; }
+// Nothing open: the list takes the whole width.
+.d-split--solo { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1360px) {
+  .d-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 </style>

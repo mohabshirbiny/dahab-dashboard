@@ -14,12 +14,12 @@
     <tr v-for="o in rows" :key="o.id" :class="{ 'd-ot__on': o.id === selectedId }">
       <td class="mono">{{ o.orderRef }}</td>
 
-      <td>
+      <td class="nowrap">
         {{ pieceTitle(o.piece.category, o.piece.pieceType.nameEn, o.piece.karat) }}
         <div v-if="o.piece.weightG" class="who2">{{ formatWeight(o.piece.weightG) }} g</div>
       </td>
 
-      <td>{{ o.seller.displayRef ?? '—' }} → {{ o.buyer.displayRef ?? '—' }}</td>
+      <td class="nowrap">{{ o.seller.displayRef ?? '—' }} → {{ o.buyer.displayRef ?? '—' }}</td>
 
       <td class="r mono">{{ formatMoney(o.value) }}</td>
       <td class="r mono">{{ formatMoney(o.held) }}</td>
@@ -28,7 +28,7 @@
 
       <td>
         <template v-if="o.deadline">
-          <span :class="{ 'd-ot__late': o.deadline.overdue }">{{ o.deadline.overdue ? 'Passed' : formatDateTime(o.deadline.at) }}</span>
+          <span class="nowrap" :class="{ 'd-ot__late': o.deadline.overdue }">{{ o.deadline.overdue ? 'Passed' : formatDateTime(o.deadline.at) }}</span>
           <div class="who2">{{ DEADLINE_LABELS[o.deadline.kind] ?? o.deadline.kind }}</div>
         </template>
 

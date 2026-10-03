@@ -1,5 +1,6 @@
 import type { IdentityDocumentStatus, IdentityDocumentType } from './identity'
 import type { StatusVariant } from './status'
+import type { PayoutAccount } from './withdrawal'
 
 // The Backend `customer.status` lifecycle. The four Users and verification tabs map 1:1 to it.
 export type CustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended'
@@ -109,6 +110,9 @@ export interface CustomerFile extends CustomerVerification {
   // Every document, newest first.
   documents: CustomerFileDocument[]
   suspension: CustomerSuspension | null
+  // Backend spec 013: every payout account (the one in use first) and the open withdrawal pause.
+  payoutAccounts: PayoutAccount[]
+  withdrawalPauseUntil: string | null
 }
 
 // The file's "Sign-ins and devices" (Backend spec 007).
