@@ -74,6 +74,17 @@ export const endpoints = {
   order: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}`,
   orderAction: (id: string, action: 'receive' | 'inspection-results' | 'propose-price' | 'change-branch' | 'extend-deadline' | 'handover' | 'seller-return/handover') =>
     `/dashboard/orders/${encodeURIComponent(id)}/${action}`,
+  // Spec 014: the ID photo of the person the buyer named to collect (order.handover | order.view).
+  orderProxyId: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}/proxy-id`,
+  // Spec 014: sellers' requests for more time (order.extend_deadline; reads also order.view).
+  extensionRequests: '/dashboard/extension-requests',
+  extensionRequestAction: (id: string, action: 'accept' | 'refuse') => `/dashboard/extension-requests/${encodeURIComponent(id)}/${action}`,
+  // Disputes (Backend spec 014): dispute.handle; a resolution with money or a suspension needs its own code too.
+  disputes: '/dashboard/disputes',
+  dispute: (id: string) => `/dashboard/disputes/${encodeURIComponent(id)}`,
+  disputePhoto: (id: string, photoId: string) => `/dashboard/disputes/${encodeURIComponent(id)}/photos/${encodeURIComponent(photoId)}`,
+  disputeAction: (id: string, action: 'pass-on' | 'resolve') => `/dashboard/disputes/${encodeURIComponent(id)}/${action}`,
+  disputeAssignees: '/dashboard/dispute-assignees',
   inspections: '/dashboard/inspections',
   workList: '/dashboard/inspections/work-list',
   // Buy requests (Backend spec 012 US10): buy_request.view, read-only.

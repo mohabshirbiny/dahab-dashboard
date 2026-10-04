@@ -5,6 +5,11 @@
     </template>
 
     <template #body>
+      <NoteBanner v-if="order.frozen" class="d-odp__frozen" variant="wait">
+        Frozen by a dispute. No money moves and no deadline runs until it is resolved.
+        <RouterLink v-if="openDispute && order.can.handleDispute" :to="{ name: 'disputes', query: { id: openDispute.id } }">Open {{ openDispute.ref }}</RouterLink>
+      </NoteBanner>
+
       <div v-if="hasActions" class="d-odp__actions">
         <DBtn v-if="order.can.receive" kind="primary" @click="receiving = true">Mark received</DBtn>
         <DBtn v-if="order.can.inspect" kind="primary" @click="openInspection(null)">Enter result</DBtn>
@@ -14,6 +19,7 @@
         <DBtn v-if="order.can.returnHandover" @click="handoverTo = 'seller'">Hand back to the seller</DBtn>
         <DBtn v-if="order.can.changeBranch" @click="modal = 'branch'">Change branch</DBtn>
         <DBtn v-if="order.can.extend" @click="modal = 'extend'">Extend a deadline</DBtn>
+        <DBtn v-if="order.can.answerExtension && order.extensionRequest" @click="modal = 'answer'">Answer the request for more time</DBtn>
         <DBtn v-if="order.can.cancel" kind="danger" @click="modal = 'cancel'">Cancel acceptance</DBtn>
       </div>
 
@@ -41,6 +47,28 @@
       </KeyValueRow>
 
       <div v-if="order.cancelReason" class="d-odp__text">{{ order.cancelReason }}</div>
+
+      <template v-if="order.extensionRequest">
+        <div class="d-odp__label">The seller asks for more time</div>
+        <KeyValueRow label="Reason" :value="order.extensionRequest.reasonLabel" />
+        <KeyValueRow label="Asked" :value="formatDateTime(order.extensionRequest.requestedAt)" />
+
+        <KeyValueRow label="State">
+          <StatusTag :label="EXTENSION_STATE_META[order.extensionRequest.state].label" :variant="EXTENSION_STATE_META[order.extensionRequest.state].variant" />
+        </KeyValueRow>
+
+        <div class="d-odp__text">{{ order.extensionRequest.detail }}</div>
+      </template>
+
+      <template v-if="order.disputes.length > 0">
+        <div class="d-odp__label">Disputes</div>
+
+        <KeyValueRow v-for="d in order.disputes" :key="d.id" :label="`${d.ref} · ${d.raisedAs === 'buyer' ? 'buyer' : 'seller'}`">
+          <RouterLink v-if="order.can.handleDispute" :to="{ name: 'disputes', query: { id: d.id } }">{{ disputeStateMeta(d.state).label }}</RouterLink>
+          <template v-else>{{ disputeStateMeta(d.state).label }}</template>
+          <template v-if="d.outcome"> · {{ OUTCOME_LABELS[d.outcome as DisputeOutcome] ?? d.outcome }}</template>
+        </KeyValueRow>
+      </template>
 
       <template v-if="order.settlement">
         <div class="d-odp__label">Settlement</div>
@@ -79,6 +107,18 @@
         <KeyValueRow label="Collected" :value="order.collection.collectedAt ? formatDateTime(order.collection.collectedAt) : 'Not yet'" />
         <KeyValueRow v-if="order.collection.failedAttempts > 0" label="Wrong codes" :value="order.collection.failedAttempts" />
         <KeyValueRow v-if="order.collection.lockedUntil && !isPast(order.collection.lockedUntil)" label="Locked until" :value="formatDateTime(order.collection.lockedUntil)" />
+
+        <template v-if="order.collection.proxy">
+          <KeyValueRow label="Someone else collects" :value="order.collection.proxy.name ?? '—'" />
+          <KeyValueRow v-if="order.collection.proxy.phone" label="Their phone" :value="order.collection.proxy.phone" />
+          <KeyValueRow v-if="order.collection.proxy.namedAt" label="Named" :value="formatDateTime(order.collection.proxy.namedAt)" />
+          <KeyValueRow v-if="order.collection.collectedAt" label="Collected by" :value="order.collection.proxy.collectedByProxy ? 'The named person' : 'The buyer'" />
+
+          <template v-if="order.can.viewProxyId && order.collection.proxy.hasIdPhoto">
+            <ProxyIdPhoto v-if="showProxyId" class="d-odp__id" :order-id="order.id" />
+            <DBtn v-else class="d-odp__id" @click="showProxyId = true">Open their ID photo</DBtn>
+          </template>
+        </template>
       </template>
 
       <template v-if="order.sellerReturn">
@@ -129,11 +169,14 @@
   <ProposePriceModal :open="modal === 'price'" :order="order" @close="modal = null" />
   <ChangeBranchModal :open="modal === 'branch'" :order="order" @close="modal = null" />
   <ExtendDeadlineModal :open="modal === 'extend'" :order="order" @close="modal = null" />
+  <AnswerExtensionModal :open="modal === 'answer'" :request="order.extensionRequest" @close="modal = null" />
 
   <HandoverModal
+    :can-view-id="order.can.viewProxyId"
     :open="handoverTo !== null"
     :order-id="order.id"
     :order-ref="order.orderRef"
+    :proxy="order.collection?.proxy ?? null"
     :to="handoverTo ?? 'buyer'"
     @close="handoverTo = null"
   />
@@ -148,6 +191,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { DisputeOutcome } from '@/types/dispute'
   import type { InspectionResult, InspectionTarget, OrderDetail } from '@/types/order'
   import { computed, ref, watch } from 'vue'
   import { RouterLink } from 'vue-router'
@@ -157,6 +201,7 @@
   import DataTable from '@/components/ui/DataTable.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import KeyValueRow from '@/components/ui/KeyValueRow.vue'
+  import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
   import { formatDateTime, formatMoney, isPast } from '@/composables/useFormatters'
@@ -164,8 +209,10 @@
   import { useOrderAction } from '@/composables/useOrders'
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
-  import { DEADLINE_LABELS, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
+  import { disputeStateMeta, OUTCOME_LABELS } from '@/types/dispute'
+  import { DEADLINE_LABELS, EXTENSION_STATE_META, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
   import { PERMISSIONS } from '@/types/staff'
+  import AnswerExtensionModal from './AnswerExtensionModal.vue'
   import ChangeBranchModal from './ChangeBranchModal.vue'
   import ExtendDeadlineModal from './ExtendDeadlineModal.vue'
   import HandoverModal from './HandoverModal.vue'
@@ -174,6 +221,7 @@
   import { formatPct } from './orderFormat'
   import OrderTimeline from './OrderTimeline.vue'
   import ProposePriceModal from './ProposePriceModal.vue'
+  import ProxyIdPhoto from './ProxyIdPhoto.vue'
 
   // One order for staff (Backend spec 012 FR-022): the figures, every inspection result,
   // the money moved, its history, and the actions the Backend says apply now (`can`).
@@ -183,9 +231,19 @@
   const canOpenCustomer = computed(() => can(PERMISSIONS.customerView))
   const title = computed(() => pieceTitle(props.order.piece.category, props.order.piece.pieceType.nameEn, props.order.piece.karat))
   const latest = computed(() => props.order.inspections.find(r => r.id === props.order.latestInspectionId) ?? null)
-  const hasActions = computed(() => Object.values(props.order.can).some(Boolean))
+  // handleDispute and viewProxyId open links and photos below, not buttons up here.
+  const hasActions = computed(() => {
+    const { handleDispute: _dispute, viewProxyId: _proxy, answerExtension, ...rest } = props.order.can
+    return Object.values(rest).some(Boolean) || (answerExtension && props.order.extensionRequest !== null)
+  })
+  // Spec 014: the unresolved dispute that froze this order, and the proxy's ID shown on request.
+  const openDispute = computed(() => props.order.disputes.find(d => d.state !== 'resolved') ?? null)
+  const showProxyId = ref(false)
+  watch(() => props.order.id, () => {
+    showProxyId.value = false
+  })
 
-  const modal = ref<'price' | 'branch' | 'extend' | 'cancel' | null>(null)
+  const modal = ref<'price' | 'branch' | 'extend' | 'cancel' | 'answer' | null>(null)
   const handoverTo = ref<'buyer' | 'seller' | null>(null)
   const inspection = ref<InspectionTarget | null>(null)
 
@@ -242,6 +300,8 @@
   white-space: pre-wrap;
 }
 .d-odp__late { color: var(--bad); }
+.d-odp__frozen { margin-bottom: 10px; }
+.d-odp__id { margin: 8px 0; }
 .d-odp__result { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .d-odp__result:last-child { border-bottom: 0; }
 .d-odp__result--old { opacity: .6; }

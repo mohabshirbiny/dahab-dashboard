@@ -1,7 +1,7 @@
 import type { Permission } from './staff'
 
 // Badges that come from a live query instead of a fixed number.
-export type LiveBadge = 'customersPending' | 'topupsToMatch' | 'listingsToReview' | 'withdrawalsWaiting'
+export type LiveBadge = 'customersPending' | 'topupsToMatch' | 'listingsToReview' | 'withdrawalsWaiting' | 'disputesOpen'
 
 export interface NavItem {
   key: string

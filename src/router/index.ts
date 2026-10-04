@@ -7,7 +7,6 @@ import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'disputes', name: 'disputes', component: Placeholder, meta: { title: 'Disputes and reports' } },
   { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
   { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
   { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
@@ -101,6 +100,13 @@ const routes: RouteRecordRaw[] = [
         name: 'transfers',
         component: () => import('@/pages/transfers/index.vue'),
         meta: { title: 'Incoming transfers', permissions: [PERMISSIONS.topupMatch] },
+      },
+      {
+        // Disputes (Backend spec 014): the queue, pass on and resolve; refund and compensation need their own codes.
+        path: 'dashboard/disputes',
+        name: 'disputes',
+        component: () => import('@/pages/disputes/index.vue'),
+        meta: { title: 'Disputes and reports', permissions: [PERMISSIONS.disputeHandle] },
       },
       {
         // Orders (Backend spec 012): order.view; each action needs its own permission too.

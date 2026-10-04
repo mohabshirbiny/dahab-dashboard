@@ -17,6 +17,26 @@
       <DSelect v-if="branchOptions.length > 1" v-model="branch" aria-label="Branch" :options="branchOptions" />
     </form>
 
+    <Panel v-if="showRequests" :subtitle="requestsSubtitle" title="Requests for more time">
+      <template #actions>
+        <DBtn @click="requestsMonth = !requestsMonth">{{ requestsMonth ? 'Waiting only' : 'This month' }}</DBtn>
+      </template>
+
+      <LoadingState v-if="requests.isPending.value" label="Loading requests…" />
+      <ErrorState v-else-if="requests.isError.value" :message="orderErrorMessage(requests.error.value)" title="Could not load the requests" @retry="requests.refetch()" />
+      <EmptyState v-else-if="requestRows.length === 0" title="No request this month" />
+
+      <template v-else>
+        <ExtensionRequestsTable :can-answer="can(PERMISSIONS.orderExtendDeadline)" :rows="requestRows" @answer="answering = $event" @open="select" />
+
+        <div v-if="requests.hasNextPage.value" class="d-ord__more">
+          <DBtn :loading="requests.isFetchingNextPage.value" @click="requests.fetchNextPage()">Load more</DBtn>
+        </div>
+      </template>
+    </Panel>
+
+    <AnswerExtensionModal :open="answering !== null" :request="answering" @close="answering = null" />
+
     <LoadingState v-if="list.isPending.value" label="Loading orders…" />
 
     <Panel v-else-if="list.isError.value">
@@ -50,9 +70,11 @@
 </template>
 
 <script lang="ts" setup>
-  import type { OrderFilters, OrderGroup } from '@/types/order'
+  import type { ExtensionRequest, OrderFilters, OrderGroup } from '@/types/order'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import AnswerExtensionModal from '@/components/orders/AnswerExtensionModal.vue'
+  import ExtensionRequestsTable from '@/components/orders/ExtensionRequestsTable.vue'
   import OrderDetailPanel from '@/components/orders/OrderDetailPanel.vue'
   import { orderErrorMessage } from '@/components/orders/orderErrors'
   import OrdersTable from '@/components/orders/OrdersTable.vue'
@@ -66,7 +88,7 @@
   import PageLead from '@/components/ui/PageLead.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatMoney } from '@/composables/useFormatters'
-  import { useOrderQuery, useOrdersQuery } from '@/composables/useOrders'
+  import { useExtensionRequestsQuery, useOrderQuery, useOrdersQuery } from '@/composables/useOrders'
   import { usePermissions } from '@/composables/usePermissions'
   import { useBranchesQuery } from '@/composables/useReference'
   import { useSplitDetail } from '@/composables/useSplitDetail'
@@ -119,6 +141,23 @@
   const rows = computed(() => list.data.value?.pages.flatMap(p => p.rows) ?? [])
   const counts = computed(() => list.data.value?.pages[0]?.counts ?? null)
   const selected = useOrderQuery(selectedId)
+
+  // Spec 014: sellers' requests for more time — the waiting ones, or everything this month.
+  // The panel shows while any is waiting, or while the month view is open.
+  const requestsMonth = ref(false)
+  const answering = ref<ExtensionRequest | null>(null)
+  const now = new Date()
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const requests = useExtensionRequestsQuery(
+    () => (requestsMonth.value ? 'all' : 'waiting'),
+    () => (requestsMonth.value ? thisMonth : null),
+  )
+  const requestRows = computed(() => requests.data.value?.pages.flatMap(p => p.rows) ?? [])
+  const showRequests = computed(() => requestsMonth.value || requestRows.value.length > 0 || requests.isError.value)
+  const requestsSubtitle = computed(() => {
+    const waiting = requestRows.value.filter(r => r.state === 'waiting').length
+    return requestsMonth.value ? `This month, ${waiting} waiting` : `${waiting} waiting`
+  })
 
   // Held on what is on screen: the sum of the Backend's figures, for display only.
   const subtitle = computed(() => {

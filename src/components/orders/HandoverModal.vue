@@ -13,6 +13,46 @@
         <template v-else>The piece leaves the market; no money moves.</template>
       </p>
 
+      <template v-if="to === 'buyer' && proxy">
+        <div class="d-hom__label">Who is collecting</div>
+
+        <label class="d-hom__check">
+          <input
+            v-model="collector"
+            :disabled="busy"
+            name="collector"
+            type="radio"
+            value="buyer"
+          >
+
+          <span>The buyer</span>
+        </label>
+
+        <label class="d-hom__check">
+          <input
+            v-model="collector"
+            :disabled="busy"
+            name="collector"
+            type="radio"
+            value="proxy"
+          >
+
+          <span>{{ proxy.name ?? 'The person the buyer named' }}<template v-if="proxy.phone"> · {{ proxy.phone }}</template></span>
+        </label>
+
+        <template v-if="collector === 'proxy'">
+          <ProxyIdPhoto v-if="canViewId && showId" class="d-hom__id" :order-id="orderId" />
+          <DBtn v-else-if="canViewId" class="d-hom__id" @click="showId = true">Open their ID photo</DBtn>
+
+          <label class="d-hom__check">
+            <input v-model="idChecked" :disabled="busy" type="checkbox">
+            <span>I checked their ID in person and it matches the name above</span>
+          </label>
+
+          <p v-if="idError" class="d-hom__field-error" role="alert">{{ idError }}</p>
+        </template>
+      </template>
+
       <FormField v-slot="{ controlId, describedBy, invalid }" :error="codeError" label="Collection code">
         <DInput
           :id="controlId"
@@ -41,6 +81,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { OrderProxy } from '@/types/order'
   import { computed, ref, watch } from 'vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
@@ -51,10 +92,13 @@
   import { useOrderAction } from '@/composables/useOrders'
   import { useToast } from '@/composables/useToast'
   import { orderErrorMessage } from './orderErrors'
+  import ProxyIdPhoto from './ProxyIdPhoto.vue'
 
   // Hand a piece over against its 6-digit code (Backend spec 012 FR-016 / FR-019,
   // order.handover, at the order's branch). Staff never see the code itself.
-  const props = defineProps<{ open: boolean, orderId: string, orderRef: string, to: 'buyer' | 'seller' }>()
+  // Spec 014: when the buyer named someone else, staff say who is collecting and, for that
+  // person, confirm they checked the ID (the Backend refuses without it: proxy_details_missing).
+  const props = defineProps<{ open: boolean, orderId: string, orderRef: string, to: 'buyer' | 'seller', proxy?: OrderProxy | null, canViewId?: boolean }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
 
   const mutation = useOrderAction()
@@ -63,7 +107,13 @@
   const busy = computed(() => mutation.isPending.value)
 
   const code = ref('')
+  const collector = ref<'buyer' | 'proxy'>('buyer')
+  const idChecked = ref(false)
+  const showId = ref(false)
   const submitted = ref(false)
+
+  const byProxy = computed(() => props.to === 'buyer' && Boolean(props.proxy) && collector.value === 'proxy')
+  const idError = computed(() => (submitted.value && byProxy.value && !idChecked.value ? 'Check their ID before handing over.' : undefined))
 
   const codeError = computed(() => (submitted.value && !/^\d{6}$/.test(code.value.trim()) ? 'The code is 6 digits.' : undefined))
   // A wrong code answers with the tries left; that is the message here, not a field error.
@@ -71,6 +121,9 @@
 
   watch(() => [props.open, props.orderId], () => {
     code.value = ''
+    collector.value = 'buyer'
+    idChecked.value = false
+    showId.value = false
     submitted.value = false
     mutation.reset()
     idempotency.reset()
@@ -85,13 +138,13 @@
   async function onSubmit () {
     if (busy.value) return
     submitted.value = true
-    if (codeError.value !== undefined) return
+    if (codeError.value !== undefined || idError.value !== undefined) return
 
-    const payload = { orderId: props.orderId, action: { kind: 'handover' as const, to: props.to, code: code.value.trim() } }
+    const payload = { orderId: props.orderId, action: { kind: 'handover' as const, to: props.to, code: code.value.trim(), byProxy: byProxy.value } }
     try {
       await mutation.mutateAsync({ ...payload, idempotencyKey: idempotency.keyFor(payload) })
       idempotency.reset()
-      toast.ok(props.to === 'buyer' ? 'Handed over. The sale is complete.' : 'Handed back to the seller.')
+      toast.ok(props.to === 'buyer' ? (byProxy.value ? 'Handed to the named person. The sale is complete.' : 'Handed over. The sale is complete.') : 'Handed back to the seller.')
       emit('close')
     } catch {
       // Shown in the form. A different code is a different request, so it gets a new key.
@@ -102,5 +155,9 @@
 <style lang="scss" scoped>
 .d-hom__lead { margin: 0 0 12px; font-size: 13px; line-height: 1.6; }
 .d-hom__error { margin-top: 10px; }
+.d-hom__label { margin: 4px 0 6px; font-size: 11.5px; color: var(--ink-2); }
+.d-hom__check { display: flex; gap: 8px; align-items: center; margin: 6px 0; font-size: 13px; }
+.d-hom__id { margin: 8px 0; }
+.d-hom__field-error { margin: 2px 0 8px; font-size: 12px; color: var(--bad); }
 .who2 { font-size: 11px; color: var(--ink-3); margin: 6px 0 0; }
 </style>

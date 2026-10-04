@@ -40,6 +40,7 @@
   import { RouterLink, useRouter } from 'vue-router'
   import BrandMark from '@/components/ui/BrandMark.vue'
   import { useCustomerWaitingCountQuery } from '@/composables/useCustomers'
+  import { useUnresolvedDisputeCountQuery } from '@/composables/useDisputes'
   import { useWaitingListingCountQuery } from '@/composables/useListings'
   import { usePermissions } from '@/composables/usePermissions'
   import { useOpenTopUpCountQuery } from '@/composables/useTopUps'
@@ -79,12 +80,14 @@
   )
 
   const { data: withdrawalsWaiting } = useWaitingWithdrawalCountQuery(() => can(PERMISSIONS.withdrawalRelease))
+  const { data: disputesOpen } = useUnresolvedDisputeCountQuery(() => can(PERMISSIONS.disputeHandle))
 
   function badgeFor (item: NavItem): number | undefined {
     if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
     if (item.liveBadge === 'topupsToMatch') return topUpsToMatch.value || undefined
     if (item.liveBadge === 'listingsToReview') return listingsToReview.value || undefined
     if (item.liveBadge === 'withdrawalsWaiting') return withdrawalsWaiting.value || undefined
+    if (item.liveBadge === 'disputesOpen') return disputesOpen.value || undefined
     return item.badge
   }
 
