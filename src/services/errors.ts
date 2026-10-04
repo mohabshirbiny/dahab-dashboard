@@ -122,6 +122,10 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   illegal_extension_request_transition: 'conflict',
   compensation_cap_exceeded: 'forbidden',
   proxy_details_missing: 'validation',
+  // Finance operations (Backend spec 015).
+  day_not_ended: 'validation',
+  day_already_closed: 'conflict',
+  upload_token_invalid: 'validation',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

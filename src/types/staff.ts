@@ -54,6 +54,11 @@ export const PERMISSIONS = {
   orderRefund: 'order.refund',
   compensationPay: 'compensation.pay',
   compensationUncapped: 'compensation.uncapped',
+  // Finance operations (Backend spec 015). wallet.adjust: founders only (no role);
+  // bank.record and day.close: CEO and Finance, never the COO.
+  walletAdjust: 'wallet.adjust',
+  bankRecord: 'bank.record',
+  dayClose: 'day.close',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

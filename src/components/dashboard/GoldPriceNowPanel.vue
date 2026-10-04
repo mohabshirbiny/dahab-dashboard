@@ -1,31 +1,35 @@
 <template>
-  <Panel title="Gold price now" subtitle="From Evolve">
+  <Panel subtitle="From Evolve" title="Gold price now">
     <div class="d-panel__body">
       <KeyValueRow label="21K, sellers get">
-        <span class="num">{{ formatNumber(price.sellersGet21k) }}</span>
+        <span class="num">{{ price.sellersGet21k === null ? '—' : formatMoney(price.sellersGet21k) }}</span>
       </KeyValueRow>
+
       <KeyValueRow label="21K, buyers pay">
-        <span class="num">{{ formatNumber(price.buyersPay21k) }}</span>
+        <span class="num">{{ price.buyersPay21k === null ? '—' : formatMoney(price.buyersPay21k) }}</span>
       </KeyValueRow>
+
       <KeyValueRow label="Difference per gram">
-        <span class="num">{{ formatNumber(price.differencePerGram) }}</span>
+        <span class="num">{{ price.differencePerGram === null ? '—' : formatMoney(price.differencePerGram) }}</span>
       </KeyValueRow>
+
       <KeyValueRow label="Feed">
         <StatusTag :label="price.feedStatus.label" :variant="price.feedStatus.variant" />
       </KeyValueRow>
+
       <KeyValueRow label="Last update">
-        {{ price.lastUpdated }}
+        {{ price.lastUpdated === null ? '—' : formatRelativeTime(price.lastUpdated) }}
       </KeyValueRow>
     </div>
   </Panel>
 </template>
 
 <script lang="ts" setup>
-  import Panel from '@/components/ui/Panel.vue'
-  import KeyValueRow from '@/components/ui/KeyValueRow.vue'
-  import StatusTag from '@/components/ui/StatusTag.vue'
-  import { formatNumber } from '@/composables/useFormatters'
   import type { GoldPriceSnapshot } from '@/types/overview'
+  import KeyValueRow from '@/components/ui/KeyValueRow.vue'
+  import Panel from '@/components/ui/Panel.vue'
+  import StatusTag from '@/components/ui/StatusTag.vue'
+  import { formatMoney, formatRelativeTime } from '@/composables/useFormatters'
 
   defineProps<{ price: GoldPriceSnapshot }>()
 </script>

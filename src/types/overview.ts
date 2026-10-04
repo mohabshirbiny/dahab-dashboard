@@ -18,11 +18,12 @@ export interface TransactionRow {
   status: string
   statusVariant: StatusVariant
   count: number
-  value: number
-  heldNow: number | null
+  value: string
+  heldNow: string | null
   action: {
     label: string
     kind: 'link' | 'export'
+    // A route for links; the Orders group for exports.
     target: string
   }
 }
@@ -31,8 +32,9 @@ export interface NeedsDecisionRow {
   id: string
   what: string
   whoSub: string
-  waitingLabel: string
+  waitingSince: string
   waitingVariant: StatusVariant
+  // The area the acting permission belongs to (never a role name: roles are Dashboard data).
   onWho: string
   ctaLabel: string
   ctaTarget: string
@@ -48,11 +50,11 @@ export interface CustomerWallets {
 }
 
 export interface GoldPriceSnapshot {
-  sellersGet21k: number
-  buyersPay21k: number
-  differencePerGram: number
+  sellersGet21k: string | null
+  buyersPay21k: string | null
+  differencePerGram: string | null
   feedStatus: { label: string, variant: StatusVariant }
-  lastUpdated: string
+  lastUpdated: string | null
 }
 
 export interface ThisMonth {
@@ -60,15 +62,19 @@ export interface ThisMonth {
   piecesListed: number
   sold: number
   sellThroughPct: number
-  moneyReachesSellersIn: string
+  avgDaysToPaySellers: string | null
 }
 
-// The mock parts of the Overview. The safety figure (hero), "Held on open
-// orders" and the Customer wallets panel come from the Backend (spec 008).
+export interface Earnings {
+  commission: string
+  spread: string
+  total: string
+}
+
+// GET /dashboard/overview (Backend spec 015): a section is null when the viewer may not see it.
 export interface OverviewData {
-  stats: OverviewStat[]
-  transactions: TransactionRow[]
-  needsDecision: NeedsDecisionRow[]
-  goldPrice: GoldPriceSnapshot
-  thisMonth: ThisMonth
+  earnings: Earnings | null
+  transactions: TransactionRow[] | null
+  needsDecision: NeedsDecisionRow[] | null
+  thisMonth: ThisMonth | null
 }

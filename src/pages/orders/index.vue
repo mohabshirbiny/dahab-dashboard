@@ -15,7 +15,10 @@
 
       <DBtn type="submit">Search</DBtn>
       <DSelect v-if="branchOptions.length > 1" v-model="branch" aria-label="Branch" :options="branchOptions" />
+      <DBtn :loading="exporting.isPending.value" @click="exportList">Export to Excel</DBtn>
     </form>
+
+    <NoteBanner v-if="exportNote" class="d-ord__note" variant="bad">{{ exportNote }}</NoteBanner>
 
     <Panel v-if="showRequests" :subtitle="requestsSubtitle" title="Requests for more time">
       <template #actions>
@@ -85,10 +88,11 @@
   import ErrorState from '@/components/ui/ErrorState.vue'
   import FilterChips from '@/components/ui/FilterChips.vue'
   import LoadingState from '@/components/ui/LoadingState.vue'
+  import NoteBanner from '@/components/ui/NoteBanner.vue'
   import PageLead from '@/components/ui/PageLead.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatMoney } from '@/composables/useFormatters'
-  import { useExtensionRequestsQuery, useOrderQuery, useOrdersQuery } from '@/composables/useOrders'
+  import { useExportOrders, useExtensionRequestsQuery, useOrderQuery, useOrdersQuery } from '@/composables/useOrders'
   import { usePermissions } from '@/composables/usePermissions'
   import { useBranchesQuery } from '@/composables/useReference'
   import { useSplitDetail } from '@/composables/useSplitDetail'
@@ -138,6 +142,21 @@
   }))
 
   const list = useOrdersQuery(filters)
+
+  // The list as CSV with the same filters (Backend spec 015 FR-018); the Backend records each export.
+  const exporting = useExportOrders()
+  const exportNote = ref('')
+  function exportList () {
+    exportNote.value = ''
+    exporting.mutate(filters.value, {
+      onSuccess: result => {
+        exportNote.value = result.truncated ? 'The file stopped at the export limit. Narrow the filters to get the rest.' : ''
+      },
+      onError: error => {
+        exportNote.value = orderErrorMessage(error)
+      },
+    })
+  }
   const rows = computed(() => list.data.value?.pages.flatMap(p => p.rows) ?? [])
   const counts = computed(() => list.data.value?.pages[0]?.counts ?? null)
   const selected = useOrderQuery(selectedId)
@@ -205,6 +224,7 @@
 </script>
 
 <style lang="scss" scoped>
+.d-ord__note { margin-top: 12px; }
 .d-page { display: block; }
 .d-ord__tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .d-ord__tools > :first-child { flex: 1 1 260px; max-width: 360px; }

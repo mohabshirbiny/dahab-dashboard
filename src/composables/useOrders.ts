@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { orderService } from '@/services/order.service'
 import { retryTransient } from './queryRetry'
+import { download } from './useFinance'
 import { listingKeys } from './useListings'
 
 export const orderKeys = {
@@ -17,6 +18,11 @@ export const orderKeys = {
 }
 
 // Open orders newest first; "Load more" follows the Backend's cursor.
+// The Orders list as CSV with the same filters (Backend spec 015); the Backend records each export.
+export function useExportOrders () {
+  return useMutation({ mutationFn: async (filters: OrderFilters) => download(await orderService.exportCsv(filters)) })
+}
+
 export function useOrdersQuery (filters: MaybeRefOrGetter<OrderFilters>, enabled: MaybeRefOrGetter<boolean> = true) {
   return useInfiniteQuery({
     queryKey: computed(() => orderKeys.list({ ...toValue(filters) })),
