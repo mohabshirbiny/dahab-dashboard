@@ -357,6 +357,22 @@ const keyHeader = (idempotencyKey: string) => ({ headers: { 'Idempotency-Key': i
 // An action answers with the order (with order.view) or the work-list item (without):
 // callers refetch what they show instead of reading that answer.
 export const orderService = {
+  // GET /dashboard/orders/export   (order.view, Backend spec 015) — a CSV file with the list's filters; the Backend records each export.
+  async exportCsv (filters: OrderFilters): Promise<{ blob: Blob, filename: string, truncated: boolean }> {
+    const response = await http.get<Blob>(endpoints.ordersExport, {
+      params: {
+        group: filters.group,
+        past_deadline: filters.pastDeadline ? 1 : undefined,
+        branch_id: filters.branchId ?? undefined,
+        q: filters.q.trim() === '' ? undefined : filters.q.trim(),
+      },
+      responseType: 'blob',
+    })
+    const disposition = String(response.headers['content-disposition'] ?? '')
+    const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'orders.csv'
+    return { blob: response.data, filename, truncated: response.headers['x-export-truncated'] === 'true' }
+  },
+
   // GET /dashboard/orders   (order.view)
   async list (filters: OrderFilters, cursor: string | null, perPage = 25): Promise<OrderPage> {
     const { data } = await http.get<ApiOrderPage>(endpoints.orders, {

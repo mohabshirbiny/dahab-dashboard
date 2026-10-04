@@ -95,8 +95,11 @@ over to the buyer or back to the seller, cancel (`order.view` and one permission
 branch work list and the results; `order.receive` / `inspection.enter` / `order.handover` / `order.view`) and the
 read-only Buy requests (`buy_request.view`; not in the design) — call
 the real Backend; `src/api/endpoints.ts` lists only
-routes that exist. Everything else has no Backend route yet and is still mock or a placeholder (the rest of the
-Overview, sidebar badges, every other section). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
+routes that exist. Since Backend spec 015 the Overview is fully live (`/dashboard/overview`, sections by permission),
+and Compensation (`compensation.pay`, reads also `wallet.view`), Bank movements (`bank.record`), Daily closing
+(`day.close`), Adjust in the Customer file's wallet (`wallet.adjust`) and the Orders export are live. Everything else
+has no Backend route yet and is still mock or a placeholder (Invoices, Promo codes, Market maker approvals, Switches,
+App text, Terms and versions, the Rapaport matrix, some sidebar badges). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
 frontend-only phase and are out of date on this point. Read `docs/06-BACKEND-API-INTEGRATION.md` for what is
 wired, how the client behaves (base URL, refresh, errors) and the Backend gaps before touching a service.
 The API base URL comes from `VITE_API_BASE_URL` (see `.env.example`).

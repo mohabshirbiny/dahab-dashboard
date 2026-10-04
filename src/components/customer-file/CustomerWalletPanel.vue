@@ -1,6 +1,7 @@
 <template>
   <Panel title="Wallet">
     <template #actions>
+      <DBtn v-if="canAdjust" @click="adjusting = true">Adjust</DBtn>
       <DBtn @click="openStatement">Wallet statement</DBtn>
     </template>
 
@@ -32,10 +33,13 @@
         </KeyValueRow>
       </template>
     </div>
+
+    <AdjustWalletModal v-if="canAdjust" :customer-id="customerId" :open="adjusting" @close="adjusting = false" />
   </Panel>
 </template>
 
 <script lang="ts" setup>
+  import { computed, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import DBtn from '@/components/ui/DBtn.vue'
   import ErrorState from '@/components/ui/ErrorState.vue'
@@ -43,13 +47,21 @@
   import LoadingState from '@/components/ui/LoadingState.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatMoney } from '@/composables/useFormatters'
+  import { usePermissions } from '@/composables/usePermissions'
   import { useCustomerWalletQuery } from '@/composables/useWallet'
+  import { PERMISSIONS } from '@/types/staff'
+  import AdjustWalletModal from './AdjustWalletModal.vue'
 
   // Rendered only for staff holding wallet.view (Backend spec 008 FR-017).
   const props = defineProps<{ customerId: string }>()
 
   const wallet = useCustomerWalletQuery(() => props.customerId, true)
   const router = useRouter()
+
+  // Backend spec 015: a direct correction, wallet.adjust only.
+  const { can } = usePermissions()
+  const canAdjust = computed(() => can(PERMISSIONS.walletAdjust))
+  const adjusting = ref(false)
 
   function openStatement () {
     router.push({ name: 'statement', query: { customer: props.customerId } })

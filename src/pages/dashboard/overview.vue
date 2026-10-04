@@ -6,20 +6,24 @@
       <div class="d-loading">Loading…</div>
     </template>
 
+    <Panel v-else-if="isError">
+      <ErrorState message="The Overview figures could not be loaded." title="Could not load the Overview" @retry="refetch()" />
+    </Panel>
+
     <template v-else-if="data">
       <OverviewStats :hero="hero" :stats="stats" />
 
       <div class="d-split">
         <div class="d-split__left">
-          <TransactionsPanel :rows="data.transactions" />
-          <NeedsDecisionPanel :rows="data.needsDecision" />
+          <TransactionsPanel v-if="data.transactions" :rows="data.transactions" />
+          <NeedsDecisionPanel v-if="data.needsDecision" :rows="data.needsDecision" />
         </div>
 
         <div class="d-split__right">
           <CustomerLookupPanel />
           <CustomerWalletsPanel v-if="wallets" :wallets="wallets" />
-          <GoldPriceNowPanel :price="data.goldPrice" />
-          <ThisMonthPanel :month="data.thisMonth" />
+          <GoldPriceNowPanel v-if="goldPrice" :price="goldPrice" />
+          <ThisMonthPanel v-if="data.thisMonth" :month="data.thisMonth" />
         </div>
       </div>
     </template>
@@ -27,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CustomerWallets, OverviewHeroStat, OverviewStat } from '@/types/overview'
+  import type { CustomerWallets, GoldPriceSnapshot, OverviewHeroStat, OverviewStat } from '@/types/overview'
   import { computed } from 'vue'
   import CustomerLookupPanel from '@/components/dashboard/CustomerLookupPanel.vue'
   import CustomerWalletsPanel from '@/components/dashboard/CustomerWalletsPanel.vue'
@@ -36,14 +40,18 @@
   import OverviewStats from '@/components/dashboard/OverviewStats.vue'
   import ThisMonthPanel from '@/components/dashboard/ThisMonthPanel.vue'
   import TransactionsPanel from '@/components/dashboard/TransactionsPanel.vue'
+  import ErrorState from '@/components/ui/ErrorState.vue'
   import PageLead from '@/components/ui/PageLead.vue'
+  import Panel from '@/components/ui/Panel.vue'
   import { formatMoney } from '@/composables/useFormatters'
   import { useOverviewQuery } from '@/composables/useOverview'
   import { usePermissions } from '@/composables/usePermissions'
+  import { useCurrentPricesQuery } from '@/composables/usePricing'
   import { useWalletOverviewQuery } from '@/composables/useWallet'
   import { PERMISSIONS } from '@/types/staff'
 
-  const { data, isLoading } = useOverviewQuery()
+  // Every figure is live (Backend specs 008 and 015); a section the viewer may not see is not shown.
+  const { data, isLoading, isError, refetch } = useOverviewQuery()
 
   // The money figures are live (Backend spec 008) and need wallet.view; staff
   // without it do not see them at all (not zeros).
@@ -64,10 +72,33 @@
     }
   })
 
-  const stats = computed<OverviewStat[]>(() => [
-    ...(live.value ? [{ label: 'Held on open orders', value: formatMoney(live.value.heldOnOrders), hint: 'Set aside against open orders' }] : []),
-    ...(data.value?.stats ?? []),
-  ])
+  const stats = computed<OverviewStat[]>(() => {
+    const earnings = data.value?.earnings
+    return [
+      ...(live.value ? [{ label: 'Held on open orders', value: formatMoney(live.value.heldOnOrders), hint: 'Set aside against open orders' }] : []),
+      ...(earnings ? [{ label: 'Dahab earned this month', value: formatMoney(earnings.total), hint: `Commission ${formatMoney(earnings.commission)} · spread ${formatMoney(earnings.spread)}` }] : []),
+    ]
+  })
+
+  // Gold price now: the pricing page's figures (pricing.view).
+  const prices = useCurrentPricesQuery(() => can(PERMISSIONS.pricingView))
+  const FEED: Record<string, { label: string, variant: 'ok' | 'bad' | 'off' }> = {
+    healthy: { label: 'Healthy', variant: 'ok' },
+    down: { label: 'Down', variant: 'bad' },
+    not_configured: { label: 'Not set up', variant: 'off' },
+  }
+  const goldPrice = computed<GoldPriceSnapshot | null>(() => {
+    const p = prices.data.value
+    if (!p) return null
+    const k21 = p.karats.find(k => k.code === 21) ?? null
+    return {
+      sellersGet21k: k21?.sellersGet ?? null,
+      buyersPay21k: k21?.buyersPay ?? null,
+      differencePerGram: k21?.difference ?? null,
+      feedStatus: p.price?.source === 'manual' ? { label: 'Manual price', variant: 'off' } : (FEED[p.feed.state] ?? { label: p.feed.state, variant: 'off' }),
+      lastUpdated: p.price?.effectiveAt ?? null,
+    }
+  })
 
   const wallets = computed<CustomerWallets | null>(() => live.value
     ? { available: live.value.available, heldOnOpenOrders: live.value.heldOnOrders, pendingWithdrawals: live.value.pendingWithdrawals, totalOwed: live.value.totalOwed }

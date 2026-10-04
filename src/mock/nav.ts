@@ -25,9 +25,10 @@ export const navGroups: NavGroup[] = [
       { key: 'withdrawals', title: 'Withdrawals', to: '/dashboard/withdrawals', liveBadge: 'withdrawalsWaiting', anyPermission: ['withdrawal.release', 'wallet.view', 'payout_account.verify'] },
       { key: 'transfers', title: 'Incoming transfers', to: '/dashboard/transfers', liveBadge: 'topupsToMatch', permission: 'topup.match' },
       { key: 'statement', title: 'Wallet statement', to: '/dashboard/statement', permission: 'wallet.view' },
-      { key: 'compensation', title: 'Compensation', to: '/dashboard/compensation', hidden: true },
-      { key: 'bankbook', title: 'Bank movements', to: '/dashboard/bankbook', hidden: true },
-      { key: 'closing', title: 'Daily closing', to: '/dashboard/closing', hidden: true },
+      // Backend spec 015: reads with the acting code or wallet.view.
+      { key: 'compensation', title: 'Compensation', to: '/dashboard/compensation', anyPermission: ['compensation.pay', 'wallet.view'] },
+      { key: 'bankbook', title: 'Bank movements', to: '/dashboard/bankbook', anyPermission: ['bank.record', 'wallet.view'] },
+      { key: 'closing', title: 'Daily closing', to: '/dashboard/closing', anyPermission: ['day.close', 'wallet.view'] },
       { key: 'invoices', title: 'Invoices', to: '/dashboard/invoices', hidden: true },
     ],
   },

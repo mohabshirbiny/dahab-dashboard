@@ -96,4 +96,21 @@ export const endpoints = {
   withdrawalAction: (id: string, action: 'review' | 'hold' | 'unhold' | 'release' | 'reject') => `/dashboard/withdrawals/${encodeURIComponent(id)}/${action}`,
   payoutAccounts: '/dashboard/payout-accounts',
   payoutAccountAction: (id: string, action: 'verify' | 'refuse') => `/dashboard/payout-accounts/${encodeURIComponent(id)}/${action}`,
+  // Finance operations (Backend spec 015): compensation.pay, wallet.adjust, bank.record, day.close (reads also wallet.view).
+  compensation: '/dashboard/compensation',
+  compensationExport: '/dashboard/compensation/export',
+  walletAdjustments: '/dashboard/wallet-adjustments',
+  customerWalletAdjust: (customerId: string) => `/dashboard/customers/${encodeURIComponent(customerId)}/wallet-adjustments`,
+  staffUploads: '/dashboard/uploads',
+  bankMovements: '/dashboard/bank-movements',
+  bankMovementsExport: '/dashboard/bank-movements/export',
+  bankMovementProof: (id: string) => `/dashboard/bank-movements/${encodeURIComponent(id)}/proof`,
+  bankBook: '/dashboard/bank-book',
+  bankBookExport: '/dashboard/bank-book/export',
+  dailyClose: '/dashboard/daily-close',
+  dailyCloses: '/dashboard/daily-closes',
+  // The Overview's figures (Backend spec 015): any staff; each section by permission.
+  overview: '/dashboard/overview',
+  // The Orders list as CSV (Backend spec 015): order.view.
+  ordersExport: '/dashboard/orders/export',
 } as const

@@ -7,9 +7,6 @@ import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'compensation', name: 'compensation', component: Placeholder, meta: { title: 'Compensation' } },
-  { path: 'bankbook', name: 'bankbook', component: Placeholder, meta: { title: 'Bank movements' } },
-  { path: 'closing', name: 'closing', component: Placeholder, meta: { title: 'Daily closing' } },
   { path: 'invoices', name: 'invoices', component: Placeholder, meta: { title: 'Invoices' } },
   { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
   { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
@@ -93,6 +90,25 @@ const routes: RouteRecordRaw[] = [
         name: 'withdrawals',
         component: () => import('@/pages/withdrawals/index.vue'),
         meta: { title: 'Withdrawals', anyPermissions: [PERMISSIONS.withdrawalRelease, PERMISSIONS.walletView, PERMISSIONS.payoutAccountVerify] },
+      },
+      {
+        // Finance operations (Backend spec 015): reads with the acting code or wallet.view.
+        path: 'dashboard/compensation',
+        name: 'compensation',
+        component: () => import('@/pages/compensation/index.vue'),
+        meta: { title: 'Compensation', anyPermissions: [PERMISSIONS.compensationPay, PERMISSIONS.walletView] },
+      },
+      {
+        path: 'dashboard/bankbook',
+        name: 'bankbook',
+        component: () => import('@/pages/bankbook/index.vue'),
+        meta: { title: 'Bank movements', anyPermissions: [PERMISSIONS.bankRecord, PERMISSIONS.walletView] },
+      },
+      {
+        path: 'dashboard/closing',
+        name: 'closing',
+        component: () => import('@/pages/closing/index.vue'),
+        meta: { title: 'Daily closing', anyPermissions: [PERMISSIONS.dayClose, PERMISSIONS.walletView] },
       },
       {
         // Incoming transfers (Backend spec 009): match, hold, reject, credit by hand.
