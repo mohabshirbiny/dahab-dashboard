@@ -48,6 +48,12 @@ export const PERMISSIONS = {
   // payout_account.verify: CEO, Finance and Verification.
   withdrawalRelease: 'withdrawal.release',
   payoutAccountVerify: 'payout_account.verify',
+  // Disputes (Backend spec 014). dispute.handle: CEO, COO, Operations, Finance; order.refund
+  // and compensation.pay: CEO and Finance (never the COO); compensation.uncapped: CEO only.
+  disputeHandle: 'dispute.handle',
+  orderRefund: 'order.refund',
+  compensationPay: 'compensation.pay',
+  compensationUncapped: 'compensation.uncapped',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

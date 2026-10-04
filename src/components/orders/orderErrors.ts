@@ -67,6 +67,16 @@ export function orderErrorMessage (error: unknown): string {
     case 'settlement_not_possible': {
       return 'The price cannot be settled for this order. Check the inspection result.'
     }
+    // Spec 014.
+    case 'order_frozen': {
+      return 'This order is frozen by an open dispute. Resolve the dispute first.'
+    }
+    case 'proxy_details_missing': {
+      return 'Check the ID of the person collecting against the named proxy, and tick the box.'
+    }
+    case 'illegal_extension_request_transition': {
+      return 'This request has already been answered, or the order moved on. It has been refreshed.'
+    }
   }
   return listingErrorMessage(error)
 }

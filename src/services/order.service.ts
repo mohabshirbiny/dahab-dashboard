@@ -2,6 +2,10 @@ import type { ApiEnvelope } from '@/types/api'
 import type { ListingCategory, ListingState } from '@/types/listing'
 import type {
   ExtendableDeadline,
+  ExtensionHours,
+  ExtensionRequest,
+  ExtensionRequestPage,
+  ExtensionRequestState,
   InspectionFilters,
   InspectionInput,
   InspectionOutcome,
@@ -39,6 +43,28 @@ interface ApiOrder {
   paid: string | null
   deadline: { kind: string, at: string, overdue: boolean } | null
   accepted_at: string
+  frozen?: boolean
+  has_waiting_extension?: boolean
+}
+
+// Spec 014: StaffExtensionRequest.
+interface ApiExtensionRequest {
+  id: string
+  order?: { id: string, ref: string, state: OrderState, branch: { id: number, name_en: string | null, name_ar: string | null } | null }
+  seller?: { customer_id: string, display_ref: string | null }
+  reason: string
+  reason_label: string
+  detail: string
+  state: ExtensionRequestState
+  deadline_at_request: string
+  deadline_now: string | null
+  seconds_left: number | null
+  extensions_before: number | null
+  requested_at: string
+  answered_at: string | null
+  answered_by: { staff_id: string, name: string | null } | null
+  hours_granted: number | null
+  answer_note: string | null
 }
 
 interface ApiInspection {
@@ -63,7 +89,7 @@ interface ApiInspection {
   superseded?: boolean
 }
 
-interface ApiOrderDetail extends ApiOrder {
+export interface ApiOrderDetail extends ApiOrder {
   locked_total_price: string
   deposit_amount: string
   locked_seller_unit_rate: string | null
@@ -85,11 +111,19 @@ interface ApiOrderDetail extends ApiOrder {
   balance_due_deadline: string | null
   reach_branch_deadline: string
   collect_deadline: string | null
-  collection: { collected_at: string | null, handover_by: string | null, failed_attempts: number, locked_until: string | null } | null
+  collection: {
+    collected_at: string | null
+    handover_by: string | null
+    failed_attempts: number
+    locked_until: string | null
+    proxy?: { name: string | null, phone: string | null, named_at: string | null, has_id_photo: boolean, collected_by_proxy: boolean } | null
+  } | null
   seller_return: { return_deadline: string, collected_at: string | null, relisted_at: string | null, compensation_txn_id: string | null, failed_attempts: number, locked_until: string | null } | null
   cancel_reason: string | null
   ledger: Array<{ ledger_txn_id: string, event_kind: string, created_at: string, lines: Array<{ account: string, party: 'buyer' | 'seller' | 'dahab' | 'other', amount: string }> }>
   timeline: Array<{ event: string, at: string, detail: Record<string, unknown> }>
+  disputes?: Array<{ id: string, ref: string, raised_as: 'buyer' | 'seller', reason: string, state: string, outcome: string | null, opened_at: string }>
+  extension_request?: ApiExtensionRequest | null
   can: {
     receive: boolean
     inspect: boolean
@@ -100,6 +134,9 @@ interface ApiOrderDetail extends ApiOrder {
     handover: boolean
     return_handover: boolean
     cancel: boolean
+    handle_dispute?: boolean
+    answer_extension?: boolean
+    view_proxy_id?: boolean
   }
 }
 
@@ -160,6 +197,31 @@ function toOrder (o: ApiOrder): Order {
     paid: o.paid,
     deadline: o.deadline,
     acceptedAt: o.accepted_at,
+    frozen: o.frozen ?? o.state === 'disputed',
+    hasWaitingExtension: o.has_waiting_extension ?? false,
+  }
+}
+
+export function toExtensionRequest (r: ApiExtensionRequest): ExtensionRequest {
+  return {
+    id: r.id,
+    order: r.order
+      ? { id: r.order.id, ref: r.order.ref, state: r.order.state, branch: r.order.branch ? { id: r.order.branch.id, nameEn: r.order.branch.name_en } : null }
+      : null,
+    seller: r.seller ? { customerId: r.seller.customer_id, displayRef: r.seller.display_ref } : null,
+    reason: r.reason,
+    reasonLabel: r.reason_label,
+    detail: r.detail,
+    state: r.state,
+    deadlineAtRequest: r.deadline_at_request,
+    deadlineNow: r.deadline_now,
+    secondsLeft: r.seconds_left,
+    extensionsBefore: r.extensions_before,
+    requestedAt: r.requested_at,
+    answeredAt: r.answered_at,
+    answeredBy: r.answered_by ? { staffId: r.answered_by.staff_id, name: r.answered_by.name } : null,
+    hoursGranted: r.hours_granted,
+    answerNote: r.answer_note,
   }
 }
 
@@ -187,7 +249,7 @@ function toInspection (r: ApiInspection): InspectionResult {
   }
 }
 
-function toDetail (o: ApiOrderDetail): OrderDetail {
+export function toDetail (o: ApiOrderDetail): OrderDetail {
   const s = o.settlement
   const r = o.seller_return
   return {
@@ -216,7 +278,20 @@ function toDetail (o: ApiOrderDetail): OrderDetail {
     reachBranchDeadline: o.reach_branch_deadline,
     collectDeadline: o.collect_deadline,
     collection: o.collection
-      ? { collectedAt: o.collection.collected_at, failedAttempts: o.collection.failed_attempts, lockedUntil: o.collection.locked_until }
+      ? {
+          collectedAt: o.collection.collected_at,
+          failedAttempts: o.collection.failed_attempts,
+          lockedUntil: o.collection.locked_until,
+          proxy: o.collection.proxy
+            ? {
+                name: o.collection.proxy.name,
+                phone: o.collection.proxy.phone,
+                namedAt: o.collection.proxy.named_at,
+                hasIdPhoto: o.collection.proxy.has_id_photo,
+                collectedByProxy: o.collection.proxy.collected_by_proxy,
+              }
+            : null,
+        }
       : null,
     sellerReturn: r
       ? { returnDeadline: r.return_deadline, collectedAt: r.collected_at, relistedAt: r.relisted_at, failedAttempts: r.failed_attempts, lockedUntil: r.locked_until }
@@ -224,6 +299,10 @@ function toDetail (o: ApiOrderDetail): OrderDetail {
     cancelReason: o.cancel_reason,
     ledger: o.ledger.map(e => ({ id: e.ledger_txn_id, eventKind: e.event_kind, createdAt: e.created_at, lines: e.lines })),
     timeline: o.timeline,
+    disputes: (o.disputes ?? []).map(d => ({
+      id: d.id, ref: d.ref, raisedAs: d.raised_as, reason: d.reason, state: d.state, outcome: d.outcome, openedAt: d.opened_at,
+    })),
+    extensionRequest: o.extension_request ? toExtensionRequest(o.extension_request) : null,
     can: {
       receive: o.can.receive,
       inspect: o.can.inspect,
@@ -234,6 +313,9 @@ function toDetail (o: ApiOrderDetail): OrderDetail {
       handover: o.can.handover,
       returnHandover: o.can.return_handover,
       cancel: o.can.cancel,
+      handleDispute: o.can.handle_dispute ?? false,
+      answerExtension: o.can.answer_extension ?? false,
+      viewProxyId: o.can.view_proxy_id ?? false,
     },
   }
 }
@@ -348,8 +430,36 @@ export const orderService = {
   },
 
   // POST /dashboard/orders/{id}/handover | seller-return/handover   (order.handover) — against the 6-digit code.
-  async handover (id: string, to: 'buyer' | 'seller', code: string, idempotencyKey: string): Promise<void> {
-    await http.post(endpoints.orderAction(id, to === 'buyer' ? 'handover' : 'seller-return/handover'), { code }, keyHeader(idempotencyKey))
+  // Spec 014: the buyer may have named someone else to collect; then staff confirm they checked that person's ID.
+  async handover (id: string, to: 'buyer' | 'seller', code: string, idempotencyKey: string, byProxy = false): Promise<void> {
+    const body = to === 'buyer' && byProxy ? { code, collector: 'proxy', proxy_id_checked: true } : { code }
+    await http.post(endpoints.orderAction(id, to === 'buyer' ? 'handover' : 'seller-return/handover'), body, keyHeader(idempotencyKey))
+  },
+
+  // GET /dashboard/orders/{id}/proxy-id   (order.handover | order.view) — the decrypted ID photo; audited, never cached.
+  async proxyId (id: string): Promise<Blob> {
+    const response = await http.get<Blob>(endpoints.orderProxyId(id), { responseType: 'blob' })
+    return response.data
+  },
+
+  // GET /dashboard/extension-requests   (order.extend_deadline | order.view) — oldest first.
+  async extensionRequests (state: ExtensionRequestState | 'all', month: string | null, cursor: string | null, perPage = 25): Promise<ExtensionRequestPage> {
+    const { data } = await http.get<ApiPage<ApiExtensionRequest>>(endpoints.extensionRequests, {
+      params: { state, month: month ?? undefined, cursor: cursor ?? undefined, per_page: perPage },
+    })
+    return { rows: data.data.map(r => toExtensionRequest(r)), nextCursor: data.meta.next_cursor }
+  },
+
+  // POST /dashboard/extension-requests/{id}/accept   (order.extend_deadline)
+  async acceptExtension (id: string, hours: ExtensionHours, note: string, idempotencyKey: string): Promise<ExtensionRequest> {
+    const { data } = await http.post<ApiEnvelope<ApiExtensionRequest>>(endpoints.extensionRequestAction(id, 'accept'), { hours, note }, keyHeader(idempotencyKey))
+    return toExtensionRequest(data.data)
+  },
+
+  // POST /dashboard/extension-requests/{id}/refuse   (order.extend_deadline)
+  async refuseExtension (id: string, note: string, idempotencyKey: string): Promise<ExtensionRequest> {
+    const { data } = await http.post<ApiEnvelope<ApiExtensionRequest>>(endpoints.extensionRequestAction(id, 'refuse'), { note }, keyHeader(idempotencyKey))
+    return toExtensionRequest(data.data)
   },
 
   // GET /dashboard/inspections/work-list   (inspection.enter | order.receive | order.handover)

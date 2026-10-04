@@ -24,7 +24,10 @@
       <td class="r mono">{{ formatMoney(o.value) }}</td>
       <td class="r mono">{{ formatMoney(o.held) }}</td>
 
-      <td><StatusTag :label="orderStateMeta(o.state).label" :variant="orderStateMeta(o.state).variant" /></td>
+      <td>
+        <StatusTag :label="orderStateMeta(o.state).label" :variant="orderStateMeta(o.state).variant" />
+        <div v-if="o.hasWaitingExtension" class="who2">More time asked</div>
+      </td>
 
       <td>
         <template v-if="o.deadline">

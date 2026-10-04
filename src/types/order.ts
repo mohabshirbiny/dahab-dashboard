@@ -103,7 +103,44 @@ export interface Order {
   paid: Money | null
   deadline: OrderDeadline | null
   acceptedAt: string
+  // Spec 014: frozen by a dispute; a seller's request for more time waiting for an answer.
+  frozen: boolean
+  hasWaitingExtension: boolean
 }
+
+// A seller's request for more time (Backend spec 014): staff accept with 6, 12, 24 or 48
+// working hours, or refuse; it lapses when the order moves on.
+export type ExtensionRequestState = 'waiting' | 'accepted' | 'refused' | 'lapsed'
+export type ExtensionHours = 6 | 12 | 24 | 48
+export const EXTENSION_HOURS: ReadonlyArray<ExtensionHours> = [6, 12, 24, 48]
+
+export const EXTENSION_STATE_META: Record<ExtensionRequestState, { label: string, variant: StatusVariant }> = {
+  waiting: { label: 'Waiting', variant: 'wait' },
+  accepted: { label: 'Extended', variant: 'ok' },
+  refused: { label: 'Refused', variant: 'off' },
+  lapsed: { label: 'Lapsed', variant: 'off' },
+}
+
+export interface ExtensionRequest {
+  id: string
+  order: { id: string, ref: string, state: OrderState, branch: { id: number, nameEn: string | null } | null } | null
+  seller: { customerId: string, displayRef: string | null } | null
+  reason: string
+  reasonLabel: string
+  detail: string
+  state: ExtensionRequestState
+  deadlineAtRequest: string
+  deadlineNow: string | null
+  secondsLeft: number | null
+  extensionsBefore: number | null
+  requestedAt: string
+  answeredAt: string | null
+  answeredBy: { staffId: string, name: string | null } | null
+  hoursGranted: number | null
+  answerNote: string | null
+}
+
+export interface ExtensionRequestPage { rows: ExtensionRequest[], nextCursor: string | null }
 
 // One immutable inspection result: measurements and the derived outcome, never money.
 export interface InspectionResult {
@@ -163,6 +200,29 @@ export interface OrderCan {
   handover: boolean
   returnHandover: boolean
   cancel: boolean
+  // Spec 014.
+  handleDispute: boolean
+  answerExtension: boolean
+  viewProxyId: boolean
+}
+
+// The person the buyer named to collect (Backend spec 014); the ID photo through its own call.
+export interface OrderProxy {
+  name: string | null
+  phone: string | null
+  namedAt: string | null
+  hasIdPhoto: boolean
+  collectedByProxy: boolean
+}
+
+export interface OrderDisputeRef {
+  id: string
+  ref: string
+  raisedAs: 'buyer' | 'seller'
+  reason: string
+  state: string
+  outcome: string | null
+  openedAt: string
 }
 
 export interface OrderDetail extends Order {
@@ -178,11 +238,13 @@ export interface OrderDetail extends Order {
   balanceDueDeadline: string | null
   reachBranchDeadline: string
   collectDeadline: string | null
-  collection: { collectedAt: string | null, failedAttempts: number, lockedUntil: string | null } | null
+  collection: { collectedAt: string | null, failedAttempts: number, lockedUntil: string | null, proxy: OrderProxy | null } | null
   sellerReturn: { returnDeadline: string, collectedAt: string | null, relistedAt: string | null, failedAttempts: number, lockedUntil: string | null } | null
   cancelReason: string | null
   ledger: OrderLedgerEntry[]
   timeline: OrderTimelineEvent[]
+  disputes: OrderDisputeRef[]
+  extensionRequest: ExtensionRequest | null
   can: OrderCan
 }
 

@@ -112,6 +112,16 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   payout_account_not_active: 'conflict',
   withdrawals_paused: 'conflict',
   insufficient_funds: 'conflict',
+  // Disputes, proxy collection, requests for more time (Backend spec 014).
+  order_frozen: 'conflict',
+  dispute_already_raised: 'conflict',
+  dispute_outcome_not_allowed: 'conflict',
+  illegal_dispute_transition: 'conflict',
+  assignee_not_eligible: 'validation',
+  extension_request_pending: 'conflict',
+  illegal_extension_request_transition: 'conflict',
+  compensation_cap_exceeded: 'forbidden',
+  proxy_details_missing: 'validation',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {
