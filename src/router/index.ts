@@ -7,7 +7,6 @@ import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
 
 const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'invoices', name: 'invoices', component: Placeholder, meta: { title: 'Invoices' } },
   { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
   { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
   { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
@@ -109,6 +108,13 @@ const routes: RouteRecordRaw[] = [
         name: 'closing',
         component: () => import('@/pages/closing/index.vue'),
         meta: { title: 'Daily closing', anyPermissions: [PERMISSIONS.dayClose, PERMISSIONS.walletView] },
+      },
+      {
+        // Tax invoices and credit notes (Backend spec 016): invoice.view reads; invoice.correct issues credit notes.
+        path: 'dashboard/invoices',
+        name: 'invoices',
+        component: () => import('@/pages/invoices/index.vue'),
+        meta: { title: 'Invoices', permissions: [PERMISSIONS.invoiceView] },
       },
       {
         // Incoming transfers (Backend spec 009): match, hold, reject, credit by hand.

@@ -97,8 +97,10 @@ read-only Buy requests (`buy_request.view`; not in the design) — call
 the real Backend; `src/api/endpoints.ts` lists only
 routes that exist. Since Backend spec 015 the Overview is fully live (`/dashboard/overview`, sections by permission),
 and Compensation (`compensation.pay`, reads also `wallet.view`), Bank movements (`bank.record`), Daily closing
-(`day.close`), Adjust in the Customer file's wallet (`wallet.adjust`) and the Orders export are live. Everything else
-has no Backend route yet and is still mock or a placeholder (Invoices, Promo codes, Market maker approvals, Switches,
+(`day.close`), Adjust in the Customer file's wallet (`wallet.adjust`) and the Orders export are live. Since Backend spec 016
+Invoices is live (`invoice.view`: figures, invoices with status from credit notes, export, credit notes, detail and
+PDF; `invoice.correct`: Issue a credit note; no Tax Authority status — e-invoicing is not connected). Everything else
+has no Backend route yet and is still mock or a placeholder (Promo codes, Market maker approvals, Switches,
 App text, Terms and versions, the Rapaport matrix, some sidebar badges). `docs/README.md` and `docs/03-ARCHITECTURE.md` describe the earlier
 frontend-only phase and are out of date on this point. Read `docs/06-BACKEND-API-INTEGRATION.md` for what is
 wired, how the client behaves (base URL, refresh, errors) and the Backend gaps before touching a service.

@@ -108,6 +108,14 @@ export const endpoints = {
   bankBook: '/dashboard/bank-book',
   bankBookExport: '/dashboard/bank-book/export',
   dailyClose: '/dashboard/daily-close',
+  // Tax invoices and credit notes (Backend spec 016): reads invoice.view, credit notes invoice.correct.
+  invoices: '/dashboard/invoices',
+  invoicesExport: '/dashboard/invoices/export',
+  invoice: (id: string) => `/dashboard/invoices/${encodeURIComponent(id)}`,
+  invoicePdf: (id: string) => `/dashboard/invoices/${encodeURIComponent(id)}/pdf`,
+  invoiceCreditNotes: (id: string) => `/dashboard/invoices/${encodeURIComponent(id)}/credit-notes`,
+  creditNotes: '/dashboard/credit-notes',
+  creditNotePdf: (id: string) => `/dashboard/credit-notes/${encodeURIComponent(id)}/pdf`,
   dailyCloses: '/dashboard/daily-closes',
   // The Overview's figures (Backend spec 015): any staff; each section by permission.
   overview: '/dashboard/overview',
