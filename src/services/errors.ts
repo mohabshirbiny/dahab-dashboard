@@ -126,6 +126,10 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   day_not_ended: 'validation',
   day_already_closed: 'conflict',
   upload_token_invalid: 'validation',
+  // Tax invoices (Backend spec 016).
+  invoice_not_creditable: 'conflict',
+  credit_exceeds_invoice: 'validation',
+  document_not_ready: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

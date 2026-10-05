@@ -59,6 +59,10 @@ export const PERMISSIONS = {
   walletAdjust: 'wallet.adjust',
   bankRecord: 'bank.record',
   dayClose: 'day.close',
+  // Tax invoices (Backend spec 016). invoice.view reads; invoice.correct issues a credit note.
+  // Both CEO and Finance, never the COO.
+  invoiceView: 'invoice.view',
+  invoiceCorrect: 'invoice.correct',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
