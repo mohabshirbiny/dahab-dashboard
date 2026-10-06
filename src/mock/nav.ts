@@ -15,7 +15,7 @@ export const navGroups: NavGroup[] = [
       // Not in the design: Backend spec 012 US10 asked for a read-only view of every buyer in line.
       { key: 'buy-requests', title: 'Buy requests', to: '/dashboard/buy-requests', permission: 'buy_request.view' },
       { key: 'inspections', title: 'Inspections', to: '/dashboard/inspections', anyPermission: ['order.receive', 'inspection.enter', 'order.handover', 'order.view'] },
-      { key: 'disputes', title: 'Disputes and reports', to: '/dashboard/disputes', liveBadge: 'disputesOpen', permission: 'dispute.handle' },
+      { key: 'disputes', title: 'Disputes and reports', to: '/dashboard/disputes', liveBadge: 'disputesOpen', anyPermission: ['dispute.handle', 'listing_report.handle'] },
     ],
   },
   {

@@ -2,14 +2,16 @@ import type { IdentityDocumentStatus, IdentityDocumentType } from './identity'
 import type { StatusVariant } from './status'
 import type { PayoutAccount } from './withdrawal'
 
-// The Backend `customer.status` lifecycle. The four Users and verification tabs map 1:1 to it.
-export type CustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended'
+// The Backend `customer.status` lifecycle. The Users and verification tabs map 1:1 to it;
+// `closed` (Backend spec 017) is final — the customer closed the account.
+export type CustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended' | 'closed'
 
 export const CUSTOMER_STATUS_META: Record<CustomerStatus, { label: string, variant: StatusVariant }> = {
   pending_verification: { label: 'Waiting', variant: 'wait' },
   active: { label: 'Verified', variant: 'ok' },
   rejected: { label: 'Rejected', variant: 'bad' },
   suspended: { label: 'Suspended', variant: 'off' },
+  closed: { label: 'Closed', variant: 'off' },
 }
 
 export type CustomerType = 'ordinary' | 'market_maker'
@@ -113,6 +115,9 @@ export interface CustomerFile extends CustomerVerification {
   // Backend spec 013: every payout account (the one in use first) and the open withdrawal pause.
   payoutAccounts: PayoutAccount[]
   withdrawalPauseUntil: string | null
+  // What opened the pause (Backend spec 017): a payout-account, phone or email change.
+  withdrawalPauseTrigger: WithdrawalPauseTrigger | null
+  closure: CustomerClosure | null
 }
 
 // The file's "Sign-ins and devices" (Backend spec 007).
@@ -158,6 +163,7 @@ export interface CustomerCounts {
   active: number
   rejected: number
   suspended: number
+  closed: number
 }
 
 export interface CustomerListResult {
@@ -170,12 +176,53 @@ export interface CustomerListResult {
 
 export const CUSTOMER_PAGE_SIZE = 10
 
-export const CUSTOMER_STATUSES: readonly CustomerStatus[] = ['pending_verification', 'active', 'rejected', 'suspended']
+export const CUSTOMER_STATUSES: readonly CustomerStatus[] = ['pending_verification', 'active', 'rejected', 'suspended', 'closed']
 
 export const DEFAULT_CUSTOMER_FILTERS: CustomerFilters = {
   status: 'pending_verification',
   page: 1,
   customer: null,
+}
+
+export type WithdrawalPauseTrigger = 'payout_account' | 'phone_change' | 'email_change'
+
+export const PAUSE_TRIGGER_LABELS: Record<WithdrawalPauseTrigger, string> = {
+  payout_account: 'an account change',
+  phone_change: 'a phone number change',
+  email_change: 'an email change',
+}
+
+export type CloseReason = 'finished' | 'fees_too_high' | 'too_slow_to_sell' | 'data_trust' | 'something_went_wrong' | 'other'
+
+export const CLOSE_REASON_LABELS: Record<CloseReason, string> = {
+  finished: 'Finished what they came for',
+  fees_too_high: 'Fees are too high',
+  too_slow_to_sell: 'It took too long to sell',
+  data_trust: 'Does not trust it with their data',
+  something_went_wrong: 'Something went wrong',
+  other: 'Another reason',
+}
+
+export interface CustomerClosure {
+  closedAt: string
+  reason: CloseReason
+  note: string | null
+}
+
+// One item of what the customer was sent (Backend spec 017 FR-035): their inbox.
+export interface CustomerInboxItem {
+  id: string
+  type: string
+  title: string
+  body: string
+  linkKind: string
+  createdAt: string
+  readAt: string | null
+}
+
+export interface CustomerInboxPage {
+  items: CustomerInboxItem[]
+  nextCursor: string | null
 }
 
 // `red_sea` becomes `Red sea`. The Backend sends codes only; labels are the UI's job.

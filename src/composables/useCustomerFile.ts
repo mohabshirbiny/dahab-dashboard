@@ -13,6 +13,18 @@ export const customerFileKeys = {
   search: (q: string) => [...customerKeys.all, 'search', q] as const,
   activity: (id: string) => [...customerKeys.all, 'activity', id] as const,
   sessions: (id: string, page: number) => [...customerKeys.all, 'sessions', id, page] as const,
+  notifications: (id: string) => [...customerKeys.all, 'notifications', id] as const,
+}
+
+// What the customer was sent (Backend spec 017 FR-035): keyset pages, "Load more".
+export function useCustomerNotificationsQuery (id: MaybeRefOrGetter<string>) {
+  return useInfiniteQuery({
+    queryKey: computed(() => customerFileKeys.notifications(toValue(id))),
+    queryFn: ({ pageParam }) => customerService.getNotifications(toValue(id), pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: last => last.nextCursor,
+    retry: retryTransient,
+  })
 }
 
 // History: keyset pages ("Load more" follows the cursor). Only for staff who hold an

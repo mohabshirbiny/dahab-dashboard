@@ -63,6 +63,8 @@ export const PERMISSIONS = {
   // Both CEO and Finance, never the COO.
   invoiceView: 'invoice.view',
   invoiceCorrect: 'invoice.correct',
+  // Listing reports (Backend spec 017). Taking a reported piece down also needs listing.takedown.
+  listingReportHandle: 'listing_report.handle',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

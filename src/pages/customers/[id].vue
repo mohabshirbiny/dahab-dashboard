@@ -17,11 +17,17 @@
       <div class="d-file__main">
         <IdentityDocumentsPanel :documents="customer.documents" />
         <CustomerSessionsPanel :customer-id="customer.id" />
+        <CustomerNotificationsPanel :customer-id="customer.id" />
       </div>
 
       <div class="d-file__side">
+        <NoteBanner v-if="customer.closure" class="d-file__closed" variant="info">
+          They closed the account on {{ formatDateTime(customer.closure.closedAt) }}: {{ CLOSE_REASON_LABELS[customer.closure.reason] }}{{ customer.closure.note ? ` — “${customer.closure.note}”` : '' }}.
+          Nothing was deleted; they cannot sign in again.
+        </NoteBanner>
+
         <CustomerProfileCard :customer="customer">
-          <template v-if="canSuspend && open === null" #actions>
+          <template v-if="canSuspend && open === null && !customer.closure" #actions>
             <DBtn v-if="customer.suspension" kind="primary" @click="open = 'reinstate'">Reinstate</DBtn>
             <DBtn v-else kind="danger" @click="open = 'suspend'">Suspend</DBtn>
           </template>
@@ -39,7 +45,12 @@
 
         <CustomerWalletPanel v-if="can(PERMISSIONS.walletView)" :customer-id="customer.id" />
 
-        <PayoutAccountsPanel :accounts="customer.payoutAccounts" :customer-id="customer.id" :pause-until="customer.withdrawalPauseUntil" />
+        <PayoutAccountsPanel
+          :accounts="customer.payoutAccounts"
+          :customer-id="customer.id"
+          :pause-trigger="customer.withdrawalPauseTrigger"
+          :pause-until="customer.withdrawalPauseUntil"
+        />
 
         <CustomerHistoryPanel v-if="canSeeHistory" :customer-id="customer.id" :own-only="!can(PERMISSIONS.auditViewAll)" />
       </div>
@@ -51,6 +62,7 @@
   import { computed, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
   import CustomerHistoryPanel from '@/components/customer-file/CustomerHistoryPanel.vue'
+  import CustomerNotificationsPanel from '@/components/customer-file/CustomerNotificationsPanel.vue'
   import CustomerProfileCard from '@/components/customer-file/CustomerProfileCard.vue'
   import CustomerSessionsPanel from '@/components/customer-file/CustomerSessionsPanel.vue'
   import CustomerWalletPanel from '@/components/customer-file/CustomerWalletPanel.vue'
@@ -61,11 +73,14 @@
   import DBtn from '@/components/ui/DBtn.vue'
   import ErrorState from '@/components/ui/ErrorState.vue'
   import LoadingState from '@/components/ui/LoadingState.vue'
+  import NoteBanner from '@/components/ui/NoteBanner.vue'
   import PageLead from '@/components/ui/PageLead.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { useCustomerFileQuery } from '@/composables/useCustomerFile'
+  import { formatDateTime } from '@/composables/useFormatters'
   import { usePermissions } from '@/composables/usePermissions'
   import { errorCodeOf } from '@/services/errors'
+  import { CLOSE_REASON_LABELS } from '@/types/customer'
   import { PERMISSIONS } from '@/types/staff'
 
   // Customer file (Backend spec 007). Panels for features the Backend does not have
