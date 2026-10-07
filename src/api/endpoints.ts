@@ -15,6 +15,8 @@ export const endpoints = {
   customerReinstate: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/reinstate`,
   customerActivity: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/activity`,
   customerSessions: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/sessions`,
+  // Backend spec 017: what the customer was sent (their inbox), read-only.
+  customerNotifications: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/notifications`,
   identityDocumentImage: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/image`,
   identityDocumentReview: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/review`,
   // Access control (Backend spec 002).
@@ -80,6 +82,10 @@ export const endpoints = {
   extensionRequests: '/dashboard/extension-requests',
   extensionRequestAction: (id: string, action: 'accept' | 'refuse') => `/dashboard/extension-requests/${encodeURIComponent(id)}/${action}`,
   // Disputes (Backend spec 014): dispute.handle; a resolution with money or a suspension needs its own code too.
+  // Backend spec 017: listing reports, the other half of Disputes and reports.
+  listingReports: '/dashboard/listing-reports',
+  listingReport: (id: string) => `/dashboard/listing-reports/${encodeURIComponent(id)}`,
+  listingReportAction: (id: string, action: 'dismiss' | 'take-down') => `/dashboard/listing-reports/${encodeURIComponent(id)}/${action}`,
   disputes: '/dashboard/disputes',
   dispute: (id: string) => `/dashboard/disputes/${encodeURIComponent(id)}`,
   disputePhoto: (id: string, photoId: string) => `/dashboard/disputes/${encodeURIComponent(id)}/photos/${encodeURIComponent(photoId)}`,

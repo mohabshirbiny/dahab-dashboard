@@ -1,7 +1,7 @@
 <template>
   <Panel title="Payout accounts">
     <template #body>
-      <NoteBanner v-if="pauseUntil" class="d-pap__note" variant="info">Withdrawals are paused until {{ formatDateTime(pauseUntil) }} after an account change.</NoteBanner>
+      <NoteBanner v-if="pauseUntil" class="d-pap__note" variant="info">Withdrawals are paused until {{ formatDateTime(pauseUntil) }} after {{ PAUSE_TRIGGER_LABELS[pauseTrigger ?? 'payout_account'] }}.</NoteBanner>
 
       <EmptyState v-if="accounts.length === 0" description="The customer has not added a bank account yet." title="Not added yet" />
 
@@ -49,6 +49,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { WithdrawalPauseTrigger } from '@/types/customer'
   import type { PayoutAccount } from '@/types/withdrawal'
   import { computed, ref } from 'vue'
   import { RouterLink } from 'vue-router'
@@ -62,12 +63,13 @@
   import { formatDate, formatDateTime, formatMoney } from '@/composables/useFormatters'
   import { usePermissions } from '@/composables/usePermissions'
   import { useWithdrawalsQuery } from '@/composables/useWithdrawals'
+  import { PAUSE_TRIGGER_LABELS } from '@/types/customer'
   import { PERMISSIONS } from '@/types/staff'
   import { PAYOUT_ACCOUNT_STATES, reasonLabel, REFUSAL_REASONS, withdrawalStateMeta } from '@/types/withdrawal'
 
   // The customer's payout accounts and withdrawals (Backend spec 013 US8). The full number
   // shows only to holders of payout_account.verify / withdrawal.release (the Backend decides).
-  const props = defineProps<{ customerId: string, accounts: PayoutAccount[], pauseUntil: string | null }>()
+  const props = defineProps<{ customerId: string, accounts: PayoutAccount[], pauseUntil: string | null, pauseTrigger?: WithdrawalPauseTrigger | null }>()
 
   const { can, canAny } = usePermissions()
   const canVerify = computed(() => can(PERMISSIONS.payoutAccountVerify))

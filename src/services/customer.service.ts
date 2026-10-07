@@ -13,6 +13,7 @@ import type {
   CustomerCounts,
   CustomerFile,
   CustomerFileDocument,
+  CustomerInboxPage,
   CustomerListParams,
   CustomerListResult,
   CustomerSessionsResult,
@@ -88,6 +89,8 @@ function toCustomerFile (file: ApiCustomerFile): CustomerFile {
     },
     payoutAccounts: (file.payout_accounts ?? []).map(a => toPayoutAccount(a)),
     withdrawalPauseUntil: file.withdrawal_pause?.until ?? null,
+    withdrawalPauseTrigger: file.withdrawal_pause?.trigger_kind ?? null,
+    closure: file.closure ? { closedAt: file.closure.closed_at, reason: file.closure.reason, note: file.closure.note } : null,
   }
 }
 
@@ -173,11 +176,23 @@ export const customerService = {
     }
   },
 
+  // GET /dashboard/customers/{id}/notifications?cursor=   (customer.view, Backend spec 017)
+  // What the customer was sent, as their inbox shows it. Read-only.
+  async getNotifications (id: string, cursor: string | null): Promise<CustomerInboxPage> {
+    const { data } = await http.get<{ data: Array<{ id: string, type: string, title: string, body: string, link: { kind: string }, created_at: string, read_at: string | null }>, meta: { next_cursor: string | null } }>(
+      endpoints.customerNotifications(id), { params: cursor ? { cursor } : {} },
+    )
+    return {
+      items: data.data.map(n => ({ id: n.id, type: n.type, title: n.title, body: n.body, linkKind: n.link.kind, createdAt: n.created_at, readAt: n.read_at })),
+      nextCursor: data.meta.next_cursor,
+    }
+  },
+
   // The Backend has no counts endpoint, so each tab is counted from the
   // `meta.total` of its own list.
   async getCounts (): Promise<CustomerCounts> {
     const totals = await Promise.all(CUSTOMER_STATUSES.map(status => countWithStatus(status)))
-    const counts = { pending_verification: 0, active: 0, rejected: 0, suspended: 0 } satisfies CustomerCounts
+    const counts = { pending_verification: 0, active: 0, rejected: 0, suspended: 0, closed: 0 } satisfies CustomerCounts
     for (const [index, status] of CUSTOMER_STATUSES.entries()) {
       counts[status] = totals[index] ?? 0
     }

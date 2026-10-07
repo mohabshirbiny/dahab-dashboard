@@ -97,7 +97,7 @@ export interface ApiMfaEnrolled extends ApiStaffSignIn {
 
 export type ApiIdentityDocumentKind = 'egyptian_id' | 'passport'
 export type ApiIdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected'
-export type ApiCustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended'
+export type ApiCustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended' | 'closed'
 
 export type ApiCustomerType = 'ordinary' | 'market_maker'
 
@@ -199,7 +199,9 @@ export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_d
   } | null
   // Backend spec 013.
   payout_accounts?: ApiPayoutAccount[]
-  withdrawal_pause?: { until: string } | null
+  withdrawal_pause?: { until: string, trigger_kind?: 'payout_account' | 'phone_change' | 'email_change' } | null
+  // Backend spec 017: the customer closed the account.
+  closure?: { closed_at: string, reason: 'finished' | 'fees_too_high' | 'too_slow_to_sell' | 'data_trust' | 'something_went_wrong' | 'other', note: string | null } | null
 }
 
 // Access control (spec 002). `GET /dashboard/permissions` — the code-defined catalogue.

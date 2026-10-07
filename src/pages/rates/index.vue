@@ -159,7 +159,7 @@
         { key: 'marketmaker.min_list_age_days', label: 'Listed this long before a market maker can buy', hint: 'Days' },
         { key: 'payout.first_sale_cap_egp', label: 'First gold sale paid in full up to', hint: 'EGP, paid when Dahab receives the piece — before the buyer pays. Never applies to diamonds' },
         { key: 'deadline.seller_return_weeks', label: 'Weeks a returned piece waits for the seller', hint: 'After a buyer never pays' },
-        { key: 'withdrawal.account_change_pause_hours', label: 'Withdrawals pause after a payout-account change', hint: 'Hours. A person re-checks the name against the ID' },
+        { key: 'withdrawal.account_change_pause_hours', label: 'Withdrawals pause after a payout-account, phone or email change', hint: 'Hours. A person re-checks the name against the ID' },
         { key: 'flag.pattern_txn_threshold', label: 'Count someone as a pattern from', hint: 'Transactions. Below this nothing is flagged' },
         { key: 'deadline.buyer_pay_days', label: 'Days to pay after inspection', hint: 'The collection code only appears once the balance is paid' },
       ],
@@ -169,6 +169,7 @@
       subtitle: 'Not on the design; listed so every setting has a place',
       fields: [
         { key: 'suspension.cancellations_threshold', label: 'Seller cancellations before listing is suspended' },
+        { key: 'saved.max_per_customer', label: 'Pieces one customer may keep in Saved', hint: 'Count (spec 017)' },
         { key: 'compensation.cap_per_payment_egp', label: 'Compensation cap per payment' },
         { key: 'compensation.cap_per_day_egp', label: 'Compensation cap per day' },
         { key: 'manualprice.confirm_deviation_pct', label: 'Manual price needs a confirmation above' },

@@ -84,6 +84,7 @@
     { value: 'active', label: 'Verified', count: counts.value?.active },
     { value: 'rejected', label: 'Rejected', count: counts.value?.rejected },
     { value: 'suspended', label: 'Suspended', count: counts.value?.suspended },
+    { value: 'closed', label: 'Closed', count: counts.value?.closed },
   ])
 
   const PANEL_TITLES: Record<CustomerStatus, string> = {
@@ -91,6 +92,7 @@
     active: 'Verified customers',
     rejected: 'Rejected customers',
     suspended: 'Suspended customers',
+    closed: 'Closed accounts',
   }
 
   const emptyDescription = computed(() =>

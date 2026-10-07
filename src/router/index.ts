@@ -128,7 +128,8 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard/disputes',
         name: 'disputes',
         component: () => import('@/pages/disputes/index.vue'),
-        meta: { title: 'Disputes and reports', permissions: [PERMISSIONS.disputeHandle] },
+        // Spec 017: listing reports share the page (listing_report.handle).
+        meta: { title: 'Disputes and reports', anyPermissions: [PERMISSIONS.disputeHandle, PERMISSIONS.listingReportHandle] },
       },
       {
         // Orders (Backend spec 012): order.view; each action needs its own permission too.
