@@ -75,6 +75,36 @@ export const EXTENDABLE_DEADLINES: ReadonlyArray<{ value: ExtendableDeadline, la
   { value: 'collect', label: 'Collect the piece (buyer)' },
 ]
 
+// Spec 018 (Backend): the buyer's offer to relist a collected piece at 0% commission, within
+// working hours of the handover. Staff only read it; they never create or change an offer.
+export type FreeRelistStatus = 'none' | 'open' | 'used' | 'expired'
+export type FreeRelistFilter = 'open' | 'used' | 'expired'
+
+export const FREE_RELIST_META: Record<FreeRelistStatus, { label: string, variant: StatusVariant }> = {
+  none: { label: 'No offer', variant: 'off' },
+  open: { label: 'Offer open', variant: 'ok' },
+  used: { label: 'Relisted', variant: 'info' },
+  expired: { label: 'Offer expired', variant: 'off' },
+}
+
+export function freeRelistMeta (status: string): { label: string, variant: StatusVariant } {
+  return FREE_RELIST_META[status as FreeRelistStatus] ?? { label: status.replaceAll('_', ' '), variant: 'info' }
+}
+
+export interface FreeRelist {
+  status: FreeRelistStatus
+  endsAt: string | null
+  listing: { id: string, title: string | null } | null
+}
+
+// Spec 018: one party's rating of the experience with Dahab. Only with `rating.view`.
+export interface OrderRating {
+  partyRole: 'buyer' | 'seller'
+  stars: number
+  note: string | null
+  createdAt: string
+}
+
 export interface OrderParty { customerId: string, displayRef: string | null }
 
 export interface OrderPiece {
@@ -106,6 +136,8 @@ export interface Order {
   // Spec 014: frozen by a dispute; a seller's request for more time waiting for an answer.
   frozen: boolean
   hasWaitingExtension: boolean
+  // Spec 018: null when the Backend sends none.
+  freeRelistStatus: FreeRelistStatus | null
 }
 
 // A seller's request for more time (Backend spec 014): staff accept with 6, 12, 24 or 48
@@ -245,6 +277,11 @@ export interface OrderDetail extends Order {
   timeline: OrderTimelineEvent[]
   disputes: OrderDisputeRef[]
   extensionRequest: ExtensionRequest | null
+  // Spec 018.
+  freeRelist: FreeRelist | null
+  relistedFromOrder: { id: string, orderRef: string } | null
+  // null = the viewer does not hold `rating.view` (the key is absent); [] = nobody rated yet.
+  ratings: OrderRating[] | null
   can: OrderCan
 }
 
@@ -264,6 +301,8 @@ export interface OrderFilters {
   pastDeadline: boolean
   branchId: number | null
   q: string
+  // Spec 018: only orders whose free-relist offer is in that state.
+  freeRelist: FreeRelistFilter | null
 }
 
 export interface OrderPage {

@@ -6,6 +6,7 @@ import type {
   ExtensionRequest,
   ExtensionRequestPage,
   ExtensionRequestState,
+  FreeRelistStatus,
   InspectionFilters,
   InspectionInput,
   InspectionOutcome,
@@ -45,6 +46,8 @@ interface ApiOrder {
   accepted_at: string
   frozen?: boolean
   has_waiting_extension?: boolean
+  // Spec 018: on list rows.
+  free_relist_status?: string | null
 }
 
 // Spec 014: StaffExtensionRequest.
@@ -124,6 +127,10 @@ export interface ApiOrderDetail extends ApiOrder {
   timeline: Array<{ event: string, at: string, detail: Record<string, unknown> }>
   disputes?: Array<{ id: string, ref: string, raised_as: 'buyer' | 'seller', reason: string, state: string, outcome: string | null, opened_at: string }>
   extension_request?: ApiExtensionRequest | null
+  // Spec 018: the offer; where this order is itself a free relist; ratings only with rating.view (key absent otherwise).
+  free_relist?: { status: string, ends_at: string | null, listing: { id: string, title: string | null } | null } | null
+  relisted_from_order?: { id: string, order_ref: string } | null
+  ratings?: Array<{ party_role: 'buyer' | 'seller', stars: number, note: string | null, created_at: string }>
   can: {
     receive: boolean
     inspect: boolean
@@ -199,6 +206,7 @@ function toOrder (o: ApiOrder): Order {
     acceptedAt: o.accepted_at,
     frozen: o.frozen ?? o.state === 'disputed',
     hasWaitingExtension: o.has_waiting_extension ?? false,
+    freeRelistStatus: (o.free_relist_status ?? null) as Order['freeRelistStatus'],
   }
 }
 
@@ -303,6 +311,13 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
       id: d.id, ref: d.ref, raisedAs: d.raised_as, reason: d.reason, state: d.state, outcome: d.outcome, openedAt: d.opened_at,
     })),
     extensionRequest: o.extension_request ? toExtensionRequest(o.extension_request) : null,
+    freeRelist: o.free_relist
+      ? { status: o.free_relist.status as FreeRelistStatus, endsAt: o.free_relist.ends_at, listing: o.free_relist.listing }
+      : null,
+    relistedFromOrder: o.relisted_from_order ? { id: o.relisted_from_order.id, orderRef: o.relisted_from_order.order_ref } : null,
+    ratings: o.ratings === undefined
+      ? null
+      : o.ratings.map(x => ({ partyRole: x.party_role, stars: x.stars, note: x.note, createdAt: x.created_at })),
     can: {
       receive: o.can.receive,
       inspect: o.can.inspect,
@@ -365,6 +380,7 @@ export const orderService = {
         past_deadline: filters.pastDeadline ? 1 : undefined,
         branch_id: filters.branchId ?? undefined,
         q: filters.q.trim() === '' ? undefined : filters.q.trim(),
+        free_relist: filters.freeRelist ?? undefined,
       },
       responseType: 'blob',
     })
@@ -381,6 +397,7 @@ export const orderService = {
         past_deadline: filters.pastDeadline ? 1 : undefined,
         branch_id: filters.branchId ?? undefined,
         q: filters.q.trim() === '' ? undefined : filters.q.trim(),
+        free_relist: filters.freeRelist ?? undefined,
         cursor: cursor ?? undefined,
         per_page: perPage,
       },

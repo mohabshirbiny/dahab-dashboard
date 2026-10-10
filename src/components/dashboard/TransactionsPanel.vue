@@ -55,7 +55,7 @@
 
   function exportGroup (group: OrderGroup) {
     note.value = ''
-    exporting.mutate({ group, pastDeadline: false, branchId: null, q: '' }, {
+    exporting.mutate({ group, pastDeadline: false, branchId: null, q: '', freeRelist: null }, {
       onSuccess: result => {
         note.value = result.truncated ? 'The file stopped at the export limit. Use the filters on Orders to get the rest.' : ''
       },

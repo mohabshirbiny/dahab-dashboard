@@ -121,6 +121,8 @@ export interface Listing {
   canRequestChanges: boolean
   canReject: boolean
   canTakeDown: boolean
+  // Spec 018: set when this listing is a buyer's free relist (0% commission) of a collected order.
+  relistedFromOrder: { id: string, orderRef: string } | null
 }
 
 // One buyer in line (Backend spec 011), read-only: the buyer by reference only.

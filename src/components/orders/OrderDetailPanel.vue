@@ -70,6 +70,9 @@
         </KeyValueRow>
       </template>
 
+      <FreeRelistPanel :free-relist="order.freeRelist" :relisted-from="order.relistedFromOrder" />
+      <OrderRatingsPanel v-if="order.ratings !== null" :ratings="order.ratings" />
+
       <template v-if="order.settlement">
         <div class="d-odp__label">Settlement</div>
         <KeyValueRow v-if="order.settlement.finalWeightG" label="Final weight" :value="`${formatWeight(order.settlement.finalWeightG)} g`" />
@@ -215,10 +218,12 @@
   import AnswerExtensionModal from './AnswerExtensionModal.vue'
   import ChangeBranchModal from './ChangeBranchModal.vue'
   import ExtendDeadlineModal from './ExtendDeadlineModal.vue'
+  import FreeRelistPanel from './FreeRelistPanel.vue'
   import HandoverModal from './HandoverModal.vue'
   import InspectionResultModal from './InspectionResultModal.vue'
   import { orderErrorMessage } from './orderErrors'
   import { formatPct } from './orderFormat'
+  import OrderRatingsPanel from './OrderRatingsPanel.vue'
   import OrderTimeline from './OrderTimeline.vue'
   import ProposePriceModal from './ProposePriceModal.vue'
   import ProxyIdPhoto from './ProxyIdPhoto.vue'

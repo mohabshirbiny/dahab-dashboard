@@ -41,6 +41,7 @@ interface ApiListing {
   can_request_changes: boolean
   can_reject: boolean
   can_take_down: boolean
+  relisted_from_order?: { id: string, order_ref: string } | null
 }
 
 interface ApiListingDetail extends ApiListing {
@@ -124,6 +125,7 @@ function toListing (l: ApiListing): Listing {
     canRequestChanges: l.can_request_changes,
     canReject: l.can_reject,
     canTakeDown: l.can_take_down,
+    relistedFromOrder: l.relisted_from_order ? { id: l.relisted_from_order.id, orderRef: l.relisted_from_order.order_ref } : null,
   }
 }
 

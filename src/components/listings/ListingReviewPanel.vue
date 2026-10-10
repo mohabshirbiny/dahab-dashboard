@@ -15,6 +15,11 @@
       <KeyValueRow label="Phone" :value="listing.seller.phoneMasked" />
       <KeyValueRow label="Listing" :value="`${ordinal(listing.sellerListingNumber)} listing`" />
 
+      <KeyValueRow v-if="listing.relistedFromOrder" label="Free relist of order">
+        <RouterLink :to="{ name: 'orders', query: { id: listing.relistedFromOrder.id } }">{{ listing.relistedFromOrder.orderRef }}</RouterLink>
+        · no commission
+      </KeyValueRow>
+
       <KeyValueRow label="Sent back on this piece">
         <span :class="{ 'd-lrp__wait': listing.sentBackCount > 0 }">{{ listing.sentBackCount }} {{ listing.sentBackCount === 1 ? 'time' : 'times' }}</span>
       </KeyValueRow>
@@ -81,6 +86,7 @@
 <script lang="ts" setup>
   import type { ListingDecision, ListingDetail, ListingMediaKind } from '@/types/listing'
   import { computed, ref, watch } from 'vue'
+  import { RouterLink } from 'vue-router'
   import DBtn from '@/components/ui/DBtn.vue'
   import KeyValueRow from '@/components/ui/KeyValueRow.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
