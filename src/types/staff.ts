@@ -67,6 +67,8 @@ export const PERMISSIONS = {
   listingReportHandle: 'listing_report.handle',
   // Ratings (Backend spec 018): each party's rating of an order. CEO and COO.
   ratingView: 'rating.view',
+  // App text (Backend spec 019). Edit and publish the customer app's texts: CEO, COO and Operations.
+  contentEdit: 'content.edit',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

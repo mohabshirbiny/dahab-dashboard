@@ -10,7 +10,6 @@ const placeholderChildren: RouteRecordRaw[] = [
   { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
   { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
   { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
-  { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
   { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
 ].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
@@ -165,6 +164,13 @@ const routes: RouteRecordRaw[] = [
         name: 'receiving-accounts',
         component: () => import('@/pages/receiving-accounts/index.vue'),
         meta: { title: 'Receiving accounts', anyPermissions: [PERMISSIONS.topupMatch, PERMISSIONS.topupAccountsManage] },
+      },
+      {
+        // App text (Backend spec 019): drafts, Publish changes, revert, history, export.
+        path: 'dashboard/content',
+        name: 'content',
+        component: () => import('@/pages/content/index.vue'),
+        meta: { title: 'App text', permissions: [PERMISSIONS.contentEdit] },
       },
       {
         // Pricing (Backend spec 005). Changes need their own permissions too.

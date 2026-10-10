@@ -44,7 +44,8 @@ export const navGroups: NavGroup[] = [
       { key: 'karats', title: 'Karats', to: '/dashboard/karats', permission: 'reference.view' },
       { key: 'switches', title: 'Switches', to: '/dashboard/switches', hidden: true },
       { key: 'branches', title: 'Branches and hours', to: '/dashboard/branches', permission: 'reference.view' },
-      { key: 'content', title: 'App text', to: '/dashboard/content', hidden: true },
+      // Backend spec 019: the customer app's texts (content.edit; not in the design as a separate page route).
+      { key: 'content', title: 'App text', to: '/dashboard/content', permission: 'content.edit' },
       { key: 'docs', title: 'Terms and versions', to: '/dashboard/docs', hidden: true },
     ],
   },

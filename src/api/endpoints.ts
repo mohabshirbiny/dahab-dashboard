@@ -127,4 +127,12 @@ export const endpoints = {
   overview: '/dashboard/overview',
   // The Orders list as CSV (Backend spec 015): order.view.
   ordersExport: '/dashboard/orders/export',
+  // App text (Backend spec 019): content.edit. Keys are readable (`order.free_relist.card_title`).
+  appTexts: '/dashboard/app-texts',
+  appTextsExport: '/dashboard/app-texts/export',
+  appTextsPublish: '/dashboard/app-texts/publish',
+  appTextDraft: (key: string) => `/dashboard/app-texts/${encodeURIComponent(key)}/draft`,
+  appTextRevert: (key: string) => `/dashboard/app-texts/${encodeURIComponent(key)}/revert`,
+  appTextHistory: (key: string) => `/dashboard/app-texts/${encodeURIComponent(key)}/history`,
+  contentPlaceholders: '/dashboard/content/placeholders',
 } as const
