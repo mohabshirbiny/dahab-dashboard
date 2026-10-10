@@ -27,6 +27,7 @@
       <td>
         <StatusTag :label="orderStateMeta(o.state).label" :variant="orderStateMeta(o.state).variant" />
         <div v-if="o.hasWaitingExtension" class="who2">More time asked</div>
+        <div v-if="o.freeRelistStatus && o.freeRelistStatus !== 'none'" class="who2">Free relist · {{ freeRelistMeta(o.freeRelistStatus).label.toLowerCase() }}</div>
       </td>
 
       <td>
@@ -52,7 +53,7 @@
   import DBtn from '@/components/ui/DBtn.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
   import { formatDateTime, formatMoney } from '@/composables/useFormatters'
-  import { DEADLINE_LABELS, orderStateMeta, pieceTitle } from '@/types/order'
+  import { DEADLINE_LABELS, freeRelistMeta, orderStateMeta, pieceTitle } from '@/types/order'
 
   defineProps<{ rows: Order[], selectedId: string | null }>()
 

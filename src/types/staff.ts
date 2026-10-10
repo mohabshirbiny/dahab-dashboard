@@ -65,6 +65,8 @@ export const PERMISSIONS = {
   invoiceCorrect: 'invoice.correct',
   // Listing reports (Backend spec 017). Taking a reported piece down also needs listing.takedown.
   listingReportHandle: 'listing_report.handle',
+  // Ratings (Backend spec 018): each party's rating of an order. CEO and COO.
+  ratingView: 'rating.view',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

@@ -15,6 +15,7 @@
 
       <DBtn type="submit">Search</DBtn>
       <DSelect v-if="branchOptions.length > 1" v-model="branch" aria-label="Branch" :options="branchOptions" />
+      <DSelect aria-label="Free relist" :model-value="freeRelist" :options="FREE_RELIST_OPTIONS" @update:model-value="setFreeRelist" />
       <DBtn :loading="exporting.isPending.value" @click="exportList">Export to Excel</DBtn>
     </form>
 
@@ -73,7 +74,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { ExtensionRequest, OrderFilters, OrderGroup } from '@/types/order'
+  import type { ExtensionRequest, FreeRelistFilter, OrderFilters, OrderGroup } from '@/types/order'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import AnswerExtensionModal from '@/components/orders/AnswerExtensionModal.vue'
@@ -122,6 +123,17 @@
     return value in GROUP_TITLES ? value as OrderGroup : 'open'
   })
   const pastDeadline = computed(() => route.query.past === '1')
+  // Spec 018: only orders whose collected piece has / had a free-relist offer in that state.
+  const FREE_RELIST_OPTIONS = [
+    { value: '', label: 'Any free relist' },
+    { value: 'open', label: 'Offer open' },
+    { value: 'used', label: 'Relisted' },
+    { value: 'expired', label: 'Offer expired' },
+  ]
+  const freeRelist = computed<FreeRelistFilter | ''>(() => {
+    const value = String(route.query.free_relist ?? '')
+    return ['open', 'used', 'expired'].includes(value) ? value as FreeRelistFilter : ''
+  })
   const selectedId = computed(() => (typeof route.query.id === 'string' && route.query.id !== '' ? route.query.id : null))
 
   const applied = computed(() => (typeof route.query.q === 'string' ? route.query.q : ''))
@@ -139,6 +151,7 @@
     pastDeadline: pastDeadline.value,
     branchId: branch.value === '' ? null : Number(branch.value),
     q: applied.value,
+    freeRelist: freeRelist.value === '' ? null : freeRelist.value,
   }))
 
   const list = useOrdersQuery(filters)
@@ -207,6 +220,10 @@
       query.group = value
     }
     router.replace({ query })
+  }
+
+  function setFreeRelist (value: string) {
+    router.replace({ query: { ...route.query, id: undefined, free_relist: value === '' ? undefined : value } })
   }
 
   function applySearch () {
