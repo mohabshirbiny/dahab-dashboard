@@ -19,6 +19,16 @@ export function accessErrorMessage (error: unknown): string {
     case 'account_frozen': {
       return 'Your account is frozen. Changes are blocked until it is unfrozen.'
     }
+    // Create, disable and enable (Backend spec 020).
+    case 'founder_protected': {
+      return 'A founder account can\'t be disabled here.'
+    }
+    case 'staff_already_disabled': {
+      return 'This person is already disabled. The list has been refreshed.'
+    }
+    case 'staff_not_disabled': {
+      return 'This person is not disabled. The list has been refreshed.'
+    }
   }
   switch (errorCodeOf(error)) {
     case 'forbidden': {

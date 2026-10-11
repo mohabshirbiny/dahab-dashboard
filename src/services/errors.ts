@@ -73,6 +73,8 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   role_in_use: 'conflict',
   last_role_manager: 'conflict',
   reason_required: 'validation',
+  // Staff recovery (Backend spec 020).
+  reset_link_invalid: 'gone',
   // Reference data (Backend spec 004).
   closure_exists: 'conflict',
   closure_in_past: 'conflict',

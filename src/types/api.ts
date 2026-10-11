@@ -199,7 +199,7 @@ export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_d
   } | null
   // Backend spec 013.
   payout_accounts?: ApiPayoutAccount[]
-  withdrawal_pause?: { until: string, trigger_kind?: 'payout_account' | 'phone_change' | 'email_change' } | null
+  withdrawal_pause?: { until: string, trigger_kind?: 'payout_account' | 'phone_change' | 'email_change' | 'password_reset' } | null
   // Backend spec 017: the customer closed the account.
   closure?: { closed_at: string, reason: 'finished' | 'fees_too_high' | 'too_slow_to_sell' | 'data_trust' | 'something_went_wrong' | 'other', note: string | null } | null
 }
@@ -236,6 +236,8 @@ export interface ApiStaffMember {
   roles: ApiRoleRef[]
   permissions: string[]
   mfa_enrolled: boolean
+  // Backend spec 020: false for an invited or re-enabled member who has not chosen a password.
+  password_set?: boolean
 }
 
 // Reference data (Backend spec 004).

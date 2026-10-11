@@ -1,4 +1,4 @@
-import type { CreateRoleInput, UpdateRoleInput } from '@/types/access'
+import type { CreateRoleInput, CreateStaffInput, StaffStatusFilter, UpdateRoleInput } from '@/types/access'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { accessService } from '@/services/access.service'
@@ -10,7 +10,7 @@ export const accessKeys = {
   all: ['access'] as const,
   permissions: () => [...accessKeys.all, 'permissions'] as const,
   roles: () => [...accessKeys.all, 'roles'] as const,
-  staff: (page: number) => [...accessKeys.all, 'staff', page] as const,
+  staff: (page: number, status: StaffStatusFilter = 'all') => [...accessKeys.all, 'staff', page, status] as const,
 }
 
 export function usePermissionCatalogueQuery (enabled: MaybeRefOrGetter<boolean>) {
@@ -33,10 +33,10 @@ export function useRolesQuery (enabled: MaybeRefOrGetter<boolean>) {
   })
 }
 
-export function useStaffQuery (page: MaybeRefOrGetter<number>) {
+export function useStaffQuery (page: MaybeRefOrGetter<number>, status: MaybeRefOrGetter<StaffStatusFilter> = 'all') {
   return useQuery({
-    queryKey: computed(() => accessKeys.staff(toValue(page))),
-    queryFn: () => accessService.listStaff({ page: toValue(page), pageSize: STAFF_PAGE_SIZE }),
+    queryKey: computed(() => accessKeys.staff(toValue(page), toValue(status))),
+    queryFn: () => accessService.listStaff({ page: toValue(page), pageSize: STAFF_PAGE_SIZE, status: toValue(status) }),
     placeholderData: keepPreviousData,
     retry: retryTransient,
   })
@@ -86,6 +86,31 @@ export function useSetStaffRoles () {
   return useMutation({
     mutationFn: (input: { id: string, roles: string[], reason: string }) =>
       accessService.setStaffRoles(input.id, input.roles, input.reason),
+    onSuccess: refresh,
+  })
+}
+
+// Create, disable and enable staff accounts (Backend spec 020). `key` is the form's Idempotency-Key.
+export function useCreateStaff () {
+  const refresh = useRefreshAccess()
+  return useMutation({
+    mutationFn: (input: { staff: CreateStaffInput, key: string }) => accessService.createStaff(input.staff, input.key),
+    onSuccess: refresh,
+  })
+}
+
+export function useDisableStaff () {
+  const refresh = useRefreshAccess()
+  return useMutation({
+    mutationFn: (input: { id: string, reason: string, key: string }) => accessService.disableStaff(input.id, input.reason, input.key),
+    onSuccess: refresh,
+  })
+}
+
+export function useEnableStaff () {
+  const refresh = useRefreshAccess()
+  return useMutation({
+    mutationFn: (input: { id: string, reason: string, key: string }) => accessService.enableStaff(input.id, input.reason, input.key),
     onSuccess: refresh,
   })
 }

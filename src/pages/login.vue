@@ -1,6 +1,15 @@
 <template>
   <AuthShell subtitle="Sign in with your own staff account." title="Sign in to Dahab admin">
     <NoteBanner
+      v-if="route.query.reset === 'done'"
+      class="d-login__banner"
+      role="status"
+      variant="ok"
+    >
+      <span><b>Password set.</b> Sign in with your new password.</span>
+    </NoteBanner>
+
+    <NoteBanner
       v-if="banner"
       class="d-login__banner"
       role="alert"
@@ -53,6 +62,10 @@
           </template>
         </DInput>
       </FormField>
+
+      <p class="d-login__forgot">
+        <RouterLink :to="{ name: 'forgot-password' }">Forgot password?</RouterLink>
+      </p>
 
       <DBtn
         block
@@ -166,6 +179,9 @@
 
 <style lang="scss" scoped>
 .d-login__banner { margin-bottom: 16px; }
+.d-login__forgot { margin: -4px 0 14px; font-size: 12px; text-align: right; }
+.d-login__forgot a { color: var(--ink-3); }
+.d-login__forgot a:hover { color: var(--ink); }
 .d-login__submit { margin-top: 6px; }
 .d-login__toggle {
   border: 0;

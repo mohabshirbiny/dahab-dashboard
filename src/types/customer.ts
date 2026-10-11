@@ -184,12 +184,13 @@ export const DEFAULT_CUSTOMER_FILTERS: CustomerFilters = {
   customer: null,
 }
 
-export type WithdrawalPauseTrigger = 'payout_account' | 'phone_change' | 'email_change'
+export type WithdrawalPauseTrigger = 'payout_account' | 'phone_change' | 'email_change' | 'password_reset'
 
 export const PAUSE_TRIGGER_LABELS: Record<WithdrawalPauseTrigger, string> = {
   payout_account: 'an account change',
   phone_change: 'a phone number change',
   email_change: 'an email change',
+  password_reset: 'a password reset',
 }
 
 export type CloseReason = 'finished' | 'fees_too_high' | 'too_slow_to_sell' | 'data_trust' | 'something_went_wrong' | 'other'
