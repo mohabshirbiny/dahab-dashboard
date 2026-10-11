@@ -55,7 +55,8 @@
 
 <script lang="ts" setup>
   import type { AuditFilters } from '@/types/audit'
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
+  import { useRoute } from 'vue-router'
   import AuditEntryModal from '@/components/audit/AuditEntryModal.vue'
   import AuditTable from '@/components/audit/AuditTable.vue'
   import { accessErrorMessage } from '@/components/staff/accessErrors'
@@ -117,6 +118,13 @@
   })
 
   const openEntry = ref<number | null>(null)
+
+  // A founder notice links here with ?entry=<id> (Backend spec 021): open that entry.
+  const route = useRoute()
+  watch(() => route.query.entry, entry => {
+    const id = Number(Array.isArray(entry) ? entry[0] : entry)
+    if (Number.isInteger(id) && id > 0) openEntry.value = id
+  }, { immediate: true })
 
   const exporting = useExportAuditLog()
   const exportNote = ref<{ text: string, variant: 'info' | 'bad' } | null>(null)

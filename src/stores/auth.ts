@@ -1,16 +1,18 @@
 import type {
+  DeviceApprovalPending,
   MfaChallenge,
   MfaEnrollment,
   Permission,
   StaffLoginPayload,
   StaffSession,
+  StaffSignInResult,
   StaffUser,
 } from '@/types/staff'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getAccessToken, setSession } from '@/api/session'
 import { queryClient } from '@/plugins/vue-query'
-import { errorCodeOf } from '@/services/errors'
+import { backendCodeOf, errorCodeOf } from '@/services/errors'
 import { staffAuthService } from '@/services/staff-auth.service'
 
 // Between a successful password step and a successful MFA step. `enroll` is
@@ -19,13 +21,27 @@ export type PendingMfa
   = | ({ kind: 'verify', email: string } & MfaChallenge)
     | ({ kind: 'enroll', email: string } & MfaEnrollment)
 
-export type LoginOutcome = 'authenticated' | 'mfa_required' | 'mfa_enrollment_required'
+// Backend spec 021: a founder's sign-in from a device the Backend does not know yet waits for
+// the other founder. No session exists meanwhile; this device polls with `approvalRef`.
+export type PendingApproval = DeviceApprovalPending & { email: string }
+
+// How a held sign-in ended without a session.
+export type ApprovalEnd = 'refused' | 'ended' | 'frozen'
+
+export type LoginOutcome = 'authenticated' | 'mfa_required' | 'mfa_enrollment_required' | 'device_approval_required'
+
+export type SignInOutcome = 'authenticated' | 'device_approval_required'
 
 let initialization: Promise<void> | null = null
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<StaffUser | null>(null)
   const pendingMfa = ref<PendingMfa | null>(null)
+  const pendingApproval = ref<PendingApproval | null>(null)
+  const approvalEnd = ref<ApprovalEnd | null>(null)
+  // Backend spec 021: the email a frozen founder tried to sign in with, for the unfreeze form.
+  const frozenEmail = ref<string | null>(null)
+  let pollTimer: ReturnType<typeof setTimeout> | null = null
   // `initializing` until the stored session has been checked once.
   const status = ref<'initializing' | 'ready'>('initializing')
 
@@ -46,14 +62,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function startSession (session: StaffSession) {
+    stopApprovalPolling()
     pendingMfa.value = null
+    pendingApproval.value = null
+    approvalEnd.value = null
     setSession(session.tokens)
     user.value = session.staff
   }
 
   function clearSession () {
+    stopApprovalPolling()
     user.value = null
     pendingMfa.value = null
+    pendingApproval.value = null
     setSession(null)
     // Cached identity data belongs to the previous staff member.
     queryClient.clear()
@@ -116,6 +137,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
         return 'mfa_enrollment_required'
       }
+      case 'device_approval_required': {
+        holdForApproval(result, email)
+        return 'device_approval_required'
+      }
       default: {
         startSession(result)
         return 'authenticated'
@@ -123,18 +148,122 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function verifyMfa (code: string) {
+  function finishSignIn (result: StaffSignInResult, email: string): SignInOutcome {
+    if (result.status === 'device_approval_required') {
+      holdForApproval(result, email)
+      return 'device_approval_required'
+    }
+    startSession(result)
+    return 'authenticated'
+  }
+
+  async function verifyMfa (code: string): Promise<SignInOutcome> {
     if (pendingMfa.value?.kind !== 'verify') {
       throw new Error('No verification in progress')
     }
-    startSession(await staffAuthService.verifyMfa({ sessionRef: pendingMfa.value.sessionRef, code }))
+    const email = pendingMfa.value.email
+    return finishSignIn(await staffAuthService.verifyMfa({ sessionRef: pendingMfa.value.sessionRef, code }), email)
   }
 
-  async function enrollMfa (code: string) {
+  async function enrollMfa (code: string): Promise<SignInOutcome> {
     if (pendingMfa.value?.kind !== 'enroll') {
       throw new Error('No enrollment in progress')
     }
-    startSession(await staffAuthService.enrollMfa({ sessionRef: pendingMfa.value.sessionRef, code }))
+    const email = pendingMfa.value.email
+    return finishSignIn(await staffAuthService.enrollMfa({ sessionRef: pendingMfa.value.sessionRef, code }), email)
+  }
+
+  // ---- Held founder sign-in (Backend spec 021) ----
+
+  function holdForApproval (pending: DeviceApprovalPending, email: string) {
+    stopApprovalPolling()
+    pendingMfa.value = null
+    approvalEnd.value = null
+    pendingApproval.value = {
+      approvalId: pending.approvalId,
+      approvalRef: pending.approvalRef,
+      expiresAt: pending.expiresAt,
+      pollIntervalSeconds: pending.pollIntervalSeconds,
+      email,
+    }
+  }
+
+  function stopApprovalPolling () {
+    if (pollTimer !== null) {
+      clearTimeout(pollTimer)
+      pollTimer = null
+    }
+  }
+
+  function endApproval (end: ApprovalEnd) {
+    stopApprovalPolling()
+    approvalEnd.value = end
+  }
+
+  // Polls every `pollIntervalSeconds` until the other founder approves (the session starts),
+  // refuses, the request ends or expires, the account is frozen, or the user cancels.
+  function startApprovalPolling () {
+    stopApprovalPolling()
+    approvalEnd.value = null
+    const pending = pendingApproval.value
+    if (!pending) {
+      return
+    }
+    const interval = Math.max(2, pending.pollIntervalSeconds) * 1000
+
+    const tick = async () => {
+      pollTimer = null
+      const current = pendingApproval.value
+      if (!current || current.approvalRef !== pending.approvalRef) {
+        return
+      }
+      if (Date.parse(current.expiresAt) <= Date.now()) {
+        endApproval('ended')
+        return
+      }
+      try {
+        const result = await staffAuthService.pollDeviceApproval(current.approvalRef)
+        if (pendingApproval.value?.approvalRef !== current.approvalRef) {
+          return
+        }
+        if (result.status === 'approved') {
+          startSession(result)
+          return
+        }
+      } catch (error) {
+        const code = backendCodeOf(error)
+        if (code === 'device_approval_refused') {
+          return endApproval('refused')
+        }
+        if (code === 'account_frozen') {
+          return endApproval('frozen')
+        }
+        if (code === 'device_approval_invalid' || code === 'invalid_credentials') {
+          return endApproval('ended')
+        }
+        // A network blip or the poll limit: keep waiting.
+      }
+      if (pendingApproval.value?.approvalRef === current.approvalRef && approvalEnd.value === null) {
+        pollTimer = setTimeout(tick, interval)
+      }
+    }
+
+    pollTimer = setTimeout(tick, interval)
+  }
+
+  // A frozen founder's sign-in (`account_frozen`): the frozen screen offers the first confirmation.
+  function markFrozen (email: string | null) {
+    stopApprovalPolling()
+    pendingMfa.value = null
+    pendingApproval.value = null
+    frozenEmail.value = email
+  }
+
+  // Back from the waiting screen to sign in. The Backend request simply expires.
+  function cancelApproval () {
+    stopApprovalPolling()
+    pendingApproval.value = null
+    approvalEnd.value = null
   }
 
   // Back from the MFA screen to the login screen.
@@ -154,6 +283,9 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     pendingMfa,
+    pendingApproval,
+    approvalEnd,
+    frozenEmail,
     status,
     isAuthenticated,
     isInitializing,
@@ -166,6 +298,10 @@ export const useAuthStore = defineStore('auth', () => {
     verifyMfa,
     enrollMfa,
     cancelMfa,
+    startApprovalPolling,
+    stopApprovalPolling,
+    cancelApproval,
+    markFrozen,
     logout,
     startSession,
     clearSession,

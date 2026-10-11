@@ -79,3 +79,16 @@ export function setSessionExpiredHandler (handler: SessionExpiredHandler | null)
 export function notifySessionExpired (): void {
   onSessionExpired?.()
 }
+
+// Backend spec 021: a signed-in account answered `account_frozen` (the other founder froze it).
+// The app signs out locally and shows the frozen screen. Registered at start-up like the above.
+type AccountFrozenHandler = () => void
+let onAccountFrozen: AccountFrozenHandler | null = null
+
+export function setAccountFrozenHandler (handler: AccountFrozenHandler | null): void {
+  onAccountFrozen = handler
+}
+
+export function notifyAccountFrozen (): void {
+  onAccountFrozen?.()
+}

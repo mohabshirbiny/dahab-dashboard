@@ -10,6 +10,9 @@ export const PERMISSIONS = {
   rolesManage: 'roles.manage',
   // Create, disable or enable staff accounts (Backend spec 020): the CEO's.
   staffManage: 'staff.manage',
+  // Give the first unfreeze confirmation when a frozen founder cannot (Backend spec 021).
+  // Founders confirm as founders; this names a stand-in for slot 1 only.
+  founderUnfreezeSecond: 'founder.unfreeze_second',
   // Reference data (Backend spec 004).
   referenceView: 'reference.view',
   karatsToggle: 'karats.toggle',
@@ -141,10 +144,30 @@ export interface MfaEnrollment extends MfaChallenge {
   recoveryCodes: string[]
 }
 
+// Password and MFA accepted, but a founder's device is not known yet (Backend spec 021):
+// no session until the other founder approves it. The device polls with `approvalRef`.
+export interface DeviceApprovalPending {
+  approvalId: string
+  approvalRef: string
+  expiresAt: string
+  pollIntervalSeconds: number
+}
+
 export type StaffLoginResult
   = | ({ status: 'authenticated' } & StaffSession)
     | ({ status: 'mfa_required' } & MfaChallenge)
     | ({ status: 'mfa_enrollment_required' } & MfaEnrollment)
+    | ({ status: 'device_approval_required' } & DeviceApprovalPending)
+
+// What the MFA step (verify or enroll) ends in.
+export type StaffSignInResult
+  = | ({ status: 'authenticated' } & StaffSession)
+    | ({ status: 'device_approval_required' } & DeviceApprovalPending)
+
+// One poll of a held sign-in.
+export type DeviceApprovalPoll
+  = | { status: 'pending', expiresAt: string }
+    | ({ status: 'approved' } & StaffSession)
 
 export interface VerifyMfaPayload {
   sessionRef: string

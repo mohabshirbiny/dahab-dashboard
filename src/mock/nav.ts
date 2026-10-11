@@ -62,6 +62,8 @@ export const navGroups: NavGroup[] = [
         permission: 'customer.view',
       },
       { key: 'staff', title: 'Staff and permissions', to: '/dashboard/staff', permission: 'staff.view' },
+      // Backend spec 021: founders, and holders of founder.unfreeze_second (the freezes only).
+      { key: 'security', title: 'Security', to: '/dashboard/security', founderOnly: true, founderOr: 'founder.unfreeze_second' },
       { key: 'audit', title: 'Audit log', to: '/dashboard/audit', anyPermission: ['audit.view_all', 'audit.view_own'] },
     ],
   },

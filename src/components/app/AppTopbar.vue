@@ -1,6 +1,7 @@
 <template>
   <header class="d-top">
     <h1 class="d-top__title">{{ title }}</h1>
+
     <div class="d-top__search">
       <input
         v-model="query"
@@ -8,12 +9,15 @@
         @keydown.enter="onSearch"
       >
     </div>
+
+    <NoticesMenu />
     <button class="d-tbtn" @click="onExport">Export</button>
   </header>
 </template>
 
 <script lang="ts" setup>
   import { ref } from 'vue'
+  import NoticesMenu from '@/components/app/NoticesMenu.vue'
   import { useToast } from '@/composables/useToast'
 
   defineProps<{ title: string }>()

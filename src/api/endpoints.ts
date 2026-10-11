@@ -11,6 +11,22 @@ export const endpoints = {
   // Staff password recovery (Backend spec 020): public routes.
   staffPasswordResetRequest: '/dashboard/auth/password/reset-request',
   staffPasswordResetConfirm: '/dashboard/auth/password/reset-confirm',
+  // Founder-account security (Backend spec 021). Public: the held device polls; the frozen
+  // founder gives the first unfreeze confirmation without a session.
+  staffDeviceApprovalStatus: '/dashboard/auth/device-approval/status',
+  staffFrozenConfirmUnfreeze: '/dashboard/auth/frozen/confirm-unfreeze',
+  // Founders only (`staff.founder`); the freezes and unfreeze also for founder.unfreeze_second.
+  founderDeviceApprovals: '/dashboard/founder/device-approvals',
+  founderDeviceApprove: (id: string) => `/dashboard/founder/device-approvals/${encodeURIComponent(id)}/approve`,
+  founderDeviceRefuse: (id: string) => `/dashboard/founder/device-approvals/${encodeURIComponent(id)}/refuse`,
+  founderDevices: '/dashboard/founder/devices',
+  founderFreeze: '/dashboard/founder/freeze',
+  founderFreezes: '/dashboard/founder/freezes',
+  founderUnfreeze: '/dashboard/founder/unfreeze',
+  // Dashboard notices, the bell (Backend spec 021): any staff, own only.
+  notices: '/dashboard/notices',
+  noticeRead: (id: string) => `/dashboard/notices/${encodeURIComponent(id)}/read`,
+  noticesReadAll: '/dashboard/notices/read-all',
   customers: '/dashboard/customers',
   customer: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}`,
   // Customer file (Backend spec 007).

@@ -12,5 +12,9 @@ declare module 'vue-router' {
     permissions?: Permission[]
     // ...and at least one of these, when set.
     anyPermissions?: Permission[]
+    // Founders only (Backend spec 021: a flag, never a role)...
+    founderOnly?: boolean
+    // ...or, when set, also staff holding this permission.
+    founderOr?: Permission
   }
 }

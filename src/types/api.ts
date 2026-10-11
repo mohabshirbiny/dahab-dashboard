@@ -89,10 +89,116 @@ export interface ApiMfaEnrollmentPending {
   expires_at: string
 }
 
-export type ApiLoginData = ApiStaffSignIn | ApiMfaChallenge | ApiMfaEnrollmentPending
+// Backend spec 021: a founder on a device the Backend does not know yet. No token is issued;
+// the device polls `POST /dashboard/auth/device-approval/status` until the other founder decides.
+export interface ApiDeviceApprovalPending {
+  device_approval_required: true
+  approval_id: string
+  // Opaque, shown once; only its hash is stored. Kept in memory only.
+  approval_ref: string
+  expires_at: string
+  poll_interval_seconds: number
+}
+
+export type ApiLoginData = ApiStaffSignIn | ApiMfaChallenge | ApiMfaEnrollmentPending | ApiDeviceApprovalPending
 
 export interface ApiMfaEnrolled extends ApiStaffSignIn {
   recovery_codes: string[]
+}
+
+// `mfa/verify` and `mfa/enroll` may also hold a founder's new device (spec 021).
+export type ApiMfaVerifyData = ApiStaffSignIn | ApiDeviceApprovalPending
+export type ApiMfaEnrollData = ApiMfaEnrolled | ApiDeviceApprovalPending
+
+// `POST /dashboard/auth/device-approval/status`: pending, or the session (first poll only).
+export type ApiDeviceApprovalStatus
+  = | { status: 'pending', expires_at: string }
+    | ({ status: 'approved' } & ApiStaffSignIn)
+
+// Founder-account security (Backend spec 021). Devices are shown by a ref only (8 hex characters).
+export type ApiDeviceApprovalState = 'pending' | 'approved' | 'refused' | 'expired'
+
+export interface ApiDeviceApproval {
+  id: string
+  founder: ApiStaffRef
+  status: ApiDeviceApprovalState
+  platform: string | null
+  user_agent: string | null
+  ip_address: string | null
+  device_ref: string
+  requested_at: string
+  expires_at: string
+  decided_by: ApiStaffRef | null
+  decided_at: string | null
+  decision_note: string | null
+  collected_at: string | null
+  can_decide: boolean
+}
+
+export interface ApiDeviceApprovalPage {
+  data: ApiDeviceApproval[]
+  meta: { current_page: number, per_page: number, total: number, pending_for_me: number }
+}
+
+export interface ApiFounderDevices {
+  founder: ApiStaffRef
+  devices: { device_ref: string, first_seen_at: string, last_seen_at: string }[]
+}
+
+export type ApiFreezeStage = 'awaiting_first' | 'awaiting_founder' | 'unfrozen'
+
+export interface ApiFreezeConfirmation {
+  slot: 1 | 2
+  kind: 'frozen_founder' | 'second_approver' | 'founder'
+  by: ApiStaffRef | null
+  at: string
+}
+
+export interface ApiAccountFreeze {
+  id: string
+  frozen_staff: ApiStaffRef
+  frozen_by: ApiStaffRef
+  frozen_at: string
+  reason: string
+  stage: ApiFreezeStage
+  confirmations: ApiFreezeConfirmation[]
+  unfrozen_at: string | null
+  can_confirm: boolean
+  my_slot: 1 | 2 | null
+  // Only on the freeze answer.
+  sessions_ended?: number
+  pending_approvals_ended?: number
+}
+
+export interface ApiFreezePage {
+  data: ApiAccountFreeze[]
+  meta: { current_page: number, per_page: number, total: number }
+}
+
+// `POST /dashboard/auth/frozen/confirm-unfreeze`: the frozen founder's first confirmation. No token.
+export interface ApiFrozenConfirmUnfreeze {
+  freeze_id: string
+  slot: 1
+  waiting_for: 'founder'
+}
+
+// Dashboard notices (Backend spec 021): the bell. Own notices only.
+export type ApiNoticeSeverity = 'info' | 'warning' | 'critical'
+
+export interface ApiStaffNotice {
+  id: string
+  kind: string
+  severity: ApiNoticeSeverity
+  title: string
+  body: string
+  link: string | null
+  created_at: string
+  read_at: string | null
+}
+
+export interface ApiStaffNoticePage {
+  data: ApiStaffNotice[]
+  meta: { current_page: number, per_page: number, total: number, unread_count: number }
 }
 
 export type ApiIdentityDocumentKind = 'egyptian_id' | 'passport'

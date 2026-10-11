@@ -40,6 +40,20 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true, guestOnly: true, title: 'Set up verification' },
   },
   {
+    // Backend spec 021: a founder's sign-in from a new device waits for the other founder.
+    path: '/device-approval',
+    name: 'device-approval',
+    component: () => import('@/pages/device-approval.vue'),
+    meta: { public: true, guestOnly: true, title: 'Waiting for approval' },
+  },
+  {
+    // Backend spec 021: a frozen founder's sign-in, with the first unfreeze confirmation.
+    path: '/frozen',
+    name: 'frozen',
+    component: () => import('@/pages/frozen.vue'),
+    meta: { public: true, guestOnly: true, title: 'Account frozen' },
+  },
+  {
     // One layout for every signed-in screen, so the sidebar survives navigation.
     path: '/',
     component: AdminLayout,
@@ -234,6 +248,14 @@ const routes: RouteRecordRaw[] = [
         name: 'branches',
         component: () => import('@/pages/branches/index.vue'),
         meta: { title: 'Branches and hours', permissions: [PERMISSIONS.referenceView] },
+      },
+      {
+        // Founder-account security (Backend spec 021): founders, plus holders of
+        // founder.unfreeze_second, who see only the freezes.
+        path: 'dashboard/security',
+        name: 'security',
+        component: () => import('@/pages/security/index.vue'),
+        meta: { title: 'Security', founderOnly: true, founderOr: PERMISSIONS.founderUnfreezeSecond },
       },
       {
         path: 'forbidden',
