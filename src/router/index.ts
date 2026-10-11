@@ -13,6 +13,21 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true, guestOnly: true, title: 'Sign in' },
   },
   {
+    // Staff password recovery (Backend spec 020).
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/pages/forgot-password.vue'),
+    meta: { public: true, guestOnly: true, title: 'Reset your password' },
+  },
+  {
+    // The emailed link lands here with ?token=. Public, but not guest-only: a member who is
+    // signed in on this browser may still follow their own link.
+    path: '/set-password',
+    name: 'set-password',
+    component: () => import('@/pages/set-password.vue'),
+    meta: { public: true, title: 'Set your password' },
+  },
+  {
     path: '/mfa',
     name: 'mfa',
     component: () => import('@/pages/mfa.vue'),

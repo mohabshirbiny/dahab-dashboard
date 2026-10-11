@@ -10,6 +10,11 @@
 
     <!-- Staff ------------------------------------------------------------ -->
     <Panel v-if="tab === 'staff'" title="Accounts">
+      <template #actions>
+        <FilterChips :model-value="status" :options="statusOptions" @update:model-value="setStatus" />
+        <DBtn v-if="canManageStaff" kind="primary" @click="openAdd">Add staff member</DBtn>
+      </template>
+
       <LoadingState v-if="staff.isPending.value" label="Loading staff…" />
 
       <ErrorState
@@ -26,9 +31,12 @@
         <div :class="{ 'd-staffpage__stale': staff.isPlaceholderData.value }">
           <StaffTable
             :can-manage="canManage"
+            :can-manage-staff="canManageStaff"
             :catalogue="catalogue.data.value"
             :current-user-id="auth.user?.id ?? null"
             :rows="staff.data.value.items"
+            @disable="openStatus($event, 'disable')"
+            @enable="openStatus($event, 'enable')"
             @permissions="openRoles"
           />
         </div>
@@ -80,6 +88,26 @@
       @confirm="saveRoles"
     />
 
+    <AddStaffModal
+      v-model="addOpen"
+      :branches="canSeeBranches ? (branches.data.value ?? null) : null"
+      :field-errors="addFieldErrors"
+      :loading="createStaff.isPending.value"
+      :my-permissions="myPermissions"
+      :roles="roles.data.value ?? []"
+      :submit-error="addError"
+      @confirm="saveNewStaff"
+    />
+
+    <StaffStatusModal
+      v-model="statusOpen"
+      :action="statusAction"
+      :loading="disableStaff.isPending.value || enableStaff.isPending.value"
+      :member="statusMember"
+      :submit-error="statusError"
+      @confirm="confirmStatus"
+    />
+
     <RoleEditorModal
       v-model="editorOpen"
       :catalogue="catalogue.data.value ?? []"
@@ -103,14 +131,16 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CreateRoleInput, Role, StaffMember, UpdateRoleInput } from '@/types/access'
+  import type { CreateRoleInput, CreateStaffInput, Role, StaffMember, StaffStatusFilter, UpdateRoleInput } from '@/types/access'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { accessErrorMessage, fieldError } from '@/components/staff/accessErrors'
+  import AddStaffModal from '@/components/staff/AddStaffModal.vue'
   import RoleDeleteModal from '@/components/staff/RoleDeleteModal.vue'
   import RoleEditorModal from '@/components/staff/RoleEditorModal.vue'
   import RolesTable from '@/components/staff/RolesTable.vue'
   import StaffRolesModal from '@/components/staff/StaffRolesModal.vue'
+  import StaffStatusModal from '@/components/staff/StaffStatusModal.vue'
   import StaffTable from '@/components/staff/StaffTable.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import EmptyState from '@/components/ui/EmptyState.vue'
@@ -122,13 +152,17 @@
   import Panel from '@/components/ui/Panel.vue'
   import {
     useCreateRole,
+    useCreateStaff,
     useDeleteRole,
+    useDisableStaff,
+    useEnableStaff,
     usePermissionCatalogueQuery,
     useRolesQuery,
     useSetStaffRoles,
     useStaffQuery,
     useUpdateRole,
   } from '@/composables/useAccessControl'
+  import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { usePermissions } from '@/composables/usePermissions'
   import { useBranchesQuery, useSetStaffBranch } from '@/composables/useReference'
   import { useToast } from '@/composables/useToast'
@@ -148,6 +182,8 @@
   // Viewing needs staff.view (route guard); every change needs roles.manage.
   const canManage = computed(() => can(PERMISSIONS.rolesManage))
   const heldRoles = computed(() => auth.user?.roles.map(r => r.name) ?? [])
+  // Create, disable and enable need staff.manage (the CEO's, Backend spec 020).
+  const canManageStaff = computed(() => can(PERMISSIONS.staffManage))
 
   const tab = computed<Tab>(() => (canManage.value && route.query.tab === 'roles' ? 'roles' : 'staff'))
   const tabOptions: Array<{ value: Tab, label: string }> = [
@@ -159,12 +195,26 @@
   }
 
   const page = ref(1)
-  const staff = useStaffQuery(page)
-  const roles = useRolesQuery(canManage)
+  const status = computed<StaffStatusFilter>(() => {
+    const value = route.query.status
+    return value === 'active' || value === 'disabled' ? value : 'all'
+  })
+  const statusOptions: Array<{ value: StaffStatusFilter, label: string }> = [
+    { value: 'all', label: 'All' },
+    { value: 'active', label: 'Active' },
+    { value: 'disabled', label: 'Disabled' },
+  ]
+  function setStatus (value: StaffStatusFilter) {
+    page.value = 1
+    router.replace({ query: { ...route.query, status: value === 'all' ? undefined : value } })
+  }
+  const staff = useStaffQuery(page, status)
+  // The role list feeds the add dialog too, so it is loaded for either permission.
+  const roles = useRolesQuery(computed(() => canManage.value || canManageStaff.value))
   const catalogue = usePermissionCatalogueQuery(canManage)
 
   // The branch picker needs the branch list (reference.view, Backend spec 004).
-  const canSeeBranches = computed(() => canManage.value && can(PERMISSIONS.referenceView))
+  const canSeeBranches = computed(() => (canManage.value || canManageStaff.value) && can(PERMISSIONS.referenceView))
   const branches = useBranchesQuery(canSeeBranches)
 
   // Staff → roles dialog
@@ -200,6 +250,83 @@
       ok(`Permissions saved for ${member.fullName}.`)
     } catch (error) {
       rolesError.value = accessErrorMessage(error)
+    }
+  }
+
+  // Add a staff member (Backend spec 020). One Idempotency-Key per submission; a retry of the same
+  // form reuses it, a changed form gets a new one.
+  const createStaff = useCreateStaff()
+  const addKey = useIdempotencyKey()
+  const addOpen = ref(false)
+  const addError = ref<string>()
+  const addFieldErrors = ref<Partial<Record<'full_name' | 'email' | 'phone' | 'roles' | 'branch_id', string>>>({})
+
+  function openAdd () {
+    addError.value = undefined
+    addFieldErrors.value = {}
+    addKey.reset()
+    createStaff.reset()
+    addOpen.value = true
+  }
+
+  function saveNewStaff (input: CreateStaffInput) {
+    addError.value = undefined
+    addFieldErrors.value = {}
+    createStaff.mutate({ staff: input, key: addKey.keyFor(input) }, {
+      onSuccess: member => {
+        addOpen.value = false
+        addKey.reset()
+        ok(`${member.fullName} was added. An email with the set-password link is on its way.`)
+      },
+      onError: error => {
+        addFieldErrors.value = {
+          full_name: fieldError(error, 'full_name'),
+          email: fieldError(error, 'email'),
+          phone: fieldError(error, 'phone'),
+          roles: fieldError(error, 'roles'),
+          branch_id: fieldError(error, 'branch_id'),
+        }
+        addError.value = accessErrorMessage(error)
+      },
+    })
+  }
+
+  // Disable or enable (reason required, Idempotency-Key).
+  const disableStaff = useDisableStaff()
+  const enableStaff = useEnableStaff()
+  const statusKey = useIdempotencyKey()
+  const statusOpen = ref(false)
+  const statusMember = ref<StaffMember | null>(null)
+  const statusAction = ref<'disable' | 'enable'>('disable')
+  const statusError = ref<string>()
+
+  function openStatus (member: StaffMember, action: 'disable' | 'enable') {
+    statusMember.value = member
+    statusAction.value = action
+    statusError.value = undefined
+    statusKey.reset()
+    disableStaff.reset()
+    enableStaff.reset()
+    statusOpen.value = true
+  }
+
+  function confirmStatus (reason: string) {
+    const member = statusMember.value
+    if (!member) return
+    statusError.value = undefined
+    const input = { id: member.id, reason, key: statusKey.keyFor({ id: member.id, reason, action: statusAction.value }) }
+    const done = (text: string) => {
+      statusOpen.value = false
+      statusKey.reset()
+      ok(text)
+    }
+    const failed = (error: unknown) => {
+      statusError.value = accessErrorMessage(error)
+    }
+    if (statusAction.value === 'disable') {
+      disableStaff.mutate(input, { onSuccess: () => done(`${member.fullName} was disabled and signed out everywhere.`), onError: failed })
+    } else {
+      enableStaff.mutate(input, { onSuccess: () => done(`${member.fullName} was enabled. A new set-password link is on its way.`), onError: failed })
     }
   }
 

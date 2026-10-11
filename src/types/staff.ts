@@ -8,6 +8,8 @@ export const PERMISSIONS = {
   // Access control (Backend spec 002).
   staffView: 'staff.view',
   rolesManage: 'roles.manage',
+  // Create, disable or enable staff accounts (Backend spec 020): the CEO's.
+  staffManage: 'staff.manage',
   // Reference data (Backend spec 004).
   referenceView: 'reference.view',
   karatsToggle: 'karats.toggle',

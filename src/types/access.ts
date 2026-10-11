@@ -30,6 +30,20 @@ export interface StaffMember {
   branchId: number | null
   roles: readonly RoleRef[]
   permissions: readonly string[]
+  // False until an invited (or re-enabled) member chooses a password (Backend spec 020).
+  passwordSet: boolean
+}
+
+export type StaffStatusFilter = 'all' | 'active' | 'disabled'
+
+// A new staff member (Backend spec 020). No password: the member chooses one through the emailed link.
+export interface CreateStaffInput {
+  fullName: string
+  email: string
+  phone: string | null
+  roles: string[]
+  branchId: number | null
+  reason: string
 }
 
 export interface StaffListResult {

@@ -1,9 +1,11 @@
 import type {
   CreateRoleInput,
+  CreateStaffInput,
   PermissionEntry,
   Role,
   StaffListResult,
   StaffMember,
+  StaffStatusFilter,
   UpdateRoleInput,
 } from '@/types/access'
 import type { ApiEnvelope, ApiPaginated, ApiPermission, ApiRole, ApiStaffMember } from '@/types/api'
@@ -36,6 +38,8 @@ export function toStaffMember (s: ApiStaffMember): StaffMember {
     branchId: s.branch_id,
     roles: s.roles.map(role => ({ name: role.name, displayName: role.display_name })),
     permissions: s.permissions,
+    // An older Backend does not send it: treat the member as having a password.
+    passwordSet: s.password_set ?? true,
   }
 }
 
@@ -95,10 +99,16 @@ export const accessService = {
     await http.delete(endpoints.role(name), { data: { reason } })
   },
 
-  // GET /dashboard/staff?role=&per_page=&page=   (staff.view) — ordered by name.
-  async listStaff (params: { page: number, pageSize: number, role?: string }): Promise<StaffListResult> {
+  // GET /dashboard/staff?role=&status=&per_page=&page=   (staff.view) — ordered by name.
+  // `status` (Backend spec 020): active or disabled; 'all' sends nothing.
+  async listStaff (params: { page: number, pageSize: number, role?: string, status?: StaffStatusFilter }): Promise<StaffListResult> {
     const { data } = await http.get<ApiPaginated<ApiStaffMember>>(endpoints.staff, {
-      params: { page: params.page, per_page: params.pageSize, role: params.role || undefined },
+      params: {
+        page: params.page,
+        per_page: params.pageSize,
+        role: params.role || undefined,
+        status: params.status && params.status !== 'all' ? params.status : undefined,
+      },
     })
     return {
       items: data.data.map(s => toStaffMember(s)),
@@ -106,6 +116,37 @@ export const accessService = {
       page: data.meta.current_page,
       pageSize: data.meta.per_page,
     }
+  },
+
+  // POST /dashboard/staff   (staff.manage, Idempotency-Key). No password is sent: the Backend mails an
+  // invitation link and the member chooses one. `idempotencyKey` is reused when the same form is retried.
+  async createStaff (input: CreateStaffInput, idempotencyKey: string): Promise<StaffMember> {
+    const { data } = await http.post<ApiEnvelope<ApiStaffMember>>(endpoints.staff, {
+      full_name: input.fullName,
+      email: input.email,
+      phone: input.phone || undefined,
+      roles: input.roles,
+      branch_id: input.branchId,
+      reason: input.reason,
+    }, { headers: { 'Idempotency-Key': idempotencyKey } })
+    return toStaffMember(data.data)
+  },
+
+  // POST /dashboard/staff/{staff}/disable   (staff.manage, Idempotency-Key) — reason required.
+  async disableStaff (id: string, reason: string, idempotencyKey: string): Promise<StaffMember> {
+    const { data } = await http.post<ApiEnvelope<ApiStaffMember>>(endpoints.staffDisable(id), { reason }, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    })
+    return toStaffMember(data.data)
+  },
+
+  // POST /dashboard/staff/{staff}/enable   (staff.manage, Idempotency-Key) — the old password is deleted
+  // and a new link is mailed.
+  async enableStaff (id: string, reason: string, idempotencyKey: string): Promise<StaffMember> {
+    const { data } = await http.post<ApiEnvelope<ApiStaffMember>>(endpoints.staffEnable(id), { reason }, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    })
+    return toStaffMember(data.data)
   },
 
   // PUT /dashboard/staff/{staff}/roles   (roles.manage) — replaces the whole set; reason required.

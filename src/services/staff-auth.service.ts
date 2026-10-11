@@ -83,6 +83,23 @@ export const staffAuthService = {
     return toStaffSession(data.data)
   },
 
+  // POST /dashboard/auth/password/reset-request (Backend spec 020). Always 202 with the same
+  // message, so the page never learns whether the address is a staff account.
+  async requestPasswordReset (email: string): Promise<void> {
+    await http.post(endpoints.staffPasswordResetRequest, { email }, AUTH_STEP)
+  },
+
+  // POST /dashboard/auth/password/reset-confirm. No session is issued: the member signs in
+  // afterwards, with the authenticator when one is enrolled. `reset_link_invalid` (422)
+  // covers an unknown, used, expired or disabled-member link.
+  async confirmPasswordReset (token: string, password: string, passwordConfirmation: string): Promise<void> {
+    await http.post(
+      endpoints.staffPasswordResetConfirm,
+      { token, password, password_confirmation: passwordConfirmation },
+      AUTH_STEP,
+    )
+  },
+
   // POST /dashboard/auth/logout: revokes this access token and its refresh token (204).
   async logout (): Promise<void> {
     await http.post(endpoints.staffLogout)

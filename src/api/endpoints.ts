@@ -8,6 +8,9 @@ export const endpoints = {
   staffRefresh: '/dashboard/auth/refresh',
   staffLogout: '/dashboard/auth/logout',
   staffMe: '/dashboard/auth/me',
+  // Staff password recovery (Backend spec 020): public routes.
+  staffPasswordResetRequest: '/dashboard/auth/password/reset-request',
+  staffPasswordResetConfirm: '/dashboard/auth/password/reset-confirm',
   customers: '/dashboard/customers',
   customer: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}`,
   // Customer file (Backend spec 007).
@@ -26,6 +29,9 @@ export const endpoints = {
   staff: '/dashboard/staff',
   staffMember: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}`,
   staffRoles: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/roles`,
+  // Create, disable, enable (Backend spec 020): staff.manage, Idempotency-Key.
+  staffDisable: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/disable`,
+  staffEnable: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/enable`,
   // Reference data (Backend spec 004).
   staffBranch: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/branch`,
   karats: '/dashboard/karats',
