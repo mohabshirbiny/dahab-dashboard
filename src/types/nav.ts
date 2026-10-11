@@ -15,6 +15,9 @@ export interface NavItem {
   permission?: Permission
   // Hidden from staff who have none of these.
   anyPermission?: Permission[]
+  // Founders only (Backend spec 021)... or staff holding `founderOr`, when set.
+  founderOnly?: boolean
+  founderOr?: Permission
 }
 
 export interface NavGroup {

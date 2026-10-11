@@ -15,6 +15,11 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
     return { name: 'overview' }
   }
 
+  // Backend spec 021: the waiting screen only makes sense while a sign-in is held.
+  if (to.name === 'device-approval' && !auth.pendingApproval) {
+    return { name: 'login', query: redirectQuery(to.query.redirect) }
+  }
+
   // The two MFA screens only make sense for the step the Backend asked for.
   if (to.name === 'mfa' || to.name === 'mfa-enroll') {
     if (!auth.pendingMfa) {
@@ -28,6 +33,9 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
 
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth)
   if (requiresAuth && !auth.isAuthenticated) {
+    if (auth.pendingApproval) {
+      return { name: 'device-approval', query: redirectQuery(to.fullPath) }
+    }
     if (auth.pendingMfa) {
       return { name: mfaRouteName(auth.pendingMfa.kind), query: redirectQuery(to.fullPath) }
     }
@@ -44,6 +52,15 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
     return { name: 'forbidden', query: { from: to.fullPath } }
   }
 
+  // Founder-only screens (Backend spec 021): founder status is a flag, never a role.
+  const founderRoute = to.matched.find(r => r.meta.founderOnly)
+  if (founderRoute && !auth.user?.isFounder) {
+    const alternative = founderRoute.meta.founderOr
+    if (!alternative || !auth.can(alternative)) {
+      return { name: 'forbidden', query: { from: to.fullPath } }
+    }
+  }
+
   return true
 }
 
@@ -54,7 +71,8 @@ export function mfaRouteName (kind: 'verify' | 'enroll'): 'mfa' | 'mfa-enroll' {
 // Only same-site paths are followed after sign-in, never full URLs.
 export function safeRedirect (value: LocationQueryValue | LocationQueryValue[] | undefined): string {
   const target = Array.isArray(value) ? value[0] : value
-  if (target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/login') && !target.startsWith('/mfa')) {
+  if (target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/login') && !target.startsWith('/mfa')
+    && !target.startsWith('/device-approval') && !target.startsWith('/frozen')) {
     return target
   }
   return '/dashboard/overview'

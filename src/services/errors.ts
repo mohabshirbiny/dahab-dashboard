@@ -75,6 +75,19 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   reason_required: 'validation',
   // Staff recovery (Backend spec 020).
   reset_link_invalid: 'gone',
+  // Founder-account security (Backend spec 021). Screens tell these apart by backendCode.
+  device_id_required: 'validation',
+  device_approval_refused: 'forbidden',
+  device_approval_invalid: 'gone',
+  device_approval_not_pending: 'conflict',
+  device_not_known: 'forbidden',
+  founder_only: 'forbidden',
+  founder_self_action: 'forbidden',
+  freeze_target_invalid: 'validation',
+  already_frozen: 'conflict',
+  not_frozen: 'conflict',
+  unfreeze_order: 'conflict',
+  unfreeze_already_confirmed: 'conflict',
   // Reference data (Backend spec 004).
   closure_exists: 'conflict',
   closure_in_past: 'conflict',

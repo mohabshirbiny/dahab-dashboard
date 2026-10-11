@@ -69,7 +69,8 @@
         ...group,
         items: group.items.filter(item => !item.hidden
           && (!item.permission || can(item.permission))
-          && (!item.anyPermission || canAny(item.anyPermission))),
+          && (!item.anyPermission || canAny(item.anyPermission))
+          && (!item.founderOnly || Boolean(auth.user?.isFounder) || (item.founderOr !== undefined && can(item.founderOr)))),
       }))
       .filter(group => group.items.length > 0),
   )

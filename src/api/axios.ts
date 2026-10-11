@@ -1,8 +1,9 @@
 import type { ApiEnvelope, ApiSession } from '@/types/api'
 import axios, { type AxiosError, AxiosHeaders, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
 import { toServiceError } from '@/services/errors'
+import { DEVICE_PLATFORM, deviceId } from './device'
 import { endpoints } from './endpoints'
-import { getAccessToken, getRefreshToken, notifySessionExpired, setSession } from './session'
+import { getAccessToken, getRefreshToken, notifyAccountFrozen, notifySessionExpired, setSession } from './session'
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -36,6 +37,11 @@ http.interceptors.request.use(config => {
   if (locale) {
     config.headers['Accept-Language'] = locale
   }
+
+  // Backend spec 021: every request says which device it comes from. A founder's sign-in
+  // needs it, and a sign-in from a device the Backend does not know is held for approval.
+  config.headers['X-Device-Id'] = deviceId()
+  config.headers['X-Device-Platform'] = DEVICE_PLATFORM
 
   return config
 })
@@ -88,6 +94,11 @@ http.interceptors.response.use(
       headers.delete('Authorization')
       return http({ ...error.config, headers, retriedAfterRefresh: true })
     }
-    throw toServiceError(error)
+    const failure = toServiceError(error)
+    // Backend spec 021: the account was frozen while signed in (`staff.standing`).
+    if (failure.backendCode === 'account_frozen' && getAccessToken() !== null) {
+      notifyAccountFrozen()
+    }
+    throw failure
   },
 )

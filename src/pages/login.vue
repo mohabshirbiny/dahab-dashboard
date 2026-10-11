@@ -90,7 +90,7 @@
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import { mfaRouteName, safeRedirect } from '@/router/guards'
-  import { errorCodeOf, type ServiceErrorCode } from '@/services/errors'
+  import { backendCodeOf, errorCodeOf, type ServiceErrorCode } from '@/services/errors'
   import { useAuthStore } from '@/stores/auth'
 
   const auth = useAuthStore()
@@ -156,14 +156,23 @@
     try {
       const outcome = await auth.login({ email: email.value.trim(), password: password.value })
       const redirect = safeRedirect(route.query.redirect)
-      // A second step means the Backend wants a code, or first-time authenticator setup.
-      await router.replace(outcome === 'authenticated'
-        ? redirect
-        : {
-          name: mfaRouteName(outcome === 'mfa_required' ? 'verify' : 'enroll'),
-          query: redirect === '/dashboard/overview' ? {} : { redirect },
-        })
+      const query = redirect === '/dashboard/overview' ? {} : { redirect }
+      // A second step means the Backend wants a code, or first-time authenticator setup, or
+      // (Backend spec 021, only with MFA off locally) the other founder's approval of this device.
+      if (outcome === 'authenticated') {
+        await router.replace(redirect)
+      } else if (outcome === 'device_approval_required') {
+        await router.replace({ name: 'device-approval', query })
+      } else {
+        await router.replace({ name: mfaRouteName(outcome === 'mfa_required' ? 'verify' : 'enroll'), query })
+      }
     } catch (error) {
+      // Backend spec 021: a frozen founder gets the plain message and the unfreeze form.
+      if (backendCodeOf(error) === 'account_frozen') {
+        auth.markFrozen(email.value.trim())
+        await router.replace({ name: 'frozen' })
+        return
+      }
       failure.value = errorCodeOf(error)
       if (failure.value === 'invalid_credentials') {
         password.value = ''

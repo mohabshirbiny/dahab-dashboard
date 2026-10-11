@@ -1,5 +1,5 @@
 import type { Router } from 'vue-router'
-import { setSessionExpiredHandler } from '@/api/session'
+import { setAccountFrozenHandler, setSessionExpiredHandler } from '@/api/session'
 import { useAuthStore } from '@/stores/auth'
 
 // When the API client cannot renew the session (the refresh token is expired,
@@ -15,6 +15,18 @@ export default function installSessionExpiry (router: Router) {
     // and the navigation guard sends the person to login itself.
     if (current.matched.some(r => r.meta.requiresAuth)) {
       router.replace({ name: 'login', query: { redirect: current.fullPath } })
+    }
+  })
+
+  // Backend spec 021: frozen by the other founder while signed in. The session is dropped
+  // locally (the Backend already deleted every token) and the frozen screen explains it.
+  setAccountFrozenHandler(() => {
+    const auth = useAuthStore()
+    const email = auth.user?.email ?? null
+    auth.clearSession()
+    auth.markFrozen(email)
+    if (router.currentRoute.value.name !== 'frozen') {
+      router.replace({ name: 'frozen' })
     }
   })
 }
