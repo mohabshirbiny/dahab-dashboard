@@ -3,6 +3,7 @@ import type {
   AppText,
   ContentExport,
   ContentStaffRef,
+  CreateFaqInput,
   PublishKeyError,
   PublishResult,
   RevertTarget,
@@ -28,6 +29,7 @@ interface ApiPublished {
   published_at: string | null
   published_by: ApiStaffRef | null
   bundle_version: number | null
+  is_hidden?: boolean
 }
 
 interface ApiDraft {
@@ -57,6 +59,7 @@ interface ApiAppText {
   read_only: boolean
   retired: boolean
   position: number | null
+  pending_position?: number | null
 }
 
 interface ApiVersion {
@@ -75,7 +78,7 @@ interface ApiVersion {
 const staff = (s: ApiStaffRef | null): ContentStaffRef | null => (s ? { id: s.id, fullName: s.full_name } : null)
 
 function toPublished (p: ApiPublished): TextPublished {
-  return { version: p.version, en: p.en, ar: p.ar, publishedAt: p.published_at, publishedBy: staff(p.published_by), bundleVersion: p.bundle_version }
+  return { version: p.version, en: p.en, ar: p.ar, isHidden: p.is_hidden ?? false, publishedAt: p.published_at, publishedBy: staff(p.published_by), bundleVersion: p.bundle_version }
 }
 
 function toDraft (d: ApiDraft): TextDraft {
@@ -108,6 +111,7 @@ function toText (t: ApiAppText): AppText {
     readOnly: t.read_only,
     retired: t.retired,
     position: t.position,
+    pendingPosition: t.pending_position ?? null,
   }
 }
 
@@ -128,6 +132,7 @@ function toVersion (v: ApiVersion): TextVersion {
 
 function listParams (query: TextListQuery) {
   return {
+    kind: query.kind === '' ? undefined : query.kind,
     area: query.area === '' ? undefined : query.area,
     q: query.q.trim() === '' ? undefined : query.q.trim(),
     state: query.state === '' ? undefined : query.state,
@@ -153,6 +158,7 @@ export const contentService = {
       text_en: input.en,
       text_ar: input.ar,
       draft_version: input.draftVersion ?? undefined,
+      is_hidden: input.isHidden,
     }, keyHeader(idempotencyKey))
     return toDraft(data.data)
   },
@@ -190,6 +196,25 @@ export const contentService = {
     const disposition = String(response.headers['content-disposition'] ?? '')
     const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'app-texts.csv'
     return { blob: response.data, filename }
+  },
+
+  // POST /dashboard/faq — a Help entry: two keys, each with a draft.
+  async createFaq (input: CreateFaqInput, idempotencyKey: string): Promise<{ slug: string, position: number }> {
+    const { data } = await http.post<ApiEnvelope<{ slug: string, position: number }>>(endpoints.faq, {
+      slug: input.slug,
+      question_en: input.questionEn,
+      question_ar: input.questionAr,
+      answer_en: input.answerEn,
+      answer_ar: input.answerAr,
+      is_hidden: input.isHidden,
+    }, keyHeader(idempotencyKey))
+    return data.data
+  },
+
+  // PATCH /dashboard/faq/{slug}/position — a draft order, live with Publish changes.
+  async moveFaq (slug: string, position: number, idempotencyKey: string): Promise<{ slug: string, position: number }> {
+    const { data } = await http.patch<ApiEnvelope<{ slug: string, position: number }>>(endpoints.faqPosition(slug), { position }, keyHeader(idempotencyKey))
+    return data.data
   },
 
   // GET /dashboard/content/placeholders — the numbers a text may name, with their live values.

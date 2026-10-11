@@ -14,6 +14,10 @@
     <div class="d-main">
       <AppTopbar :title="currentTitle" />
 
+      <div v-if="stopped?.active" class="d-stopbar" role="alert">
+        Everything is stopped. No new listings, buy requests or withdrawals, and no release, until it is started again from Switches.
+      </div>
+
       <div class="d-wrap">
         <router-view />
       </div>
@@ -29,9 +33,11 @@
   import AppSidebar from '@/components/app/AppSidebar.vue'
   import AppTopbar from '@/components/app/AppTopbar.vue'
   import Toast from '@/components/ui/Toast.vue'
+  import { useStoppedBanner } from '@/composables/useControls'
   import { navGroups } from '@/mock/nav'
 
   const route = useRoute()
+  const { data: stopped } = useStoppedBanner()
   const mobileOpen = ref(false)
 
   const flatNav = computed(() => navGroups.flatMap(g => g.items))
@@ -57,6 +63,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+.d-stopbar {
+  background: var(--bad);
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 13px;
 }
 .d-wrap {
   padding: 22px 24px 60px;

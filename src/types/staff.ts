@@ -69,6 +69,20 @@ export const PERMISSIONS = {
   ratingView: 'rating.view',
   // App text (Backend spec 019). Edit and publish the customer app's texts: CEO, COO and Operations.
   contentEdit: 'content.edit',
+  // Terms and versions (Backend spec 019): a new version of a legal document. CEO only, by seed.
+  legalPublish: 'legal.publish',
+  // Editing the messages that carry a code or a link (Backend spec 019 D7): no seeded role.
+  contentEditSecure: 'content.edit_secure',
+  // Switches (Backend spec 019 US7).
+  categoryStopNew: 'category.stop_new',
+  categoryPause: 'category.pause',
+  platformStopEverything: 'platform.stop_everything',
+  visibilityManage: 'visibility.manage',
+  // Market makers (Backend spec 019 US6): codes, and approving pieces.
+  promoManage: 'promo.manage',
+  marketMakerApprove: 'market_maker.approve',
+  // People to watch (Backend spec 019 US8): CEO and COO.
+  peopleToWatchView: 'people_to_watch.view',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

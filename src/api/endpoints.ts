@@ -135,4 +135,9 @@ export const endpoints = {
   appTextRevert: (key: string) => `/dashboard/app-texts/${encodeURIComponent(key)}/revert`,
   appTextHistory: (key: string) => `/dashboard/app-texts/${encodeURIComponent(key)}/history`,
   contentPlaceholders: '/dashboard/content/placeholders',
+  faq: '/dashboard/faq',
+  faqPosition: (slug: string) => `/dashboard/faq/${encodeURIComponent(slug)}/position`,
+  // Terms and versions (Backend spec 019): reads legal.publish or content.edit; a new version legal.publish.
+  legalDocuments: '/dashboard/legal-documents',
+  legalVersions: (code: string) => `/dashboard/legal-documents/${encodeURIComponent(code)}/versions`,
 } as const

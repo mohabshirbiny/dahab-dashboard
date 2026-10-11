@@ -10,7 +10,7 @@ export function contentErrorMessage (error: unknown): string {
       return 'Someone saved this text while you were editing it. Close and reopen it to see their version.'
     }
     case 'content_key_read_only': {
-      return 'This text carries a code or a link, so it is shown here but cannot be edited.'
+      return 'This text carries a code or a link. Editing it needs the separate permission for code and link messages.'
     }
     case 'content_key_retired': {
       return 'The app no longer uses this text.'
@@ -26,6 +26,12 @@ export function contentErrorMessage (error: unknown): string {
     }
     case 'content_no_draft': {
       return 'There is no draft to discard.'
+    }
+    case 'content_faq_exists': {
+      return 'There is already a Help entry with that name. Pick another name.'
+    }
+    case 'content_faq_unknown': {
+      return 'That Help entry no longer exists. Reload the page.'
     }
     case 'content_invalid': {
       return 'Some drafts cannot be published. Fix or discard them, then publish again.'

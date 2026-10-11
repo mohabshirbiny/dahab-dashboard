@@ -15,6 +15,8 @@ export interface ContentStaffRef {
 
 // What customers see now when it is an override (a published version).
 export interface TextPublished extends TextValue {
+  // Help answers only: live but kept out of the app.
+  isHidden: boolean
   version: number
   publishedAt: string | null
   publishedBy: ContentStaffRef | null
@@ -51,11 +53,15 @@ export interface AppText {
   // The current app no longer uses this key.
   retired: boolean
   position: number | null
+  // The Help order waiting for Publish changes.
+  pendingPosition: number | null
 }
 
 export type TextStateFilter = '' | 'draft' | 'published' | 'default'
 
 export interface TextListQuery {
+  // '' = every kind; the page works one kind at a time (App text, Notifications, Help).
+  kind: '' | TextKind
   area: string
   q: string
   state: TextStateFilter
@@ -85,6 +91,26 @@ export interface SaveDraftInput {
   ar: string
   // The draft_version of the copy being edited; the Backend refuses a stale one.
   draftVersion: number | null
+  // Help answers: hide or show the entry; leave out to keep it as it is.
+  isHidden?: boolean
+}
+
+export interface CreateFaqInput {
+  slug: string
+  questionEn: string
+  questionAr: string
+  answerEn: string
+  answerAr: string
+  isHidden: boolean
+}
+
+// One Help entry: its question and answer keys together (help.faq.<slug>.question / .answer).
+export interface FaqEntry {
+  slug: string
+  position: number | null
+  pendingPosition: number | null
+  question: AppText | null
+  answer: AppText | null
 }
 
 export type RevertTarget = 'default' | number

@@ -1,4 +1,4 @@
-import type { RevertTarget, SaveDraftInput, TextListQuery } from '@/types/content'
+import type { CreateFaqInput, RevertTarget, SaveDraftInput, TextListQuery } from '@/types/content'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { contentService } from '@/services/content.service'
@@ -36,7 +36,7 @@ export function useTextsQuery (query: MaybeRefOrGetter<TextListQuery>) {
 export function useDraftsQuery () {
   return useQuery({
     queryKey: contentKeys.drafts(),
-    queryFn: () => contentService.list({ area: '', q: '', state: 'draft' }, null, 200),
+    queryFn: () => contentService.list({ kind: '', area: '', q: '', state: 'draft' }, null, 200),
     retry: retryTransient,
   })
 }
@@ -92,6 +92,22 @@ export function usePublishTexts () {
   const refresh = useRefresh()
   return useMutation({
     mutationFn: (idempotencyKey: string) => contentService.publish(idempotencyKey),
+    onSuccess: refresh,
+  })
+}
+
+export function useCreateFaqEntry () {
+  const refresh = useRefresh()
+  return useMutation({
+    mutationFn: (input: { values: CreateFaqInput, idempotencyKey: string }) => contentService.createFaq(input.values, input.idempotencyKey),
+    onSuccess: refresh,
+  })
+}
+
+export function useMoveFaqEntry () {
+  const refresh = useRefresh()
+  return useMutation({
+    mutationFn: (input: { slug: string, position: number, idempotencyKey: string }) => contentService.moveFaq(input.slug, input.position, input.idempotencyKey),
     onSuccess: refresh,
   })
 }

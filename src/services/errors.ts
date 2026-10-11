@@ -143,6 +143,11 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   content_unchanged: 'validation',
   content_nothing_to_publish: 'validation',
   content_invalid: 'validation',
+  // Legal publishing (Backend spec 019).
+  legal_body_required: 'validation',
+  legal_code_unknown: 'not_found',
+  legal_version_conflict: 'conflict',
+  legal_document_immutable: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {
