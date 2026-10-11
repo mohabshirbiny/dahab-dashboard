@@ -39,13 +39,15 @@ export const navGroups: NavGroup[] = [
       { key: 'rates', title: 'Commission rates', to: '/dashboard/rates', permission: 'pricing.view' },
       // Not in the design: Backend spec 009 asked for a settings-like place for Dahab's receiving accounts.
       { key: 'receiving-accounts', title: 'Receiving accounts', to: '/dashboard/receiving-accounts', anyPermission: ['topup.match', 'topup.accounts.manage'] },
-      { key: 'promos', title: 'Promo codes', to: '/dashboard/promos', hidden: true },
-      { key: 'mm', title: 'Market maker approvals', to: '/dashboard/market-maker', badge: 2, hidden: true },
+      { key: 'promos', title: 'Promo codes', to: '/dashboard/promos', permission: 'promo.manage' },
+      { key: 'mm', title: 'Market maker approvals', to: '/dashboard/market-maker', anyPermission: ['market_maker.approve', 'promo.manage'] },
       { key: 'karats', title: 'Karats', to: '/dashboard/karats', permission: 'reference.view' },
-      { key: 'switches', title: 'Switches', to: '/dashboard/switches', hidden: true },
+      { key: 'switches', title: 'Switches', to: '/dashboard/switches', anyPermission: ['category.stop_new', 'category.pause', 'platform.stop_everything', 'visibility.manage'] },
       { key: 'branches', title: 'Branches and hours', to: '/dashboard/branches', permission: 'reference.view' },
-      { key: 'content', title: 'App text', to: '/dashboard/content', hidden: true },
-      { key: 'docs', title: 'Terms and versions', to: '/dashboard/docs', hidden: true },
+      // Backend spec 019: the customer app's texts (content.edit; not in the design as a separate page route).
+      { key: 'content', title: 'App text', to: '/dashboard/content', permission: 'content.edit' },
+      // Backend spec 019: every legal text and its versions; a new version needs legal.publish (the CEO).
+      { key: 'docs', title: 'Terms and versions', to: '/dashboard/docs', anyPermission: ['legal.publish', 'content.edit'] },
     ],
   },
   {

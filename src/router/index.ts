@@ -1,18 +1,9 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import Placeholder from '@/pages/dashboard/_placeholder.vue'
 import Overview from '@/pages/dashboard/overview.vue'
 import Login from '@/pages/login.vue'
 import { PERMISSIONS } from '@/types/staff'
 import { companyMiddleware } from './guards'
-
-const placeholderChildren: RouteRecordRaw[] = [
-  { path: 'promos', name: 'promos', component: Placeholder, meta: { title: 'Promo codes' } },
-  { path: 'market-maker', name: 'market-maker', component: Placeholder, meta: { title: 'Market maker approvals' } },
-  { path: 'switches', name: 'switches', component: Placeholder, meta: { title: 'Switches' } },
-  { path: 'content', name: 'content', component: Placeholder, meta: { title: 'App text' } },
-  { path: 'docs', name: 'docs', component: Placeholder, meta: { title: 'Terms and versions' } },
-].map(route => ({ ...route, path: `dashboard/${route.path}` }))
 
 const routes: RouteRecordRaw[] = [
   {
@@ -42,7 +33,6 @@ const routes: RouteRecordRaw[] = [
       { path: '', redirect: { name: 'overview' } },
       { path: 'dashboard', redirect: { name: 'overview' } },
       { path: 'dashboard/overview', name: 'overview', component: Overview, meta: { title: 'Overview' } },
-      ...placeholderChildren,
       {
         path: 'dashboard/users',
         name: 'users',
@@ -165,6 +155,44 @@ const routes: RouteRecordRaw[] = [
         name: 'receiving-accounts',
         component: () => import('@/pages/receiving-accounts/index.vue'),
         meta: { title: 'Receiving accounts', anyPermissions: [PERMISSIONS.topupMatch, PERMISSIONS.topupAccountsManage] },
+      },
+      {
+        // Terms and versions (Backend spec 019): reads legal.publish or content.edit.
+        path: 'dashboard/docs',
+        name: 'docs',
+        component: () => import('@/pages/docs/index.vue'),
+        meta: { title: 'Terms and versions', anyPermissions: [PERMISSIONS.legalPublish, PERMISSIONS.contentEdit] },
+      },
+      {
+        // Market-maker codes (Backend spec 019 FR-060): promo.manage.
+        path: 'dashboard/promos',
+        name: 'promos',
+        component: () => import('@/pages/promos/index.vue'),
+        meta: { title: 'Promo codes', permissions: ['promo.manage'] },
+      },
+      {
+        // Market-maker approvals and the cost panel (Backend spec 019 FR-062): market_maker.approve.
+        path: 'dashboard/market-maker',
+        name: 'market-maker',
+        component: () => import('@/pages/market-maker/index.vue'),
+        meta: { title: 'Market maker approvals', anyPermissions: ['market_maker.approve', 'promo.manage'] },
+      },
+      {
+        // Switches (Backend spec 019 US7): any of the four switch permissions opens it.
+        path: 'dashboard/switches',
+        name: 'switches',
+        component: () => import('@/pages/switches/index.vue'),
+        meta: {
+          title: 'Switches',
+          anyPermissions: ['category.stop_new', 'category.pause', 'platform.stop_everything', 'visibility.manage'],
+        },
+      },
+      {
+        // App text (Backend spec 019): drafts, Publish changes, revert, history, export.
+        path: 'dashboard/content',
+        name: 'content',
+        component: () => import('@/pages/content/index.vue'),
+        meta: { title: 'App text', permissions: [PERMISSIONS.contentEdit] },
       },
       {
         // Pricing (Backend spec 005). Changes need their own permissions too.

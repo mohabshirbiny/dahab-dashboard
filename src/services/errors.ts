@@ -130,6 +130,24 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   invoice_not_creditable: 'conflict',
   credit_exceeds_invoice: 'validation',
   document_not_ready: 'conflict',
+  // App text (Backend spec 019).
+  content_draft_changed: 'conflict',
+  content_key_read_only: 'conflict',
+  content_key_retired: 'conflict',
+  content_history_immutable: 'conflict',
+  content_no_draft: 'not_found',
+  content_invalid_placeholder: 'validation',
+  content_missing_required_placeholder: 'validation',
+  content_language_missing: 'validation',
+  content_too_long: 'validation',
+  content_unchanged: 'validation',
+  content_nothing_to_publish: 'validation',
+  content_invalid: 'validation',
+  // Legal publishing (Backend spec 019).
+  legal_body_required: 'validation',
+  legal_code_unknown: 'not_found',
+  legal_version_conflict: 'conflict',
+  legal_document_immutable: 'conflict',
 }
 
 const STATUS_CODES: Readonly<Record<number, ServiceErrorCode>> = {

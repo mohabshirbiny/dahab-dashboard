@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer v-model="drawer" :rail="rail" permanent>
+  <v-navigation-drawer v-model="drawer" permanent :rail="rail">
     <v-list-item
       nav
       prepend-icon="mdi-account-circle"
@@ -49,10 +49,12 @@
     <v-spacer />
 
     <v-btn icon="mdi-bell-outline" />
+
     <v-menu>
       <template #activator="{ props }">
         <v-btn icon="mdi-dots-vertical" v-bind="props" />
       </template>
+
       <v-list>
         <v-list-item
           prepend-icon="mdi-logout"

@@ -66,6 +66,8 @@
 
     <InspectionResultModal :open="inspection !== null" :target="inspection" @close="inspection = null" />
 
+    <PeopleToWatchPanel v-if="can(PERMISSIONS.peopleToWatchView)" />
+
     <HandoverModal
       :open="handover !== null"
       :order-id="handover?.orderId ?? ''"
@@ -80,6 +82,7 @@
   import type { InspectionFilters, InspectionOutcome, InspectionTarget, WorkListItem } from '@/types/order'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import PeopleToWatchPanel from '@/components/inspections/PeopleToWatchPanel.vue'
   import HandoverModal from '@/components/orders/HandoverModal.vue'
   import InspectionResultModal from '@/components/orders/InspectionResultModal.vue'
   import InspectionsTable from '@/components/orders/InspectionsTable.vue'
