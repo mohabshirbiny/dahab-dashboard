@@ -93,6 +93,17 @@ export interface ListingHistoryEntry {
   changedAt: string
 }
 
+// Spec 022: one change of the price while the piece was live, oldest first.
+export type ListingPriceField = 'making_charge_per_g' | 'asking_price'
+
+export interface ListingPriceChange {
+  field: ListingPriceField
+  oldValue: Money
+  newValue: Money
+  actor: { type: 'customer' | 'staff', name: string | null }
+  changedAt: string
+}
+
 export interface Listing {
   id: string
   state: ListingState
@@ -159,6 +170,8 @@ export interface ListingOrder {
 // line and the latest order.
 export interface ListingDetail extends Listing {
   history: ListingHistoryEntry[]
+  // Spec 022: the seller's price changes while the piece was live; empty when there were none.
+  priceHistory: ListingPriceChange[]
   sentBackCount: number
   sellerListingsSentBack: number
   sellerListingsSubmitted: number
