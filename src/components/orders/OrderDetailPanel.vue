@@ -85,6 +85,25 @@
         <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
       </template>
 
+      <template v-if="order.commissionWaiver">
+        <div class="d-odp__label">Commission</div>
+        <KeyValueRow label="An ordinary sale would pay" :value="`${formatMoney(order.commissionWaiver.ordinaryEgp)} EGP`" />
+        <KeyValueRow label="Charged" :value="`${formatMoney(order.commissionWaiver.chargedEgp)} EGP`" />
+        <KeyValueRow label="Given up" :value="`${formatMoney(order.commissionWaiver.givenUpEgp)} EGP`" />
+        <KeyValueRow label="Because of" :value="waiverWords(order.commissionWaiver)" />
+        <KeyValueRow v-if="order.commissionWaiver.floorApplied" label="Minimum commission" :value="`${formatMoney(order.commissionWaiver.floorEgp)} EGP held`" />
+        <KeyValueRow v-if="order.commissionWaiver.spreadGivenUpEgp && Number(order.commissionWaiver.spreadGivenUpEgp) > 0" label="Spread given to the dealer" :value="`${formatMoney(order.commissionWaiver.spreadGivenUpEgp)} EGP`" />
+      </template>
+
+      <template v-if="order.advance">
+        <div class="d-odp__label">First-sale advance</div>
+        <KeyValueRow label="Paid ahead" :value="`${formatMoney(order.advance.amountEgp)} EGP`" />
+        <KeyValueRow label="How" :value="order.advance.basis === 'promo_code' ? `Code ${order.advance.promoCode ?? ''}` : 'Enabled by staff'" />
+        <KeyValueRow label="State" :value="ADVANCE_STATE[order.advance.status]" />
+        <KeyValueRow v-if="order.advance.recoveredEgp" label="Recovered" :value="`${formatMoney(order.advance.recoveredEgp)} EGP`" />
+        <KeyValueRow v-if="order.advance.shortfallAbsorbedEgp && Number(order.advance.shortfallAbsorbedEgp) > 0" label="Absorbed by Dahab" :value="`${formatMoney(order.advance.shortfallAbsorbedEgp)} EGP`" />
+      </template>
+
       <template v-if="order.inspections.length > 0">
         <div class="d-odp__label">Inspection results</div>
 
@@ -195,7 +214,7 @@
 
 <script lang="ts" setup>
   import type { DisputeOutcome } from '@/types/dispute'
-  import type { InspectionResult, InspectionTarget, OrderDetail } from '@/types/order'
+  import type { InspectionResult, InspectionTarget, OrderCommissionWaiver, OrderDetail } from '@/types/order'
   import { computed, ref, watch } from 'vue'
   import { RouterLink } from 'vue-router'
   import CancelAcceptanceModal from '@/components/listings/CancelAcceptanceModal.vue'
@@ -231,6 +250,30 @@
   // One order for staff (Backend spec 012 FR-022): the figures, every inspection result,
   // the money moved, its history, and the actions the Backend says apply now (`can`).
   const props = defineProps<{ order: OrderDetail }>()
+
+  // Spec 023: what paid for the commission difference, and the state of an advance, in plain words.
+  const ADVANCE_STATE = {
+    outstanding: 'Waiting for the buyer to pay',
+    recovered: 'Recovered at the buyer\'s payment',
+    written_off: 'Written off (the buyer did not pay or the sale ended)',
+  } as const
+
+  function waiverWords (w: OrderCommissionWaiver): string {
+    switch (w.kind) {
+      case 'free_relist': {
+        return 'A free relist (no commission)'
+      }
+      case 'market_maker': {
+        return 'A market-maker code'
+      }
+      case 'credit': {
+        return w.code ? `A commission credit from code ${w.code}` : 'A commission credit'
+      }
+      default: {
+        return 'Nothing: an ordinary sale'
+      }
+    }
+  }
 
   const { can } = usePermissions()
   const canOpenCustomer = computed(() => can(PERMISSIONS.customerView))

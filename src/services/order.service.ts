@@ -107,6 +107,29 @@ export interface ApiOrderDetail extends ApiOrder {
     seller_proceeds: string
     balance_amount: string
   } | null
+  // Backend spec 023: what the commission was and what a waiver took off it, and the advance paid on the order.
+  commission_waiver?: {
+    recorded: boolean
+    kind: 'none' | 'free_relist' | 'market_maker' | 'credit' | null
+    ordinary_egp: string | null
+    charged_egp: string | null
+    given_up_egp: string | null
+    floor_egp: string | null
+    floor_applied: boolean | null
+    code: string | null
+    spread_given_up_egp: string | null
+  }
+  advance?: {
+    advance_id: string
+    amount_egp: string
+    basis: 'promo_code' | 'staff_enablement'
+    promo_code: string | null
+    status: 'outstanding' | 'recovered' | 'written_off'
+    advanced_at: string
+    recovered_egp: string | null
+    shortfall_absorbed_egp: string | null
+    written_off_reason: string | null
+  } | null
   inspections: ApiInspection[]
   latest_inspection_id: string | null
   proposed_price: string | null
@@ -276,6 +299,31 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
           spreadAmount: s.spread_amount,
           sellerProceeds: s.seller_proceeds,
           balanceAmount: s.balance_amount,
+        }
+      : null,
+    commissionWaiver: o.commission_waiver?.recorded
+      ? {
+          kind: o.commission_waiver.kind,
+          ordinaryEgp: o.commission_waiver.ordinary_egp,
+          chargedEgp: o.commission_waiver.charged_egp,
+          givenUpEgp: o.commission_waiver.given_up_egp,
+          floorEgp: o.commission_waiver.floor_egp,
+          floorApplied: o.commission_waiver.floor_applied,
+          code: o.commission_waiver.code,
+          spreadGivenUpEgp: o.commission_waiver.spread_given_up_egp,
+        }
+      : null,
+    advance: o.advance
+      ? {
+          id: o.advance.advance_id,
+          amountEgp: o.advance.amount_egp,
+          basis: o.advance.basis,
+          promoCode: o.advance.promo_code,
+          status: o.advance.status,
+          advancedAt: o.advance.advanced_at,
+          recoveredEgp: o.advance.recovered_egp,
+          shortfallAbsorbedEgp: o.advance.shortfall_absorbed_egp,
+          writtenOffReason: o.advance.written_off_reason,
         }
       : null,
     inspections: o.inspections.map(i => toInspection(i)),
