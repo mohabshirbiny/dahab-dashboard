@@ -257,12 +257,38 @@ export interface OrderDisputeRef {
   openedAt: string
 }
 
+export interface OrderCommissionWaiver {
+  kind: 'none' | 'free_relist' | 'market_maker' | 'credit' | null
+  ordinaryEgp: Money | null
+  chargedEgp: Money | null
+  givenUpEgp: Money | null
+  floorEgp: Money | null
+  floorApplied: boolean | null
+  code: string | null
+  spreadGivenUpEgp: Money | null
+}
+
+export interface OrderAdvance {
+  id: string
+  amountEgp: Money
+  basis: 'promo_code' | 'staff_enablement'
+  promoCode: string | null
+  status: 'outstanding' | 'recovered' | 'written_off'
+  advancedAt: string
+  recoveredEgp: Money | null
+  shortfallAbsorbedEgp: Money | null
+  writtenOffReason: string | null
+}
+
 export interface OrderDetail extends Order {
   lockedTotalPrice: Money
   depositAmount: Money
   lockedSellerUnitRate: Money | null
   lockedBuyerUnitRate: Money | null
   settlement: OrderSettlement | null
+  // Backend spec 023: null for an order settled before it, or not yet settled.
+  commissionWaiver: OrderCommissionWaiver | null
+  advance: OrderAdvance | null
   inspections: InspectionResult[]
   latestInspectionId: string | null
   proposedPrice: Money | null

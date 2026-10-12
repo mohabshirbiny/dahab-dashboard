@@ -70,6 +70,8 @@
         </template>
       </Panel>
 
+      <FirstSaleExposure v-if="can(PERMISSIONS.firstSaleManage)" />
+
       <Panel title="Recent changes">
         <EmptyState v-if="(history.data.value ?? []).length === 0" title="No changes yet" />
 
@@ -110,6 +112,7 @@
 <script lang="ts" setup>
   import type { Setting } from '@/types/pricing'
   import { reactive, ref } from 'vue'
+  import FirstSaleExposure from '@/components/first-sale/FirstSaleExposure.vue'
   import { pricingErrorMessage } from '@/components/pricing/pricingErrors'
   import ReasonModal from '@/components/pricing/ReasonModal.vue'
   import DataTable from '@/components/ui/DataTable.vue'
@@ -162,6 +165,33 @@
         { key: 'withdrawal.account_change_pause_hours', label: 'Withdrawals pause after a payout-account, phone or email change', hint: 'Hours. A person re-checks the name against the ID' },
         { key: 'flag.pattern_txn_threshold', label: 'Count someone as a pattern from', hint: 'Transactions. Below this nothing is flagged' },
         { key: 'deadline.buyer_pay_days', label: 'Days to pay after inspection', hint: 'The collection code only appears once the balance is paid' },
+        { key: 'marketmaker.require_approval', label: 'A market-maker purchase needs the piece approved', hint: 'The master switch. Off: no dealer code needs an approval. A code may still opt out with No' },
+      ],
+    },
+    {
+      title: 'First sale and codes',
+      subtitle: 'Backend spec 023. Switched off until Finance has signed the ledger, the VAT and the credit\'s accounting',
+      note: 'Every switch here is off in a new database. Turning one on starts it for customers at once, and is logged with the old and new value.',
+      fields: [
+        { key: 'payout.first_sale_enabled', label: 'Pay a first gold sale ahead', hint: 'Only for a seller with a first-sale code or enabled by staff, at the inspection that passes. Money leaves Dahab\'s equity before the buyer pays' },
+        { key: 'payout.first_sale_exposure_ceiling_egp', label: 'Total exposed to first-sale payouts', hint: 'EGP across everyone. The feature switches off above this' },
+        { key: 'payout.first_sale_comp_offsets_writeoff', label: 'A forfeited deposit offsets an advance written off', hint: 'Yes: the seller\'s share goes to Dahab when an advance was paid on the order. No: the seller keeps it' },
+        { key: 'promo.seller_codes_enabled', label: 'Customers may use commission codes on the sell form', hint: 'Percentage and waive codes made on the Promo codes page' },
+        { key: 'referral.enabled', label: 'Invite a friend is open', hint: 'Invitation codes, the friend\'s discount and the inviter\'s credit' },
+      ],
+    },
+    {
+      title: 'Invite a friend',
+      subtitle: 'Applies when invitations are open',
+      fields: [
+        { key: 'referral.friend_percent_off', label: 'The friend pays this much less commission', hint: 'Percent, on the sales below' },
+        { key: 'referral.friend_sales_covered', label: 'Sales the friend\'s discount covers', hint: 'Count' },
+        { key: 'referral.inviter_reward_egp', label: 'Credit the inviter earns', hint: 'EGP off a later commission, once the friend completes a sale. Never wallet money' },
+        { key: 'referral.min_friend_sale_egp', label: 'Smallest sale of the friend that earns it', hint: 'EGP' },
+        { key: 'referral.credit_expiry_days', label: 'A referral credit lasts', hint: 'Days' },
+        { key: 'referral.max_uses_per_code', label: 'Friends who may join with one code', hint: 'Count' },
+        { key: 'referral.max_per_device', label: 'Joins allowed from one device', hint: 'Count' },
+        { key: 'referral.max_invitations_per_account', label: 'Invitations counted per account', hint: 'Share and Copy taps' },
       ],
     },
     {
@@ -176,6 +206,8 @@
         { key: 'manualprice.confirmer_must_differ', label: 'Someone else must confirm a manual price' },
         { key: 'manualprice.pending_expiry_hours', label: 'A manual price waits for confirmation for' },
         { key: 'pricefeed.stale_after_minutes', label: 'The price feed counts as down after' },
+        { key: 'marketmaker.making_charge_warn_pct', label: 'A making charge above this share of the gold turns red', hint: 'Percent, on the market maker approvals page' },
+        { key: 'listing.view_retention_days', label: 'How long a view of a piece is kept', hint: 'Days' },
       ],
     },
   ]

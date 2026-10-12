@@ -91,6 +91,23 @@ function toCustomerFile (file: ApiCustomerFile): CustomerFile {
     withdrawalPauseUntil: file.withdrawal_pause?.until ?? null,
     withdrawalPauseTrigger: file.withdrawal_pause?.trigger_kind ?? null,
     closure: file.closure ? { closedAt: file.closure.closed_at, reason: file.closure.reason, note: file.closure.note } : null,
+    firstSale: file.first_sale
+      ? {
+          state: file.first_sale.state,
+          enablement: file.first_sale.enablement && {
+            id: file.first_sale.enablement.enablement_id,
+            reason: file.first_sale.enablement.reason,
+            createdAt: file.first_sale.enablement.created_at,
+          },
+          advance: file.first_sale.advance && {
+            id: file.first_sale.advance.advance_id,
+            amountEgp: file.first_sale.advance.amount_egp,
+            status: file.first_sale.advance.status,
+            basis: file.first_sale.advance.basis,
+            advancedAt: file.first_sale.advance.advanced_at,
+          },
+        }
+      : null,
   }
 }
 

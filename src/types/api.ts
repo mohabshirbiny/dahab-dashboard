@@ -306,6 +306,12 @@ export interface ApiCustomerFile extends Omit<ApiCustomerVerification, 'latest_d
   // Backend spec 013.
   payout_accounts?: ApiPayoutAccount[]
   withdrawal_pause?: { until: string, trigger_kind?: 'payout_account' | 'phone_change' | 'email_change' | 'password_reset' } | null
+  // Backend spec 023: the first-sale advance, only for a holder of first_sale.manage.
+  first_sale?: {
+    state: 'none' | 'enabled' | 'used'
+    enablement: { enablement_id: string, reason: string, created_at: string } | null
+    advance: { advance_id: string, amount_egp: string, status: 'outstanding' | 'recovered' | 'written_off', basis: 'promo_code' | 'staff_enablement', advanced_at: string } | null
+  } | null
   // Backend spec 017: the customer closed the account.
   closure?: { closed_at: string, reason: 'finished' | 'fees_too_high' | 'too_slow_to_sell' | 'data_trust' | 'something_went_wrong' | 'other', note: string | null } | null
 }

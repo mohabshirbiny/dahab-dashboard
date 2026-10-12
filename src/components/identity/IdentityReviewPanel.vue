@@ -67,6 +67,23 @@
   >
     Verify the {{ typeLabel }} of customer {{ target.customerRef }}? They become active and can buy and sell.
     This is recorded against your name.
+
+    <FormField
+      v-if="target.type === 'egyptian_id'"
+      v-slot="{ controlId, invalid }"
+      class="d-review__idno"
+      :error="idNumberError"
+      hint="14 digits, from the card. Only a one-way fingerprint is kept, to hold a once-per-ID code to one person. It is never shown again."
+      label="ID number"
+    >
+      <DInput
+        :id="controlId"
+        v-model="idNumber"
+        inputmode="numeric"
+        :invalid="invalid"
+        :maxlength="14"
+      />
+    </FormField>
   </ConfirmDialog>
 
   <ReviewReasonsModal
@@ -84,6 +101,8 @@
   import ReviewReasonsModal from '@/components/identity/ReviewReasonsModal.vue'
   import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
   import DBtn from '@/components/ui/DBtn.vue'
+  import DInput from '@/components/ui/DInput.vue'
+  import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatDateTime } from '@/composables/useFormatters'
@@ -112,6 +131,8 @@
   // Which of the two reason dialogs is showing. Kept after closing, so it can fade out.
   const reasonsMode = ref<'request_resubmission' | 'reject' | null>(null)
   const verifyError = ref('')
+  const idNumber = ref('')
+  const idNumberError = ref('')
   const reasonsError = ref('')
   // Shown on the page itself when a dialog cannot stay open, for example after a conflict.
   const notice = ref('')
@@ -177,8 +198,14 @@
 
   function onVerify () {
     verifyError.value = ''
+    idNumberError.value = ''
+    // An Egyptian ID is verified with its number (the Dashboard asks for it; the Backend does not force it).
+    if (props.target.type === 'egyptian_id' && !/^\d{14}$/.test(idNumber.value.trim())) {
+      idNumberError.value = 'Enter the 14 digits of the national ID number.'
+      return
+    }
     return submit(
-      { action: 'verify', reasons: [], note: '' },
+      { action: 'verify', reasons: [], note: '', idNumber: props.target.type === 'egyptian_id' ? idNumber.value.trim() : undefined },
       () => {
         verifyOpen.value = false
       },
@@ -208,6 +235,7 @@
 .d-review__verify { flex: 1; justify-content: center; }
 .d-review__readonly,
 .d-review__notice { margin-top: 12px; }
+.d-review__idno { margin-top: 14px; }
 .d-review__why { margin-top: 14px; }
 .d-review__why-title { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
 .d-review__reasons { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-2); }

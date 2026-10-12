@@ -50,6 +50,9 @@ export interface IdentityReviewInput {
   // Required for `request_resubmission` and `reject`, ignored for `verify`.
   reasons: IdentityReviewReason[]
   note: string
+  // The 14-digit national-ID number keyed from an Egyptian ID, sent with `verify` only (Backend spec 023).
+  // The Backend keeps a keyed hash for "once per ID" codes and never returns it.
+  idNumber?: string
 }
 
 // What the decision panel needs to know about a document.

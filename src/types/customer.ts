@@ -118,6 +118,14 @@ export interface CustomerFile extends CustomerVerification {
   // What opened the pause (Backend spec 017): a payout-account, phone or email change.
   withdrawalPauseTrigger: WithdrawalPauseTrigger | null
   closure: CustomerClosure | null
+  // Backend spec 023: the first-sale advance; null unless the viewer holds first_sale.manage.
+  firstSale: CustomerFirstSale | null
+}
+
+export interface CustomerFirstSale {
+  state: 'none' | 'enabled' | 'used'
+  enablement: { id: string, reason: string, createdAt: string } | null
+  advance: { id: string, amountEgp: string, status: 'outstanding' | 'recovered' | 'written_off', basis: 'promo_code' | 'staff_enablement', advancedAt: string } | null
 }
 
 // The file's "Sign-ins and devices" (Backend spec 007).

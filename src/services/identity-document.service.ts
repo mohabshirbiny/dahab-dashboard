@@ -23,7 +23,7 @@ export const identityDocumentService = {
   // down need at least one reason; the note is optional (max 1000 characters).
   async reviewIdentityDocument (id: string, input: IdentityReviewInput): Promise<void> {
     const body = input.action === 'verify'
-      ? { action: input.action }
+      ? { action: input.action, ...(input.idNumber && { id_number: input.idNumber }) }
       : { action: input.action, reasons: input.reasons, ...(input.note.trim() && { note: input.note.trim() }) }
     await http.post(endpoints.identityDocumentReview(id), body)
   },

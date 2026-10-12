@@ -3,15 +3,37 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { http } from '@/api/axios'
 import { retryTransient } from './queryRetry'
 
-// Market makers, staff side (Backend spec 019 US6 / 6A). Plain shapes: the Backend's own names.
+// Promo codes and market makers, staff side (Backend spec 019 US6 / 6A, spec 023 Stories 5-6).
+// Plain shapes: the Backend's own names.
+
+export type CommissionMode = 'waive' | 'percent' | 'none'
+export type UseLimit = 'unlimited' | 'once' | 'monthly'
 
 export interface PromoCodeRow {
   code: string
-  kind: string
+  kind: 'market_maker' | 'first_sale' | 'discount' | string
   customer: { id: string, display_ref: string, full_name: string } | null
+  what_it_does: {
+    commission: { mode: CommissionMode, percent: string | null }
+    gives_spread: boolean
+    pays_advance: boolean
+  }
+  tied_to:
+    | { audience: 'anyone' }
+    | { audience: 'account', customer: { id: string, display_ref: string, full_name: string, phone_masked: string | null } }
+  first_sale_only: boolean
+  conditions: {
+    use_limit: UseLimit
+    // Only for dealer codes (effective values); null otherwise.
+    min_listed_days: number | null
+    requires_approval: boolean | null
+    starts_on: string | null
+    ends_on: string | null
+  }
   monthly_cap_egp: string | null
   is_active: boolean
   uses_this_month: number
+  value_this_month_egp: string
   created_at: string
 }
 
@@ -21,7 +43,14 @@ export interface PromoUseRow {
   allowed: boolean
   block_reason: string | null
   order_id: string | null
+  value_egp: string | null
+  listing_ref: string | null
+  buy_request_ref: string | null
+  credit_status: 'active' | 'exhausted' | 'expired' | 'voided' | null
+  reduction_egp: string | null
 }
+
+export interface QueueMedia { media_id: string, kind: 'photo' | 'video' | 'invoice' | 'stone_certificate' }
 
 export interface QueueRow {
   listing_id: string
@@ -34,26 +63,39 @@ export interface QueueRow {
   gold_value: string | null
   listed_at: string | null
   days_listed: number
-  views: number | null
+  views: number
+  requests: number
+  media: QueueMedia[]
+  guide: { kind: 'making_charge' | 'none', value_pct: number | null, tone: 'ok' | 'bad' | 'none' }
 }
 
-export interface ApprovalRow {
-  approval_id: string
-  listing_id: string
-  title: string | null
-  asking_price: string
-  gold_value: string | null
-  rapaport_guide: string | null
-  approved_by: { id: string, full_name: string } | null
-  approved_at: string
-}
+export interface QueueMeta { min_list_age_days: number, require_approval: boolean }
 
 export interface CostPanel {
   month: string
   pieces_bought: number
-  value_egp: string
-  spread_paid_to_dealers_egp: string
-  commission_waived: boolean
+  commission_given_up_egp: string
+  spread_given_up_egp: string
+  total_cost_egp: string
+  not_recorded: number
+}
+
+// What the New-code form sends (Backend contracts/staff-promo-api.md §2); absent = not sent.
+export interface NewCodeInput {
+  code: string
+  audience: 'account' | 'anyone'
+  tied_to?: string
+  use_limit: UseLimit
+  commission_mode: CommissionMode
+  commission_percent?: string
+  gives_spread: boolean
+  min_listed_days?: string
+  requires_approval: boolean
+  monthly_cap_egp?: string
+  starts_on?: string
+  ends_on?: string
+  first_sale_only: boolean
+  pays_advance: boolean
 }
 
 const keyHeader = (idempotencyKey: string) => ({ headers: { 'Idempotency-Key': idempotencyKey } })
@@ -79,15 +121,7 @@ export function usePromoUses (code: MaybeRefOrGetter<string | null>) {
 export function useMarketMakerQueue () {
   return useQuery({
     queryKey: [...root, 'queue'],
-    queryFn: async () => (await http.get<{ data: QueueRow[], meta: { min_list_age_days: number } }>('/dashboard/market-maker/queue')).data,
-    retry: retryTransient,
-  })
-}
-
-export function useApprovals () {
-  return useQuery({
-    queryKey: [...root, 'approvals'],
-    queryFn: async () => (await http.get<{ data: ApprovalRow[] }>('/dashboard/market-maker/approvals')).data.data,
+    queryFn: async () => (await http.get<{ data: QueueRow[], meta: QueueMeta }>('/dashboard/market-maker/queue')).data,
     retry: retryTransient,
   })
 }
@@ -108,12 +142,8 @@ function useRefresh () {
 export function useCreatePromoCode () {
   const refresh = useRefresh()
   return useMutation({
-    mutationFn: async (input: { code: string, customerId: string, monthlyCap: string, idempotencyKey: string }) =>
-      (await http.post('/dashboard/promo-codes', {
-        code: input.code,
-        tied_customer_id: input.customerId,
-        monthly_cap_egp: input.monthlyCap === '' ? undefined : input.monthlyCap,
-      }, keyHeader(input.idempotencyKey))).data,
+    mutationFn: async (input: { body: NewCodeInput, idempotencyKey: string }) =>
+      (await http.post('/dashboard/promo-codes', input.body, keyHeader(input.idempotencyKey))).data,
     onSuccess: refresh,
   })
 }
@@ -140,5 +170,13 @@ export function useApprovePiece () {
         gold_value_seen: input.goldValueSeen ?? undefined,
       }, keyHeader(input.idempotencyKey))).data,
     onSuccess: refresh,
+  })
+}
+
+// "Leave" changes nothing about the piece; it is only logged (Backend spec 023 D23-7).
+export function useLeavePiece () {
+  return useMutation({
+    mutationFn: async (input: { listingId: string, note?: string, idempotencyKey: string }) =>
+      (await http.post(`/dashboard/market-maker/queue/${input.listingId}/leave`, { note: input.note }, keyHeader(input.idempotencyKey))).data,
   })
 }

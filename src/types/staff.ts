@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   auditViewOwn: 'audit.view_own',
   // Wallets (Backend spec 008): CEO and Finance by default, never the COO.
   walletView: 'wallet.view',
+  // The first-sale advance (Backend spec 023): enable it for a seller, see the exposure. CEO and Finance.
+  firstSaleManage: 'first_sale.manage',
   // Wallet top-up (Backend spec 009): CEO and Finance by default, never the COO.
   topupMatch: 'topup.match',
   topupAccountsManage: 'topup.accounts.manage',

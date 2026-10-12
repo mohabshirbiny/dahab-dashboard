@@ -45,6 +45,8 @@
 
         <CustomerWalletPanel v-if="can(PERMISSIONS.walletView)" :customer-id="customer.id" />
 
+        <FirstSaleCard v-if="customer.firstSale" :customer-id="customer.id" :first-sale="customer.firstSale" />
+
         <PayoutAccountsPanel
           :accounts="customer.payoutAccounts"
           :customer-id="customer.id"
@@ -66,6 +68,7 @@
   import CustomerProfileCard from '@/components/customer-file/CustomerProfileCard.vue'
   import CustomerSessionsPanel from '@/components/customer-file/CustomerSessionsPanel.vue'
   import CustomerWalletPanel from '@/components/customer-file/CustomerWalletPanel.vue'
+  import FirstSaleCard from '@/components/customer-file/FirstSaleCard.vue'
   import IdentityDocumentsPanel from '@/components/customer-file/IdentityDocumentsPanel.vue'
   import PayoutAccountsPanel from '@/components/customer-file/PayoutAccountsPanel.vue'
   import ReinstateForm from '@/components/customer-file/ReinstateForm.vue'
