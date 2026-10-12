@@ -52,6 +52,14 @@ interface ApiListingDetail extends ApiListing {
     note: string | null
     changed_at: string
   }>
+  // Backend spec 022: the price changes while live, oldest first.
+  price_history?: Array<{
+    field: 'making_charge_per_g' | 'asking_price'
+    old_value: string
+    new_value: string
+    actor: { type: 'customer' | 'staff', name: string | null }
+    changed_at: string
+  }>
   sent_back_count: number
   seller_listings_sent_back: number
   seller_listings_submitted: number
@@ -133,6 +141,13 @@ function toDetail (l: ApiListingDetail): ListingDetail {
   return {
     ...toListing(l),
     history: l.history.map(h => ({ fromState: h.from_state, toState: h.to_state, actor: h.actor, note: h.note, changedAt: h.changed_at })),
+    priceHistory: (l.price_history ?? []).map(p => ({
+      field: p.field,
+      oldValue: p.old_value,
+      newValue: p.new_value,
+      actor: p.actor,
+      changedAt: p.changed_at,
+    })),
     sentBackCount: l.sent_back_count,
     sellerListingsSentBack: l.seller_listings_sent_back,
     sellerListingsSubmitted: l.seller_listings_submitted,

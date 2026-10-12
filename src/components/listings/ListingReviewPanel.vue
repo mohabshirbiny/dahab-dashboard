@@ -70,6 +70,11 @@
 
       <div class="d-lrp__label">History</div>
       <ListingHistory :history="listing.history" />
+
+      <template v-if="listing.priceHistory.length > 0">
+        <div class="d-lrp__label">Price changes</div>
+        <ListingPriceHistory :changes="listing.priceHistory" />
+      </template>
     </div>
 
     <ListingDecisionModal
@@ -99,6 +104,7 @@
   import ListingHistory from './ListingHistory.vue'
   import ListingMediaGrid from './ListingMediaGrid.vue'
   import ListingOrderBox from './ListingOrderBox.vue'
+  import ListingPriceHistory from './ListingPriceHistory.vue'
   import ListingQueuePanel from './ListingQueuePanel.vue'
 
   // The review panel of the design (Backend spec 010): the piece, its files, the seller
