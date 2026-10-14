@@ -51,6 +51,13 @@ export interface InvoiceLines {
   commissionPct: string | null
   commissionMinimum: string | null
   paidToWallet: string | null
+  // Backend package C: seller invoices issued since the commission rate includes VAT.
+  commissionVatInclusive: boolean
+  // Buyer gold invoices (package C item 13): gold at the seller's rate and the price difference,
+  // shown as Dahab's commission (VAT 0). Null on older invoices.
+  sellerUnitRate: string | null
+  goldValueAtSellerRate: string | null
+  priceDifference: string | null
 }
 
 export interface CreditNote {

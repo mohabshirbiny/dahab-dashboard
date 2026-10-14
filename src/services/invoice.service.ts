@@ -34,7 +34,7 @@ interface ApiInvoice {
   document_ready: boolean
   customer: ApiCustomer
   vat_rate?: string
-  lines?: Record<string, string | number | null>
+  lines?: Record<string, string | number | boolean | null>
   issuer?: Record<string, string> | null
   party_details?: { full_name: string | null, display_ref: string } | null
   creditable?: boolean
@@ -102,7 +102,7 @@ function toCreditNote (n: ApiCreditNote): CreditNote {
   }
 }
 
-const str = (v: string | number | null | undefined) => (v === null || v === undefined ? null : String(v))
+const str = (v: string | number | boolean | null | undefined) => (v === null || v === undefined ? null : String(v))
 
 function toDetail (i: ApiInvoice): InvoiceDetail {
   const l = i.lines ?? {}
@@ -124,6 +124,10 @@ function toDetail (i: ApiInvoice): InvoiceDetail {
       commissionPct: str(l.commission_pct),
       commissionMinimum: str(l.commission_minimum),
       paidToWallet: str(l.paid_to_wallet),
+      commissionVatInclusive: l.commission_vat_inclusive === true,
+      sellerUnitRate: str(l.seller_unit_rate),
+      goldValueAtSellerRate: str(l.gold_value_at_seller_rate),
+      priceDifference: str(l.price_difference),
     },
     issuer: i.issuer ?? null,
     partyDetails: i.party_details ? { fullName: i.party_details.full_name, displayRef: i.party_details.display_ref } : null,
