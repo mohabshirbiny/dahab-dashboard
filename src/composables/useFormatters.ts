@@ -91,6 +91,22 @@ export function formatRelativeTime (value: string | null | undefined): string {
   return formatDate(value, true)
 }
 
+// "waiting less than a day", "waiting 1 day", "waiting 4 days": how long something has waited since `value`.
+export function formatWaiting (value: string | null | undefined): string {
+  if (!value) {
+    return ''
+  }
+  const diff = Date.now() - toTime(value)
+  if (Number.isNaN(diff)) {
+    return ''
+  }
+  const days = Math.floor(diff / 86_400_000)
+  if (days < 1) {
+    return 'waiting less than a day'
+  }
+  return `waiting ${days} ${days === 1 ? 'day' : 'days'}`
+}
+
 export function isPast (value: string | null | undefined): boolean {
   if (!value) {
     return false

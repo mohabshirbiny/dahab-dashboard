@@ -4,7 +4,7 @@
 import type { StatusVariant } from './status'
 
 export type IdentityDocumentType = 'egyptian_id' | 'passport'
-export type IdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected'
+export type IdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected' | 'superseded'
 export type IdentityDocumentSide = 'front' | 'back'
 
 export const IDENTITY_TYPE_LABELS: Record<IdentityDocumentType, string> = {
@@ -18,6 +18,8 @@ export const IDENTITY_STATUS_META: Record<IdentityDocumentStatus, { label: strin
   verified: { label: 'Verified', variant: 'ok' },
   needs_resubmission: { label: 'New upload asked', variant: 'info' },
   rejected: { label: 'Rejected', variant: 'bad' },
+  // Asked again and answered with a newer attempt; kept read-only.
+  superseded: { label: 'Replaced by a new upload', variant: 'wait' },
 }
 
 // What a reviewer can say is wrong with a document. The values are the Backend enum
@@ -60,6 +62,8 @@ export interface IdentityReviewTarget {
   id: string
   type: IdentityDocumentType
   status: IdentityDocumentStatus
+  // 1, 2, 3 … earlier attempts stay readable in the customer's file.
+  attemptNumber: number
   customerRef: string
   reviewedAt: string | null
   reviewReasons: string[]

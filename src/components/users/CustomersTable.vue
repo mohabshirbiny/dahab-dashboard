@@ -22,7 +22,8 @@
       <td>
         <template v-if="row.latestDocument">
           {{ IDENTITY_TYPE_LABELS[row.latestDocument.type] }}
-          <div v-if="row.latestDocument.status === 'needs_resubmission'" class="who2">Waiting for a new upload</div>
+          <div v-if="row.latestDocument.attemptNumber > 1" class="who2">Attempt {{ row.latestDocument.attemptNumber }}</div>
+          <div v-if="row.latestDocument.status === 'needs_resubmission'" class="who2">Waiting for a new upload, {{ formatWaiting(row.latestDocument.reviewedAt) }}</div>
         </template>
 
         <span v-else class="d-cust__none">No document</span>
@@ -48,7 +49,7 @@
   import DataTable from '@/components/ui/DataTable.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
-  import { formatRelativeTime } from '@/composables/useFormatters'
+  import { formatRelativeTime, formatWaiting } from '@/composables/useFormatters'
   import { CUSTOMER_TYPE_LABELS, type CustomerVerification, governorateLabel } from '@/types/customer'
   import { IDENTITY_TYPE_LABELS } from '@/types/identity'
 
@@ -59,9 +60,10 @@
 
   const emit = defineEmits<{ (e: 'select', id: string): void }>()
 
-  // A decision is only open while the latest document is pending.
+  // A decision is open while the latest document is pending, or waiting for a new upload
+  // (staff may verify or reject without waiting; Backend testing fixes).
   function isReviewable (row: CustomerVerification): boolean {
-    return row.latestDocument?.status === 'pending'
+    return row.latestDocument?.status === 'pending' || row.latestDocument?.status === 'needs_resubmission'
   }
 </script>
 

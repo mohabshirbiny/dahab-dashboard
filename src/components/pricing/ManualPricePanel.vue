@@ -106,6 +106,11 @@
               Change from the current price: {{ preview.data.value.deviationPct ? `${trimDecimal(preview.data.value.deviationPct)} %` : 'first price' }}.
               Greyed karats are turned off; their price is ready if you turn them on.
             </p>
+
+            <p class="who2 d-mp__dev">
+              Each karat's own buy and sell adjustment is applied to these prices. See them in the
+              <a class="d-mp__link" href="#karat-prices" @click.prevent="showKaratTable">karat table</a>.
+            </p>
           </template>
 
           <NoteBanner v-if="preview.isError.value" variant="bad">{{ pricingErrorMessage(preview.error.value) }}</NoteBanner>
@@ -218,6 +223,11 @@
     return mode.value === 'prices' ? { bid24k: bid.value.trim(), ask24k: ask.value.trim() } : { changePct: pct.value.trim() }
   }
 
+  // The "Prices per karat" panel on the same page holds each karat's adjustments.
+  function showKaratTable () {
+    document.querySelector('#karat-prices')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   function runPreview () {
     if (inputValid.value) preview.mutate({ price: input() })
   }
@@ -257,6 +267,7 @@
 @media (max-width: 640px) {
   .d-mp__grid { grid-template-columns: 1fr; }
 }
+.d-mp__link { color: var(--gold); text-decoration: underline; }
 .d-mp__preview {
   background: var(--bg);
   border: 1px solid var(--line);

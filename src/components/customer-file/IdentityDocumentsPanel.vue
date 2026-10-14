@@ -1,5 +1,5 @@
 <template>
-  <Panel :subtitle="documents.length === 1 ? '1 document' : `${documents.length} documents`" title="Identity documents">
+  <Panel :subtitle="documents.length === 1 ? '1 attempt' : `${documents.length} attempts`" title="Identity documents">
     <EmptyState
       v-if="documents.length === 0"
       description="This customer has not sent an identity document."
@@ -8,6 +8,7 @@
 
     <DataTable v-else>
       <template #head>
+        <th>Attempt</th>
         <th>Document</th>
         <th>Sent</th>
         <th>Outcome</th>
@@ -16,6 +17,8 @@
       </template>
 
       <tr v-for="doc in documents" :key="doc.id">
+        <td>{{ doc.attemptNumber }}</td>
+
         <td>
           {{ IDENTITY_TYPE_LABELS[doc.type] }}
           <div v-if="doc.reviewReasons.length > 0" class="who2">{{ doc.reviewReasons.map(reasonLabel).join(', ') }}</div>
@@ -46,7 +49,7 @@
   <DModal
     :max-width="760"
     :model-value="open !== null"
-    :title="open ? IDENTITY_TYPE_LABELS[open.type] : ''"
+    :title="open ? `${IDENTITY_TYPE_LABELS[open.type]} · attempt ${open.attemptNumber} · ${IDENTITY_STATUS_META[open.status].label}` : ''"
     @update:model-value="value => { if (!value) open = null }"
   >
     <div v-if="open" class="d-docs__images" :class="{ 'd-docs__images--two': open.hasBack }">

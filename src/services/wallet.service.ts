@@ -43,6 +43,11 @@ interface ApiStatementSummary {
   total?: string
   customer?: { id: string, display_ref: string, full_name: string | null }
   vat_payable?: string
+  // view = dahab (Backend testing fixes): the two Dahab accounts apart.
+  commission_in?: string
+  commission_out?: string
+  spread_in?: string
+  spread_out?: string
 }
 
 interface ApiStatementRow {
@@ -57,6 +62,9 @@ interface ApiStatementRow {
   held_after?: string
   wallet?: { customer_id: string, display_ref: string } | null
   moved_to_held?: string
+  // view = dahab: signed; commission + spread = in − out.
+  commission?: string
+  spread?: string
   period?: string
   count?: number
   before: string
@@ -94,12 +102,16 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
     total: s.total,
     customer: s.customer ? { id: s.customer.id, displayRef: s.customer.display_ref, fullName: s.customer.full_name } : undefined,
     vatPayable: s.vat_payable,
+    commissionIn: s.commission_in,
+    commissionOut: s.commission_out,
+    spreadIn: s.spread_in,
+    spreadOut: s.spread_out,
   }
 }
 
 function toRow (r: ApiStatementRow): StatementRow {
   if (r.period !== undefined) {
-    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after }
+    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after, commission: r.commission ?? null, spread: r.spread ?? null }
   }
   return {
     kind: 'movement',
@@ -118,6 +130,8 @@ function toRow (r: ApiStatementRow): StatementRow {
     heldAfter: r.held_after ?? null,
     wallet: r.wallet ? { customerId: r.wallet.customer_id, displayRef: r.wallet.display_ref } : null,
     movedToHeld: r.moved_to_held ?? null,
+    commission: r.commission ?? null,
+    spread: r.spread ?? null,
   }
 }
 

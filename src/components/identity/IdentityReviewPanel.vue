@@ -1,5 +1,5 @@
 <template>
-  <Panel title="Decision">
+  <Panel :subtitle="`Attempt ${target.attemptNumber}`" title="Decision">
     <template #body>
       <NoteBanner v-if="target.status === 'verified'" variant="ok">
         <span>
@@ -14,12 +14,23 @@
         </span>
       </NoteBanner>
 
-      <NoteBanner v-else-if="target.status === 'needs_resubmission'" variant="info">
-        <span>
-          The customer was asked to upload the document again<template v-if="target.reviewedAt"> on {{ formatDateTime(target.reviewedAt) }}</template>.
-          It comes back to Waiting when they do.
-        </span>
+      <NoteBanner v-else-if="target.status === 'superseded'" variant="wait">
+        <span>The customer has sent a newer upload. This earlier attempt is kept for the record and cannot be decided on.</span>
       </NoteBanner>
+
+      <template v-else-if="target.status === 'needs_resubmission'">
+        <NoteBanner variant="info">
+          <span>
+            Asked again<template v-if="target.reviewedAt"> on {{ formatDateTime(target.reviewedAt) }}, {{ formatWaiting(target.reviewedAt) }}</template>
+            for a new upload. It comes back to Waiting when they send one. You can still decide on this document now.
+          </span>
+        </NoteBanner>
+
+        <div v-if="canReview" class="d-review__actions">
+          <DBtn class="d-review__verify" kind="success" @click="open('verify')">Verify</DBtn>
+          <DBtn kind="danger" @click="open('reject')">Reject</DBtn>
+        </div>
+      </template>
 
       <template v-else>
         <NoteBanner variant="info">
@@ -105,7 +116,7 @@
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
-  import { formatDateTime } from '@/composables/useFormatters'
+  import { formatDateTime, formatWaiting } from '@/composables/useFormatters'
   import { useReviewIdentityDocument } from '@/composables/useIdentityDocuments'
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
