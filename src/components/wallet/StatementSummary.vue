@@ -4,6 +4,11 @@
     <StatCard :hint="inHint" label="In" :value="formatMoney(summary.in)" value-color="var(--ok)" />
     <StatCard :hint="outHint" label="Out" :value="formatMoney(summary.out)" />
     <StatCard :hint="closingHint" :label="`Balance on ${formatDate(summary.to)}`" :value="formatMoney(summary.closing)" />
+
+    <template v-if="summary.view === 'dahab' && summary.commissionIn !== undefined">
+      <StatCard :hint="splitHint(summary.commissionIn, summary.commissionOut)" label="Commission" :value="formatMoney(net(summary.commissionIn, summary.commissionOut))" />
+      <StatCard :hint="splitHint(summary.spreadIn, summary.spreadOut)" label="Spread" :value="formatMoney(net(summary.spreadIn, summary.spreadOut))" />
+    </template>
   </StatGrid>
 </template>
 
@@ -16,7 +21,16 @@
 
   const props = defineProps<{ summary: StatementSummary }>()
 
-  const inHint = computed(() => props.summary.view === 'dahab' ? 'Commission and spread' : 'Money in, and deposits returned')
+  const inHint = computed(() => props.summary.view === 'dahab' ? 'Commission and spread, shown apart below' : 'Money in, and deposits returned')
+
+  // The Dahab view's two accounts apart (Backend testing fixes): in − out, 4 dp strings.
+  function net (moneyIn?: string, moneyOut?: string): string {
+    return (Number(moneyIn ?? 0) - Number(moneyOut ?? 0)).toFixed(4)
+  }
+
+  function splitHint (moneyIn?: string, moneyOut?: string): string {
+    return `In ${formatMoney(moneyIn ?? '0')}, out ${formatMoney(moneyOut ?? '0')}`
+  }
   const outHint = computed(() => props.summary.view === 'customer' ? 'Including deposits held' : 'Money out')
 
   const closingHint = computed(() => {

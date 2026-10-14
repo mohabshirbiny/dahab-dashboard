@@ -37,7 +37,11 @@
           />
         </div>
 
-        <NoteBanner v-else class="d-review__none" variant="wait">
+        <p v-if="doc && doc.attemptNumber > 1" class="who2 d-review__attempt">
+          Attempt {{ doc.attemptNumber }}. The earlier attempts and their images are in the customer's file (Open file).
+        </p>
+
+        <NoteBanner v-else-if="!doc" class="d-review__none" variant="wait">
           <span>No identity document came with this customer's registration.</span>
         </NoteBanner>
 
@@ -102,6 +106,7 @@
       id: d.id,
       type: d.type,
       status: d.status,
+      attemptNumber: d.attemptNumber,
       customerRef: c.displayRef,
       reviewedAt: d.reviewedAt,
       reviewReasons: d.reviewReasons,
@@ -120,6 +125,7 @@
 .d-review__images { display: grid; gap: 12px; margin-bottom: 14px; }
 .d-review__images--two { grid-template-columns: 1fr 1fr; }
 .d-review__none { margin-bottom: 14px; }
+.d-review__attempt { margin: -6px 0 12px; }
 @media (max-width: 1400px) {
   .d-review__images--two { grid-template-columns: 1fr; }
 }

@@ -202,7 +202,8 @@ export interface ApiStaffNoticePage {
 }
 
 export type ApiIdentityDocumentKind = 'egyptian_id' | 'passport'
-export type ApiIdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected'
+// `superseded` (Backend testing fixes): an "Ask again" document the customer answered with a new attempt.
+export type ApiIdentityDocumentStatus = 'pending' | 'verified' | 'needs_resubmission' | 'rejected' | 'superseded'
 export type ApiCustomerStatus = 'pending_verification' | 'active' | 'rejected' | 'suspended' | 'closed'
 
 export type ApiCustomerType = 'ordinary' | 'market_maker'
@@ -224,6 +225,8 @@ export interface ApiCustomerVerification {
     document_id: string
     doc_kind: ApiIdentityDocumentKind
     status: ApiIdentityDocumentStatus
+    // 1, 2, 3 … every upload is kept (Backend testing fixes); the latest is also the number of attempts.
+    attempt_number: number
     has_back: boolean
     review_reasons: string[] | null
     review_note: string | null

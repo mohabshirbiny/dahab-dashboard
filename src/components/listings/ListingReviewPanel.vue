@@ -59,6 +59,11 @@
         The making charge is high for a piece this weight. It is allowed, but it usually means the piece sits unsold.
       </NoteBanner>
 
+      <NoteBanner v-if="listing.state === 'changes_requested'" class="d-lrp__note" variant="info">
+        Changes asked on {{ formatDateTime(listing.stateChangedAt) }}, {{ formatWaiting(listing.stateChangedAt) }} for the seller.
+        <template v-if="listing.canReject">You can reject it for good without waiting.</template>
+      </NoteBanner>
+
       <div v-if="hasActions" class="d-lrp__actions">
         <DBtn v-if="listing.canApprove" class="d-lrp__main" kind="primary" @click="decision = 'approve'">Approve and publish</DBtn>
         <DBtn v-if="listing.canRequestChanges" @click="decision = 'request-changes'">Ask for changes</DBtn>
@@ -97,7 +102,7 @@
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
-  import { formatDateTime, formatMoney } from '@/composables/useFormatters'
+  import { formatDateTime, formatMoney, formatWaiting } from '@/composables/useFormatters'
   import { listingStateMeta, listingTitle } from '@/types/listing'
   import ListingDecisionModal from './ListingDecisionModal.vue'
   import { formatWeight, makingShareOfGold } from './listingFormat'

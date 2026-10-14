@@ -52,6 +52,11 @@ export interface StatementSummary {
   customer?: { id: string, displayRef: string, fullName: string | null }
   // view = dahab
   vatPayable?: Money
+  // view = dahab: commission and spread apart (their ins add up to `in`, their outs to `out`).
+  commissionIn?: Money
+  commissionOut?: Money
+  spreadIn?: Money
+  spreadOut?: Money
 }
 
 export interface StatementActor {
@@ -77,6 +82,9 @@ export interface StatementMovement {
   heldAfter: Money | null
   wallet: { customerId: string, displayRef: string } | null
   movedToHeld: Money | null
+  // view = dahab only (null otherwise): signed, commission + spread = in − out.
+  commission: Money | null
+  spread: Money | null
 }
 
 // One day or month (grain = day | month).
@@ -88,6 +96,8 @@ export interface StatementPeriod {
   in: Money
   out: Money
   after: Money
+  commission: Money | null
+  spread: Money | null
 }
 
 export type StatementRow = StatementMovement | StatementPeriod

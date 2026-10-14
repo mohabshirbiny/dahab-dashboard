@@ -27,6 +27,8 @@ export interface CustomerLatestDocument {
   id: string
   type: IdentityDocumentType
   status: IdentityDocumentStatus
+  // Which upload this is: 1, 2, 3 … (every attempt is kept).
+  attemptNumber: number
   hasBack: boolean
   reviewReasons: string[]
   reviewNote: string | null

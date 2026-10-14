@@ -7,7 +7,7 @@
 
     <div class="d-split">
       <div class="d-split__left">
-        <Panel subtitle="Buy side = sellers get · sell side = buyers pay" title="Prices per karat">
+        <Panel id="karat-prices" subtitle="Buy side = sellers get · sell side = buyers pay" title="Prices per karat">
           <LoadingState v-if="current.isPending.value" label="Loading prices…" />
 
           <ErrorState

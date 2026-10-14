@@ -9,6 +9,11 @@
       <th class="r">In</th>
       <th class="r">Out</th>
       <th class="r">After</th>
+
+      <template v-if="split">
+        <th class="r">Commission</th>
+        <th class="r">Spread</th>
+      </template>
     </template>
 
     <template v-for="row in rows" :key="row.kind === 'movement' ? row.id : row.period">
@@ -29,6 +34,11 @@
         <td class="r mono d-st__in">{{ dash(row.in) }}</td>
         <td class="r mono">{{ dash(row.out) }}</td>
         <td class="r mono d-st__after">{{ formatMoney(row.after) }}</td>
+
+        <template v-if="split">
+          <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
+          <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
+        </template>
       </tr>
 
       <tr v-else>
@@ -39,6 +49,11 @@
         <td class="r mono d-st__in">{{ dash(row.in) }}</td>
         <td class="r mono">{{ dash(row.out) }}</td>
         <td class="r mono d-st__after">{{ formatMoney(row.after) }}</td>
+
+        <template v-if="split">
+          <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
+          <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
+        </template>
       </tr>
     </template>
   </DataTable>
@@ -46,10 +61,14 @@
 
 <script lang="ts" setup>
   import type { StatementGrain, StatementRow } from '@/types/wallet'
+  import { computed } from 'vue'
   import DataTable from '@/components/ui/DataTable.vue'
   import { formatDate, formatDateTime, formatMoney } from '@/composables/useFormatters'
 
-  defineProps<{ rows: StatementRow[], grain: StatementGrain }>()
+  const props = defineProps<{ rows: StatementRow[], grain: StatementGrain }>()
+
+  // The Dahab view carries commission and spread per row (Backend testing fixes).
+  const split = computed(() => props.rows.some(r => r.commission !== null))
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
