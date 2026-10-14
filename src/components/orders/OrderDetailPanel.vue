@@ -79,8 +79,9 @@
         <KeyValueRow label="Buyer pays" :value="`${formatMoney(order.settlement.finalBuyerTotal)} EGP`" />
         <KeyValueRow label="Balance after the deposit" :value="`${formatMoney(order.settlement.balanceAmount)} EGP`" />
         <KeyValueRow label="Seller gross" :value="`${formatMoney(order.settlement.finalSellerGross)} EGP`" />
-        <KeyValueRow label="Commission" :value="`${formatMoney(order.settlement.commissionAmount)} EGP`" />
-        <KeyValueRow label="VAT" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
+        <!-- Backend package C: the rate the seller pays includes VAT; these are its two parts. -->
+        <KeyValueRow label="Commission before VAT" :value="`${formatMoney(order.settlement.commissionAmount)} EGP`" />
+        <KeyValueRow label="VAT in the commission" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
         <KeyValueRow label="Spread" :value="`${formatMoney(order.settlement.spreadAmount)} EGP`" />
         <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
       </template>

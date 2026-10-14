@@ -20,7 +20,14 @@
 
       <h3 class="d-idm__h">{{ invoice.party === 'seller' ? 'Settlement' : 'Price' }}</h3>
 
-      <template v-if="invoice.lines.goldValue !== null">
+      <!-- Backend package C item 13: the price difference is Dahab's commission (VAT 0); the total is unchanged. -->
+      <template v-if="invoice.party === 'buyer' && invoice.lines.priceDifference !== null">
+        <KeyValueRow :label="`Gold value at ${formatMoney(invoice.lines.sellerUnitRate)} per gram`" :value="formatMoney(invoice.lines.goldValueAtSellerRate)" />
+        <KeyValueRow label="Commission" :value="formatMoney(invoice.lines.priceDifference)" />
+        <KeyValueRow label="Making charge" :value="formatMoney(invoice.lines.makingTotal)" />
+      </template>
+
+      <template v-else-if="invoice.lines.goldValue !== null">
         <KeyValueRow :label="`Gold value at ${formatMoney(invoice.lines.unitRate)} per gram`" :value="formatMoney(invoice.lines.goldValue)" />
         <KeyValueRow label="Making charge" :value="formatMoney(invoice.lines.makingTotal)" />
       </template>
@@ -30,9 +37,14 @@
 
       <template v-if="invoice.party === 'seller'">
         <h3 class="d-idm__h">Dahab charges</h3>
-        <KeyValueRow :label="`Commission (${invoice.lines.commissionPct ?? '—'}%)`" :value="formatMoney(invoice.net)" />
+        <!-- Backend package C: since then the rate includes VAT, which is carved out of it. -->
+        <KeyValueRow
+          :label="invoice.lines.commissionVatInclusive ? `Commission before VAT (${invoice.lines.commissionPct ?? '—'}%, VAT included)` : `Commission (${invoice.lines.commissionPct ?? '—'}%)`"
+          :value="formatMoney(invoice.net)"
+        />
+
         <KeyValueRow :label="`VAT at ${Number(invoice.vatRate)}%`" :value="formatMoney(invoice.vat)" />
-        <KeyValueRow big label="Total charges" :value="formatMoney(invoice.gross)" />
+        <KeyValueRow big :label="invoice.lines.commissionVatInclusive ? 'Commission, VAT included' : 'Total charges'" :value="formatMoney(invoice.gross)" />
         <KeyValueRow label="Paid to the seller's wallet" :value="formatMoney(invoice.lines.paidToWallet)" />
       </template>
 
