@@ -26,6 +26,26 @@ export function useReviewIdentityDocument () {
   })
 }
 
+// "Move back to waiting" on a rejected customer: the status changes, so the same lists,
+// counts and badge are refreshed, and on a conflict (someone else reopened it first) too.
+export function useReopenIdentityDocument () {
+  const queryClient = useQueryClient()
+
+  function refreshCustomers () {
+    return queryClient.invalidateQueries({ queryKey: customerKeys.all })
+  }
+
+  return useMutation({
+    mutationFn: (input: { id: string, reason: string }) => identityDocumentService.reopenIdentityDocument(input.id, input.reason),
+    onError: error => {
+      if (errorCodeOf(error) === 'conflict') {
+        refreshCustomers()
+      }
+    },
+    onSuccess: refreshCustomers,
+  })
+}
+
 export type DocumentImageState = 'loading' | 'loaded' | 'deleted' | 'error'
 
 // Loads a document image as an object URL. Deliberately not a query: the Backend

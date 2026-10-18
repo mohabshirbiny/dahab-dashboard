@@ -27,4 +27,14 @@ export const identityDocumentService = {
       : { action: input.action, reasons: input.reasons, ...(input.note.trim() && { note: input.note.trim() }) }
     await http.post(endpoints.identityDocumentReview(id), body)
   },
+
+  // POST /dashboard/identity-documents/{id}/reopen   (identity.review)
+  // "Move back to waiting": a rejected customer cannot send their ID again, so after they
+  // contact customer service staff reopen the latest rejected attempt. It goes back to
+  // pending with the same images and the customer back to waiting review; then the normal
+  // Verify / Ask again / Reject apply. The reason (5 to 500 characters) is required and
+  // recorded in the audit log.
+  async reopenIdentityDocument (id: string, reason: string): Promise<void> {
+    await http.post(endpoints.identityDocumentReopen(id), { reason: reason.trim() })
+  },
 }

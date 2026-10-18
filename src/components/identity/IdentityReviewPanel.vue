@@ -8,11 +8,18 @@
         </span>
       </NoteBanner>
 
-      <NoteBanner v-else-if="target.status === 'rejected'" variant="bad">
-        <span>
-          Rejected<template v-if="target.reviewedAt"> on {{ formatDateTime(target.reviewedAt) }}</template>.
-        </span>
-      </NoteBanner>
+      <template v-else-if="target.status === 'rejected'">
+        <NoteBanner variant="bad">
+          <span>
+            Rejected<template v-if="target.reviewedAt"> on {{ formatDateTime(target.reviewedAt) }}</template>.
+            The customer cannot send their ID again and is told to contact customer service.
+          </span>
+        </NoteBanner>
+
+        <div v-if="canReview" class="d-review__actions">
+          <DBtn @click="openReopen">Move back to waiting</DBtn>
+        </div>
+      </template>
 
       <NoteBanner v-else-if="target.status === 'superseded'" variant="wait">
         <span>The customer has sent a newer upload. This earlier attempt is kept for the record and cannot be decided on.</span>
@@ -97,6 +104,36 @@
     </FormField>
   </ConfirmDialog>
 
+  <ConfirmDialog
+    v-model="reopenOpen"
+    confirm-label="Move back to waiting"
+    :error="reopenError"
+    :loading="reopen.isPending.value"
+    title="Move back to waiting"
+    @confirm="onReopen"
+  >
+    Customer {{ target.customerRef }} goes back to waiting review with the same {{ typeLabel }} images.
+    You can then verify it, ask them to fix their details, or reject it again. This is recorded against your name.
+
+    <FormField
+      v-slot="{ controlId, describedBy, invalid }"
+      class="d-review__idno"
+      :error="reopenReasonError"
+      hint="Required. For example: the customer called customer service."
+      label="Reason"
+    >
+      <DTextarea
+        :id="controlId"
+        v-model="reopenReason"
+        :describedby="describedBy"
+        :disabled="reopen.isPending.value"
+        :invalid="invalid"
+        :maxlength="REOPEN_REASON_MAX"
+        :rows="2"
+      />
+    </FormField>
+  </ConfirmDialog>
+
   <ReviewReasonsModal
     v-if="reasonsMode"
     v-model="reasonsOpen"
@@ -113,14 +150,15 @@
   import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
+  import DTextarea from '@/components/ui/DTextarea.vue'
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatDateTime, formatWaiting } from '@/composables/useFormatters'
-  import { useReviewIdentityDocument } from '@/composables/useIdentityDocuments'
+  import { useReopenIdentityDocument, useReviewIdentityDocument } from '@/composables/useIdentityDocuments'
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
-  import { errorCodeOf, isServiceError, type ServiceErrorCode } from '@/services/errors'
+  import { backendCodeOf, errorCodeOf, isServiceError, type ServiceErrorCode } from '@/services/errors'
   import {
     IDENTITY_TYPE_LABELS,
     type IdentityReviewAction,
@@ -136,6 +174,7 @@
   const { can } = usePermissions()
   const { ok } = useToast()
   const review = useReviewIdentityDocument()
+  const reopen = useReopenIdentityDocument()
 
   const verifyOpen = ref(false)
   const reasonsOpen = ref(false)
@@ -224,6 +263,56 @@
         verifyError.value = text
       },
     )
+  }
+
+  // "Move back to waiting" (Backend: POST …/reopen). The Backend takes 5 to 500 characters.
+  const REOPEN_REASON_MIN = 5
+  const REOPEN_REASON_MAX = 500
+  const reopenOpen = ref(false)
+  const reopenReason = ref('')
+  const reopenReasonError = ref('')
+  const reopenError = ref('')
+
+  function openReopen () {
+    notice.value = ''
+    reopenReason.value = ''
+    reopenReasonError.value = ''
+    reopenError.value = ''
+    reopenOpen.value = true
+  }
+
+  async function onReopen () {
+    reopenError.value = ''
+    reopenReasonError.value = ''
+    const reason = reopenReason.value.trim()
+    if (reason.length < REOPEN_REASON_MIN) {
+      reopenReasonError.value = `Write at least ${REOPEN_REASON_MIN} characters.`
+      return
+    }
+    try {
+      await reopen.mutateAsync({ id: props.target.id, reason })
+      reopenOpen.value = false
+      ok('Back to waiting review. Logged with your name.')
+    } catch (error) {
+      const code = errorCodeOf(error)
+      const backend = backendCodeOf(error)
+      if (code === 'validation') {
+        reopenReasonError.value = (isServiceError(error) ? error.fields.reason?.[0] : undefined) ?? `Write at least ${REOPEN_REASON_MIN} characters.`
+        return
+      }
+      let text = FAILURE_TEXT[code] ?? 'Something went wrong. Nothing was changed. Try again.'
+      if (backend === 'account_closed') {
+        text = 'This account is closed. It cannot be moved back to waiting.'
+      } else if (code === 'conflict') {
+        text = 'This document is no longer the rejected latest attempt. The page now shows where it stands.'
+      }
+      if (['conflict', 'forbidden', 'not_found'].includes(code)) {
+        reopenOpen.value = false
+        notice.value = text
+      } else {
+        reopenError.value = text
+      }
+    }
   }
 
   function onReasons (payload: { reasons: IdentityReviewReason[], note: string }) {
