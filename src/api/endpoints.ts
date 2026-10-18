@@ -38,6 +38,7 @@ export const endpoints = {
   customerNotifications: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/notifications`,
   identityDocumentImage: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/image`,
   identityDocumentReview: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/review`,
+  identityDocumentReopen: (id: string) => `/dashboard/identity-documents/${encodeURIComponent(id)}/reopen`,
   // Access control (Backend spec 002).
   permissions: '/dashboard/permissions',
   roles: '/dashboard/roles',
