@@ -36,7 +36,7 @@
         <button class="d-notices__retry" type="button" @click="notices.refetch()">Try again</button>
       </div>
 
-      <div v-else-if="rows.length === 0" class="d-notices__state">Nothing yet. Security notices for founders appear here.</div>
+      <div v-else-if="rows.length === 0" class="d-notices__state">Nothing new. New work in your queues and security notices appear here.</div>
 
       <ul v-else class="d-notices__list">
         <li v-for="notice in rows" :key="notice.id">
@@ -67,7 +67,7 @@
   import { formatRelativeTime } from '@/composables/useFormatters'
   import { useMarkAllNoticesRead, useMarkNoticeRead, useNoticesQuery } from '@/composables/useNotices'
 
-  // Dashboard notices, the bell (Backend spec 021). A click marks the notice read and opens its link.
+  // Dashboard notices, the bell (Backend specs 021, 026). A click marks the notice read and opens its link.
   const router = useRouter()
   const open = ref(false)
 
