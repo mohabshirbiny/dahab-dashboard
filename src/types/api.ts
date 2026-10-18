@@ -192,6 +192,8 @@ export interface ApiStaffNotice {
   title: string
   body: string
   link: string | null
+  // Backend spec 026: events grouped in this notice while unread (1 for a founder alert).
+  count: number
   created_at: string
   read_at: string | null
 }

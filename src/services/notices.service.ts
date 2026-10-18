@@ -13,6 +13,7 @@ function toNotice (n: ApiStaffNotice): StaffNotice {
     title: n.title,
     body: n.body,
     link: n.link,
+    count: n.count ?? 1,
     createdAt: n.created_at,
     readAt: n.read_at,
   }
