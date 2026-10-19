@@ -1,0 +1,18 @@
+# Single-page app: Vue Router uses web history (/dashboard/...), so any address that is not a
+# real file or folder is answered with index.html and the router shows the page. Copied into
+# dist/ by `npm run build`; upload it with the rest of dist/ (Hostinger / Apache / LiteSpeed).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Always check for a new index.html, so a new upload shows without a hard refresh.
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
