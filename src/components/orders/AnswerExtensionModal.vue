@@ -66,7 +66,7 @@
   import { EXTENSION_HOURS } from '@/types/order'
   import { orderErrorMessage } from './orderErrors'
 
-  // Accept a seller's request for more time with 6, 12, 24 or 48 working hours, or refuse
+  // Accept a seller's request for more time with 2, 4, 6, 12, 24 or 48 working hours, or refuse
   // it (Backend spec 014, order.extend_deadline). The Backend moves the deadline.
   const props = defineProps<{ open: boolean, request: ExtensionRequest | null }>()
   const emit = defineEmits<{ (e: 'close'): void }>()

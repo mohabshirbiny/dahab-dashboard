@@ -140,11 +140,11 @@ export interface Order {
   freeRelistStatus: FreeRelistStatus | null
 }
 
-// A seller's request for more time (Backend spec 014): staff accept with 6, 12, 24 or 48
+// A seller's request for more time (Backend spec 014): staff accept with 2, 4, 6, 12, 24 or 48
 // working hours, or refuse; it lapses when the order moves on.
 export type ExtensionRequestState = 'waiting' | 'accepted' | 'refused' | 'lapsed'
-export type ExtensionHours = 6 | 12 | 24 | 48
-export const EXTENSION_HOURS: ReadonlyArray<ExtensionHours> = [6, 12, 24, 48]
+export type ExtensionHours = 2 | 4 | 6 | 12 | 24 | 48
+export const EXTENSION_HOURS: ReadonlyArray<ExtensionHours> = [2, 4, 6, 12, 24, 48]
 
 export const EXTENSION_STATE_META: Record<ExtensionRequestState, { label: string, variant: StatusVariant }> = {
   waiting: { label: 'Waiting', variant: 'wait' },
