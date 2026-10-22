@@ -13,7 +13,7 @@ export interface AdvanceRow {
   order_ref: string | null
   seller: { display_ref: string | null, full_name: string | null }
   amount_egp: string
-  basis: 'promo_code' | 'staff_enablement'
+  basis: 'promo_code' | 'staff_enablement' | 'automatic'
   promo_code: string | null
   status: AdvanceStatus
   advanced_at: string

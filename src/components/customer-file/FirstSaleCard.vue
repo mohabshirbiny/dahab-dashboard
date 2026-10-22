@@ -5,7 +5,7 @@
 
       <template v-if="firstSale.state === 'used' && firstSale.advance">
         <KeyValueRow label="Paid ahead" :value="`${formatMoney(firstSale.advance.amountEgp)} EGP`" />
-        <KeyValueRow label="How" :value="firstSale.advance.basis === 'promo_code' ? 'A first-sale code' : 'Enabled by staff'" />
+        <KeyValueRow label="How" :value="firstSale.advance.basis === 'promo_code' ? 'A first-sale code' : firstSale.advance.basis === 'staff_enablement' ? 'Enabled by staff' : 'Their first sale'" />
         <KeyValueRow label="State" :value="STATE_LABEL[firstSale.advance.status]" />
         <KeyValueRow label="When" :value="formatDateTime(firstSale.advance.advancedAt)" />
         <p class="who2 d-fs__line">A seller is paid ahead once. This one will not be again.</p>
@@ -18,7 +18,7 @@
       </template>
 
       <template v-else>
-        <p class="d-fs__line">Not enabled. A seller with a first-sale code is paid ahead without this; this is for a seller you vouch for in person.</p>
+        <p class="d-fs__line">Not enabled. A seller's first sale is paid ahead without this when the piece is gold and the advance is switched on; enabling only records that you vouch for this seller in person.</p>
         <DBtn kind="primary" @click="enableOpen = true">Enable</DBtn>
       </template>
     </template>

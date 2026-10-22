@@ -122,7 +122,7 @@ export interface ApiOrderDetail extends ApiOrder {
   advance?: {
     advance_id: string
     amount_egp: string
-    basis: 'promo_code' | 'staff_enablement'
+    basis: 'promo_code' | 'staff_enablement' | 'automatic'
     promo_code: string | null
     status: 'outstanding' | 'recovered' | 'written_off'
     advanced_at: string

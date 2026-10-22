@@ -31,7 +31,7 @@
       <tr v-for="a in rows" :key="a.advance_id">
         <td class="mono">{{ a.order_ref }}</td>
         <td>{{ a.seller.full_name }} <span class="who2">{{ a.seller.display_ref }}</span></td>
-        <td>{{ a.basis === 'promo_code' ? `Code ${a.promo_code ?? ''}` : 'Enabled by staff' }}</td>
+        <td>{{ a.basis === 'promo_code' ? `Code ${a.promo_code ?? ''}` : a.basis === 'staff_enablement' ? 'Enabled by staff' : 'First sale' }}</td>
         <td class="r mono">{{ formatMoney(a.amount_egp) }}</td>
         <td>{{ formatDateTime(a.advanced_at) }}</td>
       </tr>

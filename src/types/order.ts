@@ -271,7 +271,7 @@ export interface OrderCommissionWaiver {
 export interface OrderAdvance {
   id: string
   amountEgp: Money
-  basis: 'promo_code' | 'staff_enablement'
+  basis: 'promo_code' | 'staff_enablement' | 'automatic'
   promoCode: string | null
   status: 'outstanding' | 'recovered' | 'written_off'
   advancedAt: string

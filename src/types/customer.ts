@@ -127,7 +127,7 @@ export interface CustomerFile extends CustomerVerification {
 export interface CustomerFirstSale {
   state: 'none' | 'enabled' | 'used'
   enablement: { id: string, reason: string, createdAt: string } | null
-  advance: { id: string, amountEgp: string, status: 'outstanding' | 'recovered' | 'written_off', basis: 'promo_code' | 'staff_enablement', advancedAt: string } | null
+  advance: { id: string, amountEgp: string, status: 'outstanding' | 'recovered' | 'written_off', basis: 'promo_code' | 'staff_enablement' | 'automatic', advancedAt: string } | null
 }
 
 // The file's "Sign-ins and devices" (Backend spec 007).

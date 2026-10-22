@@ -99,7 +99,7 @@
       <template v-if="order.advance">
         <div class="d-odp__label">First-sale advance</div>
         <KeyValueRow label="Paid ahead" :value="`${formatMoney(order.advance.amountEgp)} EGP`" />
-        <KeyValueRow label="How" :value="order.advance.basis === 'promo_code' ? `Code ${order.advance.promoCode ?? ''}` : 'Enabled by staff'" />
+        <KeyValueRow label="How" :value="order.advance.basis === 'promo_code' ? `Code ${order.advance.promoCode ?? ''}` : order.advance.basis === 'staff_enablement' ? 'Enabled by staff' : 'First sale'" />
         <KeyValueRow label="State" :value="ADVANCE_STATE[order.advance.status]" />
         <KeyValueRow v-if="order.advance.recoveredEgp" label="Recovered" :value="`${formatMoney(order.advance.recoveredEgp)} EGP`" />
         <KeyValueRow v-if="order.advance.shortfallAbsorbedEgp && Number(order.advance.shortfallAbsorbedEgp) > 0" label="Absorbed by Dahab" :value="`${formatMoney(order.advance.shortfallAbsorbedEgp)} EGP`" />
