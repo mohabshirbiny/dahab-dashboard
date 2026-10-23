@@ -13,6 +13,8 @@
       <template v-if="split">
         <th class="r">Commission</th>
         <th class="r">Spread</th>
+        <!-- Owed to the tax authority, not Dahab's: outside In / Out and the balance. -->
+        <th class="r">VAT</th>
       </template>
     </template>
 
@@ -38,6 +40,7 @@
         <template v-if="split">
           <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
+          <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
         </template>
       </tr>
 
@@ -53,6 +56,7 @@
         <template v-if="split">
           <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
+          <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
         </template>
       </tr>
     </template>

@@ -8,6 +8,13 @@
     <template v-if="summary.view === 'dahab' && summary.commissionIn !== undefined">
       <StatCard :hint="splitHint(summary.commissionIn, summary.commissionOut)" label="Commission" :value="formatMoney(net(summary.commissionIn, summary.commissionOut))" />
       <StatCard :hint="splitHint(summary.spreadIn, summary.spreadOut)" label="Spread" :value="formatMoney(net(summary.spreadIn, summary.spreadOut))" />
+
+      <StatCard
+        v-if="summary.vatIn !== undefined"
+        :hint="`${splitHint(summary.vatIn, summary.vatOut)} · owed, not in the balance`"
+        label="VAT"
+        :value="formatMoney(net(summary.vatIn, summary.vatOut))"
+      />
     </template>
   </StatGrid>
 </template>

@@ -57,6 +57,9 @@ export interface StatementSummary {
   commissionOut?: Money
   spreadIn?: Money
   spreadOut?: Money
+  // view = dahab: the period's VAT on the commission — owed, not earned, so not in `in`/`out`.
+  vatIn?: Money
+  vatOut?: Money
 }
 
 export interface StatementActor {
@@ -85,6 +88,8 @@ export interface StatementMovement {
   // view = dahab only (null otherwise): signed, commission + spread = in − out.
   commission: Money | null
   spread: Money | null
+  // view = dahab only: the entry's VAT payable change, outside the balance.
+  vat: Money | null
 }
 
 // One day or month (grain = day | month).
@@ -98,6 +103,7 @@ export interface StatementPeriod {
   after: Money
   commission: Money | null
   spread: Money | null
+  vat: Money | null
 }
 
 export type StatementRow = StatementMovement | StatementPeriod
