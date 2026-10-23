@@ -88,8 +88,9 @@
   const overLimit = computed(() => amountValid.value && Number(amount.value) > Number(props.invoice.remaining))
   const split = computed(() => {
     if (!amountValid.value) return null
-    const rate = Number(props.invoice.vatRate)
-    const vat = Math.round(Number(amount.value) * rate / (100 + rate) * 10_000) / 10_000
+    // The invoice's own VAT share (the Backend gives the last note the VAT not yet given back).
+    const gross = Number(props.invoice.gross)
+    const vat = gross > 0 ? Math.round(Number(amount.value) * Number(props.invoice.vat) / gross * 10_000) / 10_000 : 0
     return { vat: vat.toFixed(4) }
   })
 
