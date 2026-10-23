@@ -143,7 +143,7 @@
       note: 'Commission is taken from the making charge or the value the seller adds. It is never taken from the value of their gold.',
       fields: [
         { key: 'commission.gold_pct', label: 'On gold', hint: 'Percent of the making charge the seller recovers' },
-        { key: 'commission.stone_pct', label: 'On diamonds and stones', hint: 'Percent of the value added above gold' },
+        { key: 'commission.stone_pct', label: 'On diamonds and stones', hint: 'Percent of the asking price, gold and diamond pieces included' },
         { key: 'commission.minimum_egp', label: 'Minimum per sale', hint: 'EGP. Never broken, even by a promo code' },
         { key: 'vat.pct', label: 'VAT', hint: 'Percent, on commission only' },
       ],
