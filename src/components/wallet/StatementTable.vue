@@ -15,6 +15,8 @@
         <th class="r">Spread</th>
         <!-- Owed to the tax authority, not Dahab's: outside In / Out and the balance. -->
         <th class="r">VAT</th>
+        <!-- Spec 023: Dahab's money paid to a seller ahead (−) and recovered (+): outside In / Out and the balance. -->
+        <th v-if="hasAdvance" class="r">Advance</th>
       </template>
     </template>
 
@@ -41,6 +43,7 @@
           <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
           <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
+          <td v-if="hasAdvance" class="r mono d-st__muted">{{ dash(row.advance ?? '0') }}</td>
         </template>
       </tr>
 
@@ -57,6 +60,7 @@
           <td class="r mono">{{ dash(row.commission ?? '0') }}</td>
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
           <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
+          <td v-if="hasAdvance" class="r mono d-st__muted">{{ dash(row.advance ?? '0') }}</td>
         </template>
       </tr>
     </template>
@@ -73,6 +77,8 @@
 
   // The Dahab view carries commission and spread per row (Backend testing fixes).
   const split = computed(() => props.rows.some(r => r.commission !== null))
+  // The advance column only while the Backend sends it (spec 023 on the Dahab view).
+  const hasAdvance = computed(() => props.rows.some(r => r.advance !== null))
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
