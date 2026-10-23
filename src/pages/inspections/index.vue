@@ -69,9 +69,11 @@
     <PeopleToWatchPanel v-if="can(PERMISSIONS.peopleToWatchView)" />
 
     <HandoverModal
+      :can-view-id="handoverCanViewId"
       :open="handover !== null"
       :order-id="handover?.orderId ?? ''"
       :order-ref="handover?.orderRef ?? ''"
+      :proxy="handover?.proxy ?? null"
       :to="handover?.to ?? 'buyer'"
       @close="handover = null"
     />
@@ -79,7 +81,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { InspectionFilters, InspectionOutcome, InspectionTarget, WorkListItem } from '@/types/order'
+  import type { InspectionFilters, InspectionOutcome, InspectionTarget, OrderProxy, WorkListItem } from '@/types/order'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import PeopleToWatchPanel from '@/components/inspections/PeopleToWatchPanel.vue'
@@ -177,7 +179,10 @@
 
   // The work-list actions.
   const inspection = ref<InspectionTarget | null>(null)
-  const handover = ref<{ orderId: string, orderRef: string, to: 'buyer' | 'seller' } | null>(null)
+  const handover = ref<{ orderId: string, orderRef: string, to: 'buyer' | 'seller', proxy?: OrderProxy | null } | null>(null)
+  // Spec 014: the ID photo of the person the buyer named (the Backend allows order.handover or order.view).
+  const handoverCanViewId = computed(() => Boolean(handover.value?.proxy?.hasIdPhoto)
+    && canAny([PERMISSIONS.orderHandover, PERMISSIONS.orderView]))
   const receiving = ref<WorkListItem | null>(null)
 
   function act (item: WorkListItem) {
@@ -200,7 +205,7 @@
         break
       }
       case 'handover': {
-        handover.value = { orderId: item.orderId, orderRef: item.orderRef, to: 'buyer' }
+        handover.value = { orderId: item.orderId, orderRef: item.orderRef, to: 'buyer', proxy: item.proxy }
         break
       }
       case 'return_handover': {

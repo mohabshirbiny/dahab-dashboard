@@ -191,6 +191,7 @@ interface ApiWorkListItem {
   latest_inspection: ApiInspection | null
   branch: { id: number | null, name_en: string | null, name_ar: string | null }
   since: string
+  proxy?: { name: string, phone: string, has_id_photo: boolean } | null
 }
 
 interface ApiInspectionRow extends ApiInspection {
@@ -396,6 +397,9 @@ function toWorkItem (w: ApiWorkListItem): WorkListItem {
     latestInspection: w.latest_inspection ? toInspection(w.latest_inspection) : null,
     branch: { id: w.branch.id, nameEn: w.branch.name_en },
     since: w.since,
+    proxy: w.proxy
+      ? { name: w.proxy.name, phone: w.proxy.phone, namedAt: null, hasIdPhoto: w.proxy.has_id_photo, collectedByProxy: false }
+      : null,
   }
 }
 

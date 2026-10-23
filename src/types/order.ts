@@ -352,6 +352,8 @@ export interface WorkListItem {
   latestInspection: InspectionResult | null
   branch: { id: number | null, nameEn: string | null }
   since: string
+  // Spec 014: on a handover only, the person the buyer named to collect.
+  proxy: OrderProxy | null
 }
 
 export interface WorkListPage { rows: WorkListItem[], nextCursor: string | null }
