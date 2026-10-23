@@ -15,6 +15,14 @@
         label="VAT"
         :value="formatMoney(net(summary.vatIn, summary.vatOut))"
       />
+
+      <!-- Spec 023: Dahab's money paid to a seller ahead and recovered when the buyer pays — not earned, not in the balance. -->
+      <StatCard
+        v-if="summary.advanceOut !== undefined"
+        :hint="`Paid ${formatMoney(summary.advanceOut)}, back ${formatMoney(summary.advanceBack ?? '0')} · Dahab's money, not in the balance`"
+        label="First-sale advance still out"
+        :value="formatMoney(net(summary.advanceOut, summary.advanceBack))"
+      />
     </template>
   </StatGrid>
 </template>

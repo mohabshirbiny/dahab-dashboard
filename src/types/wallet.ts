@@ -60,6 +60,10 @@ export interface StatementSummary {
   // view = dahab: the period's VAT on the commission — owed, not earned, so not in `in`/`out`.
   vatIn?: Money
   vatOut?: Money
+  // view = dahab: the first-sale advance (spec 023) paid to sellers and recovered at the settlement —
+  // Dahab's money fronted, not earned, so not in `in`/`out`.
+  advanceOut?: Money
+  advanceBack?: Money
 }
 
 export interface StatementActor {
@@ -90,6 +94,8 @@ export interface StatementMovement {
   spread: Money | null
   // view = dahab only: the entry's VAT payable change, outside the balance.
   vat: Money | null
+  // view = dahab only: the first-sale advance, signed (− paid to a seller, + recovered), outside the balance.
+  advance: Money | null
 }
 
 // One day or month (grain = day | month).
@@ -104,6 +110,7 @@ export interface StatementPeriod {
   commission: Money | null
   spread: Money | null
   vat: Money | null
+  advance: Money | null
 }
 
 export type StatementRow = StatementMovement | StatementPeriod

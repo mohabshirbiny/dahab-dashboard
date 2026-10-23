@@ -51,6 +51,9 @@ interface ApiStatementSummary {
   // view = dahab: the period's VAT, beside commission and spread (not in in/out).
   vat_in?: string
   vat_out?: string
+  // view = dahab: the first-sale advance paid out and recovered in the period (not in in/out).
+  advance_out?: string
+  advance_back?: string
 }
 
 interface ApiStatementRow {
@@ -70,6 +73,8 @@ interface ApiStatementRow {
   spread?: string
   // view = dahab: the entry's change to VAT payable, outside the balance.
   vat?: string
+  // view = dahab: the first-sale advance, signed (− paid to a seller, + recovered), outside the balance.
+  advance?: string
   period?: string
   count?: number
   before: string
@@ -113,12 +118,14 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
     spreadOut: s.spread_out,
     vatIn: s.vat_in,
     vatOut: s.vat_out,
+    advanceOut: s.advance_out,
+    advanceBack: s.advance_back,
   }
 }
 
 function toRow (r: ApiStatementRow): StatementRow {
   if (r.period !== undefined) {
-    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after, commission: r.commission ?? null, spread: r.spread ?? null, vat: r.vat ?? null }
+    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after, commission: r.commission ?? null, spread: r.spread ?? null, vat: r.vat ?? null, advance: r.advance ?? null }
   }
   return {
     kind: 'movement',
@@ -140,6 +147,7 @@ function toRow (r: ApiStatementRow): StatementRow {
     commission: r.commission ?? null,
     spread: r.spread ?? null,
     vat: r.vat ?? null,
+    advance: r.advance ?? null,
   }
 }
 
