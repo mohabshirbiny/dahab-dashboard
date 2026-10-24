@@ -14,7 +14,7 @@ export const orderKeys = {
   inspections: (filters: InspectionFilters) => [...orderKeys.all, 'inspections', filters] as const,
   // Spec 014.
   extensionRequests: (state: ExtensionRequestState | 'all', month: string | null) => [...orderKeys.all, 'extension-requests', state, month] as const,
-  proxyId: (id: string) => [...orderKeys.all, 'proxy-id', id] as const,
+  handoverId: (id: string, who: 'buyer' | 'proxy', side: 'front' | 'back') => [...orderKeys.all, 'handover-id', id, who, side] as const,
 }
 
 // Open orders newest first; "Load more" follows the Backend's cursor.
@@ -142,12 +142,13 @@ export function useAnswerExtension () {
   })
 }
 
-// The proxy's ID photo as an object URL for <img>; the caller revokes it. Each load is audited.
-export function useProxyIdQuery (orderId: MaybeRefOrGetter<string | null>) {
+// One side of the collector's ID (the proxy's, or the buyer's own) as an object URL for <img>; the caller
+// revokes it. Each load is audited.
+export function useHandoverIdQuery (orderId: MaybeRefOrGetter<string | null>, who: 'buyer' | 'proxy', side: 'front' | 'back') {
   return useQuery({
-    queryKey: computed(() => orderKeys.proxyId(toValue(orderId) ?? '')),
+    queryKey: computed(() => orderKeys.handoverId(toValue(orderId) ?? '', who, side)),
     queryFn: async () => {
-      const blob = await orderService.proxyId(toValue(orderId)!)
+      const blob = await orderService.handoverId(toValue(orderId)!, who, side)
       return { url: URL.createObjectURL(blob), type: blob.type }
     },
     enabled: computed(() => toValue(orderId) !== null),

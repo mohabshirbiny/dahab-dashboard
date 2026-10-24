@@ -7,6 +7,8 @@ import type {
   ExtensionRequestPage,
   ExtensionRequestState,
   FreeRelistStatus,
+  HandoverBuyerId,
+  IdKind,
   InspectionFilters,
   InspectionInput,
   InspectionOutcome,
@@ -142,7 +144,8 @@ export interface ApiOrderDetail extends ApiOrder {
     handover_by: string | null
     failed_attempts: number
     locked_until: string | null
-    proxy?: { name: string | null, phone: string | null, named_at: string | null, has_id_photo: boolean, collected_by_proxy: boolean } | null
+    proxy?: { name: string | null, phone: string | null, named_at: string | null, has_id_photo: boolean, collected_by_proxy: boolean, id_kind?: IdKind | null, has_back?: boolean } | null
+    buyer_id?: ApiBuyerId | null
   } | null
   seller_return: { return_deadline: string, collected_at: string | null, relisted_at: string | null, compensation_txn_id: string | null, failed_attempts: number, locked_until: string | null } | null
   cancel_reason: string | null
@@ -167,6 +170,7 @@ export interface ApiOrderDetail extends ApiOrder {
     handle_dispute?: boolean
     answer_extension?: boolean
     view_proxy_id?: boolean
+    view_buyer_id?: boolean
   }
 }
 
@@ -191,7 +195,14 @@ interface ApiWorkListItem {
   latest_inspection: ApiInspection | null
   branch: { id: number | null, name_en: string | null, name_ar: string | null }
   since: string
-  proxy?: { name: string, phone: string, has_id_photo: boolean } | null
+  proxy?: { name: string, phone: string, has_id_photo: boolean, id_kind?: IdKind | null, has_back?: boolean } | null
+  buyer_id?: ApiBuyerId | null
+}
+
+interface ApiBuyerId { doc_kind: IdKind, has_back: boolean }
+
+function toBuyerId (b: ApiBuyerId | null | undefined): HandoverBuyerId | null {
+  return b ? { docKind: b.doc_kind, hasBack: b.has_back } : null
 }
 
 interface ApiInspectionRow extends ApiInspection {
@@ -346,8 +357,11 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
                 namedAt: o.collection.proxy.named_at,
                 hasIdPhoto: o.collection.proxy.has_id_photo,
                 collectedByProxy: o.collection.proxy.collected_by_proxy,
+                idKind: o.collection.proxy.id_kind ?? null,
+                hasBack: o.collection.proxy.has_back ?? false,
               }
             : null,
+          buyerId: toBuyerId(o.collection.buyer_id),
         }
       : null,
     sellerReturn: r
@@ -380,6 +394,7 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
       handleDispute: o.can.handle_dispute ?? false,
       answerExtension: o.can.answer_extension ?? false,
       viewProxyId: o.can.view_proxy_id ?? false,
+      viewBuyerId: o.can.view_buyer_id ?? false,
     },
   }
 }
@@ -398,8 +413,9 @@ function toWorkItem (w: ApiWorkListItem): WorkListItem {
     branch: { id: w.branch.id, nameEn: w.branch.name_en },
     since: w.since,
     proxy: w.proxy
-      ? { name: w.proxy.name, phone: w.proxy.phone, namedAt: null, hasIdPhoto: w.proxy.has_id_photo, collectedByProxy: false }
+      ? { name: w.proxy.name, phone: w.proxy.phone, namedAt: null, hasIdPhoto: w.proxy.has_id_photo, collectedByProxy: false, idKind: w.proxy.id_kind ?? null, hasBack: w.proxy.has_back ?? false }
       : null,
+    buyerId: toBuyerId(w.buyer_id),
   }
 }
 
@@ -521,9 +537,11 @@ export const orderService = {
     await http.post(endpoints.orderAction(id, to === 'buyer' ? 'handover' : 'seller-return/handover'), body, keyHeader(idempotencyKey))
   },
 
-  // GET /dashboard/orders/{id}/proxy-id   (order.handover | order.view) — the decrypted ID photo; audited, never cached.
-  async proxyId (id: string): Promise<Blob> {
-    const response = await http.get<Blob>(endpoints.orderProxyId(id), { responseType: 'blob' })
+  // GET /dashboard/orders/{id}/proxy-id | buyer-id ?side=front|back   (order.handover | order.view) — one side of the
+  // decrypted ID of the person collecting (the proxy, or the buyer's own verified ID); audited, never cached.
+  async handoverId (id: string, who: 'buyer' | 'proxy', side: 'front' | 'back'): Promise<Blob> {
+    const url = who === 'buyer' ? endpoints.orderBuyerId(id) : endpoints.orderProxyId(id)
+    const response = await http.get<Blob>(url, { params: { side }, responseType: 'blob' })
     return response.data
   },
 

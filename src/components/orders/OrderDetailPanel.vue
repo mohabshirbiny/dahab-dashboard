@@ -138,7 +138,15 @@
           <KeyValueRow v-if="order.collection.collectedAt" label="Collected by" :value="order.collection.proxy.collectedByProxy ? 'The named person' : 'The buyer'" />
 
           <template v-if="order.can.viewProxyId && order.collection.proxy.hasIdPhoto">
-            <ProxyIdPhoto v-if="showProxyId" class="d-odp__id" :order-id="order.id" />
+            <HandoverIdPhotos
+              v-if="showProxyId"
+              class="d-odp__id"
+              :has-back="order.collection.proxy.hasBack"
+              :kind="order.collection.proxy.idKind"
+              :order-id="order.id"
+              who="proxy"
+            />
+
             <DBtn v-else class="d-odp__id" @click="showProxyId = true">Open their ID photo</DBtn>
           </template>
         </template>
@@ -195,6 +203,8 @@
   <AnswerExtensionModal :open="modal === 'answer'" :request="order.extensionRequest" @close="modal = null" />
 
   <HandoverModal
+    :buyer-id="order.collection?.buyerId ?? null"
+    :can-view-buyer-id="order.can.viewBuyerId"
     :can-view-id="order.can.viewProxyId"
     :open="handoverTo !== null"
     :order-id="order.id"
@@ -239,6 +249,7 @@
   import ChangeBranchModal from './ChangeBranchModal.vue'
   import ExtendDeadlineModal from './ExtendDeadlineModal.vue'
   import FreeRelistPanel from './FreeRelistPanel.vue'
+  import HandoverIdPhotos from './HandoverIdPhotos.vue'
   import HandoverModal from './HandoverModal.vue'
   import InspectionResultModal from './InspectionResultModal.vue'
   import { orderErrorMessage } from './orderErrors'
@@ -246,7 +257,6 @@
   import OrderRatingsPanel from './OrderRatingsPanel.vue'
   import OrderTimeline from './OrderTimeline.vue'
   import ProposePriceModal from './ProposePriceModal.vue'
-  import ProxyIdPhoto from './ProxyIdPhoto.vue'
 
   // One order for staff (Backend spec 012 FR-022): the figures, every inspection result,
   // the money moved, its history, and the actions the Backend says apply now (`can`).
@@ -280,9 +290,9 @@
   const canOpenCustomer = computed(() => can(PERMISSIONS.customerView))
   const title = computed(() => pieceTitle(props.order.piece.category, props.order.piece.pieceType.nameEn, props.order.piece.karat))
   const latest = computed(() => props.order.inspections.find(r => r.id === props.order.latestInspectionId) ?? null)
-  // handleDispute and viewProxyId open links and photos below, not buttons up here.
+  // handleDispute, viewProxyId and viewBuyerId open links and photos below, not buttons up here.
   const hasActions = computed(() => {
-    const { handleDispute: _dispute, viewProxyId: _proxy, answerExtension, ...rest } = props.order.can
+    const { handleDispute: _dispute, viewProxyId: _proxy, viewBuyerId: _buyer, answerExtension, ...rest } = props.order.can
     return Object.values(rest).some(Boolean) || (answerExtension && props.order.extensionRequest !== null)
   })
   // Spec 014: the unresolved dispute that froze this order, and the proxy's ID shown on request.

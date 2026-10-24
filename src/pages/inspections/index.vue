@@ -69,6 +69,8 @@
     <PeopleToWatchPanel v-if="can(PERMISSIONS.peopleToWatchView)" />
 
     <HandoverModal
+      :buyer-id="handover?.buyerId ?? null"
+      :can-view-buyer-id="handoverCanView"
       :can-view-id="handoverCanViewId"
       :open="handover !== null"
       :order-id="handover?.orderId ?? ''"
@@ -81,7 +83,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { InspectionFilters, InspectionOutcome, InspectionTarget, OrderProxy, WorkListItem } from '@/types/order'
+  import type { HandoverBuyerId, InspectionFilters, InspectionOutcome, InspectionTarget, OrderProxy, WorkListItem } from '@/types/order'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import PeopleToWatchPanel from '@/components/inspections/PeopleToWatchPanel.vue'
@@ -179,10 +181,11 @@
 
   // The work-list actions.
   const inspection = ref<InspectionTarget | null>(null)
-  const handover = ref<{ orderId: string, orderRef: string, to: 'buyer' | 'seller', proxy?: OrderProxy | null } | null>(null)
-  // Spec 014: the ID photo of the person the buyer named (the Backend allows order.handover or order.view).
-  const handoverCanViewId = computed(() => Boolean(handover.value?.proxy?.hasIdPhoto)
-    && canAny([PERMISSIONS.orderHandover, PERMISSIONS.orderView]))
+  const handover = ref<{ orderId: string, orderRef: string, to: 'buyer' | 'seller', proxy?: OrderProxy | null, buyerId?: HandoverBuyerId | null } | null>(null)
+  // The ID of whoever collects — the person the buyer named (spec 014) or the buyer themself; the Backend
+  // allows either with order.handover or order.view.
+  const handoverCanView = computed(() => canAny([PERMISSIONS.orderHandover, PERMISSIONS.orderView]))
+  const handoverCanViewId = computed(() => Boolean(handover.value?.proxy?.hasIdPhoto) && handoverCanView.value)
   const receiving = ref<WorkListItem | null>(null)
 
   function act (item: WorkListItem) {
@@ -205,7 +208,7 @@
         break
       }
       case 'handover': {
-        handover.value = { orderId: item.orderId, orderRef: item.orderRef, to: 'buyer', proxy: item.proxy }
+        handover.value = { orderId: item.orderId, orderRef: item.orderRef, to: 'buyer', proxy: item.proxy, buyerId: item.buyerId }
         break
       }
       case 'return_handover': {

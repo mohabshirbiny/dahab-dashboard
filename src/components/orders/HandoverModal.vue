@@ -13,6 +13,24 @@
         <template v-else>The piece leaves the market; no money moves.</template>
       </p>
 
+      <template v-if="to === 'buyer' && !byProxy">
+        <template v-if="canViewBuyerId && buyerId">
+          <HandoverIdPhotos
+            v-if="showBuyerId"
+            class="d-hom__id"
+            :has-back="buyerId.hasBack"
+            :kind="buyerId.docKind"
+            :order-id="orderId"
+            who="buyer"
+          />
+
+          <DBtn v-else class="d-hom__id" @click="showBuyerId = true">Open the buyer's ID</DBtn>
+          <p class="who2">Check the ID matches the person at the counter before you hand over.</p>
+        </template>
+
+        <p v-else-if="canViewBuyerId" class="who2">The buyer has no verified ID on file to show.</p>
+      </template>
+
       <template v-if="to === 'buyer' && proxy">
         <div class="d-hom__label">Who is collecting</div>
 
@@ -41,7 +59,15 @@
         </label>
 
         <template v-if="collector === 'proxy'">
-          <ProxyIdPhoto v-if="canViewId && showId" class="d-hom__id" :order-id="orderId" />
+          <HandoverIdPhotos
+            v-if="canViewId && showId"
+            class="d-hom__id"
+            :has-back="proxy.hasBack"
+            :kind="proxy.idKind"
+            :order-id="orderId"
+            who="proxy"
+          />
+
           <DBtn v-else-if="canViewId" class="d-hom__id" @click="showId = true">Open their ID photo</DBtn>
 
           <label class="d-hom__check">
@@ -81,7 +107,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { OrderProxy } from '@/types/order'
+  import type { HandoverBuyerId, OrderProxy } from '@/types/order'
   import { computed, ref, watch } from 'vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
@@ -91,14 +117,24 @@
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { useOrderAction } from '@/composables/useOrders'
   import { useToast } from '@/composables/useToast'
+  import HandoverIdPhotos from './HandoverIdPhotos.vue'
   import { orderErrorMessage } from './orderErrors'
-  import ProxyIdPhoto from './ProxyIdPhoto.vue'
 
   // Hand a piece over against its 6-digit code (Backend spec 012 FR-016 / FR-019,
   // order.handover, at the order's branch). Staff never see the code itself.
   // Spec 014: when the buyer named someone else, staff say who is collecting and, for that
   // person, confirm they checked the ID (the Backend refuses without it: proxy_details_missing).
-  const props = defineProps<{ open: boolean, orderId: string, orderRef: string, to: 'buyer' | 'seller', proxy?: OrderProxy | null, canViewId?: boolean }>()
+  // When the buyer collects in person, their own verified ID is offered to check (handover ID check).
+  const props = defineProps<{
+    open: boolean
+    orderId: string
+    orderRef: string
+    to: 'buyer' | 'seller'
+    proxy?: OrderProxy | null
+    canViewId?: boolean
+    buyerId?: HandoverBuyerId | null
+    canViewBuyerId?: boolean
+  }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
 
   const mutation = useOrderAction()
@@ -110,6 +146,7 @@
   const collector = ref<'buyer' | 'proxy'>('buyer')
   const idChecked = ref(false)
   const showId = ref(false)
+  const showBuyerId = ref(false)
   const submitted = ref(false)
 
   const byProxy = computed(() => props.to === 'buyer' && Boolean(props.proxy) && collector.value === 'proxy')
@@ -124,6 +161,7 @@
     collector.value = 'buyer'
     idChecked.value = false
     showId.value = false
+    showBuyerId.value = false
     submitted.value = false
     mutation.reset()
     idempotency.reset()

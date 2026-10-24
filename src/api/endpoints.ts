@@ -102,6 +102,8 @@ export const endpoints = {
     `/dashboard/orders/${encodeURIComponent(id)}/${action}`,
   // Spec 014: the ID photo of the person the buyer named to collect (order.handover | order.view).
   orderProxyId: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}/proxy-id`,
+  // The buyer's own verified ID at the handover (order.handover | order.view).
+  orderBuyerId: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}/buyer-id`,
   // Spec 014: sellers' requests for more time (order.extend_deadline; reads also order.view).
   extensionRequests: '/dashboard/extension-requests',
   extensionRequestAction: (id: string, action: 'accept' | 'refuse') => `/dashboard/extension-requests/${encodeURIComponent(id)}/${action}`,

@@ -236,6 +236,7 @@ export interface OrderCan {
   handleDispute: boolean
   answerExtension: boolean
   viewProxyId: boolean
+  viewBuyerId: boolean
 }
 
 // The person the buyer named to collect (Backend spec 014); the ID photo through its own call.
@@ -245,7 +246,20 @@ export interface OrderProxy {
   namedAt: string | null
   hasIdPhoto: boolean
   collectedByProxy: boolean
+  // Handover ID check: the kind (null when named before it was asked) and whether the back was uploaded.
+  idKind: IdKind | null
+  hasBack: boolean
 }
+
+export type IdKind = 'egyptian_id' | 'passport'
+
+// The buyer's own verified ID, while the order waits for collection; images through GET …/buyer-id.
+export interface HandoverBuyerId {
+  docKind: IdKind
+  hasBack: boolean
+}
+
+export const ID_KIND_LABEL: Record<IdKind, string> = { egyptian_id: 'Egyptian ID', passport: 'Passport' }
 
 export interface OrderDisputeRef {
   id: string
@@ -296,7 +310,7 @@ export interface OrderDetail extends Order {
   balanceDueDeadline: string | null
   reachBranchDeadline: string
   collectDeadline: string | null
-  collection: { collectedAt: string | null, failedAttempts: number, lockedUntil: string | null, proxy: OrderProxy | null } | null
+  collection: { collectedAt: string | null, failedAttempts: number, lockedUntil: string | null, proxy: OrderProxy | null, buyerId: HandoverBuyerId | null } | null
   sellerReturn: { returnDeadline: string, collectedAt: string | null, relistedAt: string | null, failedAttempts: number, lockedUntil: string | null } | null
   cancelReason: string | null
   ledger: OrderLedgerEntry[]
@@ -354,6 +368,8 @@ export interface WorkListItem {
   since: string
   // Spec 014: on a handover only, the person the buyer named to collect.
   proxy: OrderProxy | null
+  // On a handover only, the buyer's own verified ID.
+  buyerId: HandoverBuyerId | null
 }
 
 export interface WorkListPage { rows: WorkListItem[], nextCursor: string | null }
