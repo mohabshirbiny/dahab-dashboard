@@ -18,6 +18,7 @@ import type {
   CustomerListResult,
   CustomerSessionsResult,
   CustomerStatus,
+  CustomerType,
   CustomerVerification,
   StaffRef,
   SuspendedReason,
@@ -166,6 +167,15 @@ export const customerService = {
   // POST /dashboard/customers/{id}/reinstate   (customer.suspend, Idempotency-Key)
   async reinstate (id: string, input: { note: string }, idempotencyKey: string): Promise<CustomerFile> {
     const { data } = await http.post<ApiEnvelope<ApiCustomerFile>>(endpoints.customerReinstate(id), input, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    })
+    return toCustomerFile(data.data)
+  },
+
+  // POST /dashboard/customers/{id}/type   (promo.manage, Idempotency-Key)
+  // Makes the customer a market maker, or an ordinary customer again. Returns the updated file.
+  async setType (id: string, input: { type: CustomerType, note: string }, idempotencyKey: string): Promise<CustomerFile> {
+    const { data } = await http.post<ApiEnvelope<ApiCustomerFile>>(endpoints.customerType(id), input, {
       headers: { 'Idempotency-Key': idempotencyKey },
     })
     return toCustomerFile(data.data)

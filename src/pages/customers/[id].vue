@@ -27,9 +27,15 @@
         </NoteBanner>
 
         <CustomerProfileCard :customer="customer">
-          <template v-if="canSuspend && open === null && !customer.closure" #actions>
-            <DBtn v-if="customer.suspension" kind="primary" @click="open = 'reinstate'">Reinstate</DBtn>
-            <DBtn v-else kind="danger" @click="open = 'suspend'">Suspend</DBtn>
+          <template v-if="(canSuspend || canSetType) && open === null && !customer.closure" #actions>
+            <template v-if="canSuspend">
+              <DBtn v-if="customer.suspension" kind="primary" @click="open = 'reinstate'">Reinstate</DBtn>
+              <DBtn v-else kind="danger" @click="open = 'suspend'">Suspend</DBtn>
+            </template>
+
+            <DBtn v-if="canSetType" @click="open = 'type'">
+              {{ customer.type === 'market_maker' ? 'Remove as market maker' : 'Make market maker' }}
+            </DBtn>
           </template>
 
           <SuspendForm v-if="canSuspend && open === 'suspend'" :customer-id="customer.id" @cancel="open = null" @done="open = null" />
@@ -38,6 +44,14 @@
             v-else-if="canSuspend && open === 'reinstate' && customer.suspension"
             :customer-id="customer.id"
             :status-before="customer.suspension.statusBefore"
+            @cancel="open = null"
+            @done="open = null"
+          />
+
+          <SetCustomerTypeForm
+            v-else-if="canSetType && open === 'type'"
+            :current="customer.type"
+            :customer-id="customer.id"
             @cancel="open = null"
             @done="open = null"
           />
@@ -72,6 +86,7 @@
   import IdentityDocumentsPanel from '@/components/customer-file/IdentityDocumentsPanel.vue'
   import PayoutAccountsPanel from '@/components/customer-file/PayoutAccountsPanel.vue'
   import ReinstateForm from '@/components/customer-file/ReinstateForm.vue'
+  import SetCustomerTypeForm from '@/components/customer-file/SetCustomerTypeForm.vue'
   import SuspendForm from '@/components/customer-file/SuspendForm.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import ErrorState from '@/components/ui/ErrorState.vue'
@@ -97,10 +112,12 @@
   // Suspend and reinstate share one permission (Backend `customer.suspend`).
   const { can } = usePermissions()
   const canSuspend = computed(() => can(PERMISSIONS.customerSuspend))
-  const open = ref<'suspend' | 'reinstate' | null>(null)
-  // A successful suspend / reinstate replaces the cached file, which can unmount the
-  // form before its `done` event arrives: close it whenever the status changes.
-  watch(() => customer.value?.status, () => {
+  // Making a market maker follows the Backend's `promo.manage` (the same permission as dealer codes).
+  const canSetType = computed(() => can(PERMISSIONS.promoManage))
+  const open = ref<'suspend' | 'reinstate' | 'type' | null>(null)
+  // A successful suspend / reinstate / type change replaces the cached file, which can unmount the
+  // form before its `done` event arrives: close it whenever the status or the type changes.
+  watch(() => [customer.value?.status, customer.value?.type], () => {
     open.value = null
   })
 

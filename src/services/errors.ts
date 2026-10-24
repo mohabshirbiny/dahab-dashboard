@@ -105,6 +105,8 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   // Customer file (Backend spec 007).
   customer_already_suspended: 'conflict',
   customer_not_suspended: 'conflict',
+  customer_type_unchanged: 'conflict',
+  customer_has_active_dealer_code: 'conflict',
   idempotency_in_progress: 'conflict',
   idempotency_key_mismatch: 'validation',
   idempotency_key_required: 'validation',

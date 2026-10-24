@@ -32,6 +32,7 @@ export const endpoints = {
   // Customer file (Backend spec 007).
   customerSuspend: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/suspend`,
   customerReinstate: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/reinstate`,
+  customerType: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/type`,
   customerActivity: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/activity`,
   customerSessions: (id: string) => `/dashboard/customers/${encodeURIComponent(id)}/sessions`,
   // Backend spec 017: what the customer was sent (their inbox), read-only.

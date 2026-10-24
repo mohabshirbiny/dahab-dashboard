@@ -1,4 +1,4 @@
-import type { CustomerFile, SuspendedReason } from '@/types/customer'
+import type { CustomerFile, CustomerType, SuspendedReason } from '@/types/customer'
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { customerService } from '@/services/customer.service'
@@ -87,6 +87,16 @@ export function useReinstateCustomer (id: MaybeRefOrGetter<string>) {
   return useMutation({
     mutationFn: (input: { note: string, idempotencyKey: string }) =>
       customerService.reinstate(toValue(id), { note: input.note }, input.idempotencyKey),
+    onSuccess: apply,
+  })
+}
+
+// Make a market maker, or an ordinary customer again (Backend `promo.manage`).
+export function useSetCustomerType (id: MaybeRefOrGetter<string>) {
+  const apply = useApplyFile()
+  return useMutation({
+    mutationFn: (input: { type: CustomerType, note: string, idempotencyKey: string }) =>
+      customerService.setType(toValue(id), { type: input.type, note: input.note }, input.idempotencyKey),
     onSuccess: apply,
   })
 }

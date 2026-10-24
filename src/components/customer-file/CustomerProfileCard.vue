@@ -20,6 +20,10 @@
       <KeyValueRow label="Joined" :value="formatDateTime(customer.joinedAt)" />
       <KeyValueRow label="Language" :value="customer.preferredLang === 'ar' ? 'Arabic' : 'English'" />
 
+      <KeyValueRow label="Type">
+        <StatusTag :label="CUSTOMER_TYPE_LABELS[customer.type]" :variant="customer.type === 'market_maker' ? 'info' : 'off'" />
+      </KeyValueRow>
+
       <KeyValueRow label="Identity">
         <StatusTag :label="CUSTOMER_STATUS_META[customer.status].label" :variant="CUSTOMER_STATUS_META[customer.status].variant" />
       </KeyValueRow>
@@ -42,7 +46,7 @@
   import Panel from '@/components/ui/Panel.vue'
   import StatusTag from '@/components/ui/StatusTag.vue'
   import { formatDateTime } from '@/composables/useFormatters'
-  import { CUSTOMER_STATUS_META, governorateLabel, suspendedReasonLabel } from '@/types/customer'
+  import { CUSTOMER_STATUS_META, CUSTOMER_TYPE_LABELS, governorateLabel, suspendedReasonLabel } from '@/types/customer'
 
   defineProps<{ customer: CustomerFile }>()
 </script>
