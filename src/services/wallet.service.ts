@@ -54,6 +54,14 @@ interface ApiStatementSummary {
   // view = dahab: the first-sale advance paid out and recovered in the period (not in in/out).
   advance_out?: string
   advance_back?: string
+  // view = equity: Dahab's own money by what moved it, earnings beside it, advances still out (today).
+  groups?: Array<{ key: string, label: string, in: string, out: string }>
+  earned?: string
+  own_money_total?: string
+  advances_outstanding?: string
+  advances_outstanding_count?: number
+  advances_written_off?: string
+  advances_shortfall?: string
 }
 
 interface ApiStatementRow {
@@ -66,8 +74,10 @@ interface ApiStatementRow {
   by_hand?: boolean
   actor?: { type: 'customer' | 'staff' | 'system', name: string | null }
   held_after?: string
-  wallet?: { customer_id: string, display_ref: string } | null
+  wallet?: { customer_id: string, display_ref: string, full_name?: string | null } | null
   moved_to_held?: string
+  // view = equity: advance_paid, advance_back, compensation, wallet_adjustment or a bank movement kind.
+  group?: string
   // view = dahab: signed; commission + spread = in − out.
   commission?: string
   spread?: string
@@ -120,6 +130,13 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
     vatOut: s.vat_out,
     advanceOut: s.advance_out,
     advanceBack: s.advance_back,
+    groups: s.groups,
+    earned: s.earned,
+    ownMoneyTotal: s.own_money_total,
+    advancesOutstanding: s.advances_outstanding,
+    advancesOutstandingCount: s.advances_outstanding_count,
+    advancesWrittenOff: s.advances_written_off,
+    advancesShortfall: s.advances_shortfall,
   }
 }
 
@@ -142,8 +159,9 @@ function toRow (r: ApiStatementRow): StatementRow {
     out: r.out,
     after: r.after,
     heldAfter: r.held_after ?? null,
-    wallet: r.wallet ? { customerId: r.wallet.customer_id, displayRef: r.wallet.display_ref } : null,
+    wallet: r.wallet ? { customerId: r.wallet.customer_id, displayRef: r.wallet.display_ref, fullName: r.wallet.full_name ?? null } : null,
     movedToHeld: r.moved_to_held ?? null,
+    group: r.group ?? null,
     commission: r.commission ?? null,
     spread: r.spread ?? null,
     vat: r.vat ?? null,
