@@ -26,7 +26,7 @@
 
         <td>
           {{ row.label }}
-          <div v-if="row.wallet" class="who2">Wallet {{ row.wallet.displayRef }}</div>
+          <div v-if="row.wallet" class="who2">Wallet {{ row.wallet.displayRef }}{{ row.wallet.fullName ? ` · ${row.wallet.fullName}` : '' }}</div>
           <div v-if="row.movedToHeld && row.movedToHeld !== '0.0000'" class="who2">{{ movedNote(row.movedToHeld) }}</div>
           <div v-if="row.heldAfter !== null && isHoldMove(row.eventKind)" class="who2">Held after: {{ formatMoney(row.heldAfter) }}</div>
           <div v-if="row.memo" class="who2">{{ row.memo }}</div>

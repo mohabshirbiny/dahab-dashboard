@@ -90,6 +90,7 @@
     { value: 'customer', label: 'One customer wallet' },
     { value: 'customers', label: 'All customer wallets together' },
     { value: 'dahab', label: 'The Dahab wallet' },
+    { value: 'equity', label: 'Dahab\'s own money' },
   ]
 
   const GRAIN_OPTIONS: Array<{ value: StatementGrain, label: string }> = [

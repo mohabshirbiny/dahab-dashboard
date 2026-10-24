@@ -24,6 +24,31 @@
         :value="formatMoney(net(summary.advanceOut, summary.advanceBack))"
       />
     </template>
+
+    <!-- Dahab's own money (external_equity): one card per kind of movement, then the advances and the total. -->
+    <template v-if="summary.view === 'equity'">
+      <StatCard
+        v-for="group in summary.groups ?? []"
+        :key="group.key"
+        :hint="splitHint(group.in, group.out)"
+        :label="group.label"
+        :value="formatMoney(net(group.in, group.out))"
+      />
+
+      <StatCard
+        v-if="summary.advancesOutstanding !== undefined"
+        :hint="advancesHint"
+        label="First-sale advances still out today"
+        :value="formatMoney(summary.advancesOutstanding)"
+      />
+
+      <StatCard
+        v-if="summary.ownMoneyTotal !== undefined"
+        :hint="`Own money ${formatMoney(summary.closing)} + earned ${formatMoney(summary.earned ?? '0')} (commission and spread)`"
+        :label="`Own money and earnings on ${formatDate(summary.to)}`"
+        :value="formatMoney(summary.ownMoneyTotal)"
+      />
+    </template>
   </StatGrid>
 </template>
 
@@ -36,7 +61,17 @@
 
   const props = defineProps<{ summary: StatementSummary }>()
 
-  const inHint = computed(() => props.summary.view === 'dahab' ? 'Commission and spread, shown apart below' : 'Money in, and deposits returned')
+  const inHint = computed(() => {
+    if (props.summary.view === 'dahab') return 'Commission and spread, shown apart below'
+    if (props.summary.view === 'equity') return 'Capital, refunds and advances back, shown apart below'
+    return 'Money in, and deposits returned'
+  })
+
+  const advancesHint = computed(() => {
+    const s = props.summary
+    const count = s.advancesOutstandingCount ?? 0
+    return `${count} ${count === 1 ? 'advance' : 'advances'} · written off ${formatMoney(s.advancesWrittenOff ?? '0')}, shortfall ${formatMoney(s.advancesShortfall ?? '0')}`
+  })
 
   // The Dahab view's two accounts apart (Backend testing fixes): in − out, 4 dp strings.
   function net (moneyIn?: string, moneyOut?: string): string {
@@ -46,12 +81,17 @@
   function splitHint (moneyIn?: string, moneyOut?: string): string {
     return `In ${formatMoney(moneyIn ?? '0')}, out ${formatMoney(moneyOut ?? '0')}`
   }
-  const outHint = computed(() => props.summary.view === 'customer' ? 'Including deposits held' : 'Money out')
+  const outHint = computed(() => {
+    if (props.summary.view === 'customer') return 'Including deposits held'
+    if (props.summary.view === 'equity') return 'Advances, compensation, adjustments, expenses and profit taken out'
+    return 'Money out'
+  })
 
   const closingHint = computed(() => {
     const s = props.summary
     if (s.view === 'customer') return `Available ${formatMoney(s.available)}, held ${formatMoney(s.held)}`
     if (s.view === 'customers') return 'Total owed to customers'
+    if (s.view === 'equity') return 'Put in by the owners, less what was spent from it'
     return `VAT payable ${formatMoney(s.vatPayable)}, owed, not earned`
   })
 </script>

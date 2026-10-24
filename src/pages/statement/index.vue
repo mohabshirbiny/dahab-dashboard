@@ -113,6 +113,7 @@
   const title = computed(() => {
     const s = summary.value
     if (s?.customer) return `Wallet ${s.customer.displayRef}${s.customer.fullName ? ` · ${s.customer.fullName}` : ''}`
+    if (view.value === 'equity') return 'Dahab\'s own money'
     return view.value === 'customers' ? 'All customer wallets' : 'The Dahab wallet'
   })
   const subtitle = computed(() => (query.value ? `${query.value.from} to ${query.value.to}` : ''))

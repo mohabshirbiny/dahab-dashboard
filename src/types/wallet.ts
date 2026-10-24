@@ -26,7 +26,17 @@ export interface CustomerWallet {
   total: Money
 }
 
-export type StatementView = 'customer' | 'customers' | 'dahab'
+// equity: Dahab's own money (external_equity) — capital, advances, compensation, adjustments, expenses.
+export type StatementView = 'customer' | 'customers' | 'dahab' | 'equity'
+
+// view = equity: what moved Dahab's own money in the period (advance_paid, advance_back,
+// compensation, wallet_adjustment, or a bank movement kind such as capital_in or profit_draw).
+export interface EquityGroup {
+  key: string
+  label: string
+  in: Money
+  out: Money
+}
 export type StatementGrain = 'each' | 'day' | 'month'
 
 export interface StatementQuery {
@@ -64,6 +74,15 @@ export interface StatementSummary {
   // Dahab's money fronted, not earned, so not in `in`/`out`.
   advanceOut?: Money
   advanceBack?: Money
+  // view = equity: the period by what moved it, Dahab's earnings and own money together at the end of
+  // the period, and — as of today, whatever the period — the first-sale advances not back yet.
+  groups?: EquityGroup[]
+  earned?: Money
+  ownMoneyTotal?: Money
+  advancesOutstanding?: Money
+  advancesOutstandingCount?: number
+  advancesWrittenOff?: Money
+  advancesShortfall?: Money
 }
 
 export interface StatementActor {
@@ -87,8 +106,11 @@ export interface StatementMovement {
   out: Money
   after: Money
   heldAfter: Money | null
-  wallet: { customerId: string, displayRef: string } | null
+  // customers: the wallet moved; equity: the one customer paid or charged (with their name).
+  wallet: { customerId: string, displayRef: string, fullName: string | null } | null
   movedToHeld: Money | null
+  // view = equity only: what the movement was (an EquityGroup key).
+  group: string | null
   // view = dahab only (null otherwise): signed, commission + spread = in − out.
   commission: Money | null
   spread: Money | null
