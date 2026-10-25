@@ -106,6 +106,8 @@ export interface ApiOrderDetail extends ApiOrder {
     commission_amount: string
     vat_amount: string
     spread_amount: string
+    // Package D: the stone certificate cost taken from the seller's proceeds.
+    certificate_fee?: string
     seller_proceeds: string
     balance_amount: string
   } | null
@@ -309,6 +311,7 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
           commissionAmount: s.commission_amount,
           vatAmount: s.vat_amount,
           spreadAmount: s.spread_amount,
+          certificateFee: s.certificate_fee ?? '0.0000',
           sellerProceeds: s.seller_proceeds,
           balanceAmount: s.balance_amount,
         }

@@ -54,6 +54,10 @@ interface ApiStatementSummary {
   // view = dahab: the first-sale advance paid out and recovered in the period (not in in/out).
   advance_out?: string
   advance_back?: string
+  // view = dahab: the stone certificate fees sellers paid (owed to IGI; not in in/out).
+  certificates_payable?: string
+  certificate_in?: string
+  certificate_out?: string
   // view = equity: Dahab's own money by what moved it, earnings beside it, advances still out (today).
   groups?: Array<{ key: string, label: string, in: string, out: string }>
   earned?: string
@@ -85,6 +89,8 @@ interface ApiStatementRow {
   vat?: string
   // view = dahab: the first-sale advance, signed (− paid to a seller, + recovered), outside the balance.
   advance?: string
+  // view = dahab: the entry's change to the IGI certificates account, outside the balance.
+  certificate?: string
   period?: string
   count?: number
   before: string
@@ -130,6 +136,9 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
     vatOut: s.vat_out,
     advanceOut: s.advance_out,
     advanceBack: s.advance_back,
+    certificatesPayable: s.certificates_payable,
+    certificateIn: s.certificate_in,
+    certificateOut: s.certificate_out,
     groups: s.groups,
     earned: s.earned,
     ownMoneyTotal: s.own_money_total,
@@ -142,7 +151,7 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
 
 function toRow (r: ApiStatementRow): StatementRow {
   if (r.period !== undefined) {
-    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after, commission: r.commission ?? null, spread: r.spread ?? null, vat: r.vat ?? null, advance: r.advance ?? null }
+    return { kind: 'period', period: r.period, count: r.count ?? 0, before: r.before, in: r.in, out: r.out, after: r.after, commission: r.commission ?? null, spread: r.spread ?? null, vat: r.vat ?? null, advance: r.advance ?? null, certificate: r.certificate ?? null }
   }
   return {
     kind: 'movement',
@@ -166,6 +175,7 @@ function toRow (r: ApiStatementRow): StatementRow {
     spread: r.spread ?? null,
     vat: r.vat ?? null,
     advance: r.advance ?? null,
+    certificate: r.certificate ?? null,
   }
 }
 

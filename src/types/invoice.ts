@@ -51,6 +51,8 @@ export interface InvoiceLines {
   commissionPct: string | null
   commissionMinimum: string | null
   paidToWallet: string | null
+  // Package D: the stone certificate fee taken from the seller's proceeds (null when none).
+  certificateFee: string | null
   // Backend package C: seller invoices issued since the commission rate includes VAT.
   commissionVatInclusive: boolean
   // Buyer gold invoices (package C item 13): gold at the seller's rate and the price difference,

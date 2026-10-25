@@ -121,6 +121,9 @@ export interface Listing {
   priceAvailable: boolean
   priceIsIndicative: boolean
   youWouldReceive: Money | null
+  // Stones only: the certificate the seller brings and what it costs them (null before it existed).
+  certificateKind: 'igi' | 'other_lab' | 'none' | null
+  certificateFee: Money | null
   // What buyers pay per gram of this karat now (gold only).
   goldRatePerGram: Money | null
   seller: ListingSeller

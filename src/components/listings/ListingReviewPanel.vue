@@ -47,6 +47,7 @@
       <KeyValueRow label="Video" :value="has('video') ? 'Uploaded' : 'None'" />
       <KeyValueRow label="Original invoice" :value="has('invoice') ? 'Uploaded' : 'None'" />
       <KeyValueRow v-if="listing.category !== 'gold'" label="Stone certificate" :value="has('stone_certificate') ? 'Uploaded' : 'None'" />
+      <KeyValueRow v-if="listing.certificateKind" label="Certificate brought" :value="`${certificateWords[listing.certificateKind]}${listing.certificateFee && Number(listing.certificateFee) > 0 ? ` · ${formatMoney(listing.certificateFee)} EGP from the seller` : ''}`" />
       <KeyValueRow v-if="listing.listedAt" label="Went live" :value="formatDateTime(listing.listedAt)" />
 
       <ListingQueuePanel v-if="listing.state === 'reserved' || listing.queue.length > 0" :queue="listing.queue" />
@@ -125,6 +126,7 @@
   const hasActions = computed(() => props.listing.canApprove || props.listing.canRequestChanges || props.listing.canReject || props.listing.canTakeDown)
   const branches = computed(() => props.listing.branchOptions.map(b => b.nameEn).join(', ') || '—')
   const has = (kind: ListingMediaKind) => props.listing.media.some(m => m.kind === kind)
+  const certificateWords = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
 
   const makingShare = computed(() => makingShareOfGold(props.listing.makingChargePerG, props.listing.goldRatePerGram))
   // A hint for the reviewer only, as in the design ("21%" in amber).

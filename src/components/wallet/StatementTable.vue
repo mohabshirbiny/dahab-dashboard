@@ -17,6 +17,8 @@
         <th class="r">VAT</th>
         <!-- Spec 023: Dahab's money paid to a seller ahead (−) and recovered (+): outside In / Out and the balance. -->
         <th v-if="hasAdvance" class="r">Advance</th>
+        <!-- The seller's stone certificate fee, held for IGI: outside In / Out and the balance. -->
+        <th v-if="hasCertificate" class="r">Certificate fee</th>
       </template>
     </template>
 
@@ -44,6 +46,7 @@
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
           <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
           <td v-if="hasAdvance" class="r mono d-st__muted">{{ dash(row.advance ?? '0') }}</td>
+          <td v-if="hasCertificate" class="r mono d-st__muted">{{ dash(row.certificate ?? '0') }}</td>
         </template>
       </tr>
 
@@ -61,6 +64,7 @@
           <td class="r mono">{{ dash(row.spread ?? '0') }}</td>
           <td class="r mono d-st__muted">{{ dash(row.vat ?? '0') }}</td>
           <td v-if="hasAdvance" class="r mono d-st__muted">{{ dash(row.advance ?? '0') }}</td>
+          <td v-if="hasCertificate" class="r mono d-st__muted">{{ dash(row.certificate ?? '0') }}</td>
         </template>
       </tr>
     </template>
@@ -79,6 +83,8 @@
   const split = computed(() => props.rows.some(r => r.commission !== null))
   // The advance column only while the Backend sends it (spec 023 on the Dahab view).
   const hasAdvance = computed(() => props.rows.some(r => r.advance !== null))
+  // The certificate column only while the Backend sends it (the Dahab view since the certificate fee).
+  const hasCertificate = computed(() => props.rows.some(r => r.certificate !== null))
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 

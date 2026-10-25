@@ -16,6 +16,14 @@
         :value="formatMoney(net(summary.vatIn, summary.vatOut))"
       />
 
+      <!-- Stone certificate fees taken from sellers at settlement: owed to IGI, not earned, not in the balance. -->
+      <StatCard
+        v-if="summary.certificateIn !== undefined"
+        :hint="`${splitHint(summary.certificateIn, summary.certificateOut ?? '0')} · held for IGI, not in the balance${summary.certificatesPayable ? ` · total held ${formatMoney(summary.certificatesPayable)}` : ''}`"
+        label="Certificate fees"
+        :value="formatMoney(net(summary.certificateIn, summary.certificateOut ?? '0'))"
+      />
+
       <!-- Spec 023: Dahab's money paid to a seller ahead and recovered when the buyer pays — not earned, not in the balance. -->
       <StatCard
         v-if="summary.advanceOut !== undefined"
