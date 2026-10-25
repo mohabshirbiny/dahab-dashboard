@@ -41,6 +41,9 @@ export interface PromoCodeRow {
   uses_this_month: number
   value_this_month_egp: string
   created_at: string
+  // Something points at the code (a use, credit, request, listing or advance): its terms stay and it
+  // cannot be deleted; only the cap, the end date and the on/off change (2026-10-26).
+  in_use?: boolean
 }
 
 export interface PromoUseRow {
@@ -164,11 +167,32 @@ export function useCreatePromoCode () {
 export function useUpdatePromoCode () {
   const refresh = useRefresh()
   return useMutation({
-    mutationFn: async (input: { code: string, active?: boolean, monthlyCap?: string | null, idempotencyKey: string }) =>
+    mutationFn: async (input: { code: string, active?: boolean, monthlyCap?: string | null, endsOn?: string | null, idempotencyKey: string }) =>
       (await http.patch(`/dashboard/promo-codes/${encodeURIComponent(input.code)}`, {
         active: input.active,
         monthly_cap_egp: input.monthlyCap,
+        ends_on: input.endsOn,
       }, keyHeader(input.idempotencyKey))).data,
+    onSuccess: refresh,
+  })
+}
+
+// Every term of a code nobody has used yet (PUT; the name stays). A used code answers promo_code_in_use.
+export function useReplacePromoCode () {
+  const refresh = useRefresh()
+  return useMutation({
+    mutationFn: async (input: { code: string, body: Omit<NewCodeInput, 'code'>, idempotencyKey: string }) =>
+      (await http.put(`/dashboard/promo-codes/${encodeURIComponent(input.code)}`, input.body, keyHeader(input.idempotencyKey))).data,
+    onSuccess: refresh,
+  })
+}
+
+// A code nobody has used yet; a used one answers promo_code_in_use (turn it off instead).
+export function useDeletePromoCode () {
+  const refresh = useRefresh()
+  return useMutation({
+    mutationFn: async (input: { code: string, idempotencyKey: string }) =>
+      (await http.delete(`/dashboard/promo-codes/${encodeURIComponent(input.code)}`, keyHeader(input.idempotencyKey))).data,
     onSuccess: refresh,
   })
 }
