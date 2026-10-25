@@ -8,8 +8,29 @@ function trimPercent (value: string | null): string {
   return value === null ? '' : String(Number(value))
 }
 
-/** "No commission" · "50% off commission" · "Commission as it is". */
+/** A buyer code's discount off the price, in words: "10% off the price" · "500 EGP off the price"; null when none. */
+export function priceWords (c: PromoCodeRow): string | null {
+  const p = c.what_it_does.price
+  if (!p || p.mode === 'none') {
+    return null
+  }
+  return p.mode === 'percent' ? `${trimPercent(p.percent)}% off the price` : `${formatMoney(p.amount_egp)} EGP off the price`
+}
+
+/** Who pays for a price discount, in words. */
+export function fundedByWords (c: PromoCodeRow): string | null {
+  const by = c.what_it_does.price?.funded_by
+  if (!by) {
+    return null
+  }
+  return by === 'spread' ? 'Paid by the buy and sell difference' : 'Paid by Dahab\'s commission'
+}
+
+/** "No commission" · "50% off commission" · "Commission as it is"; for a buyer code what the buyer gets. */
 export function commissionWords (c: PromoCodeRow): string {
+  if (c.kind === 'buyer') {
+    return priceWords(c) ?? (c.what_it_does.gives_spread ? 'The seller\'s price' : (depositWords(c) ?? 'Nothing off'))
+  }
   const { mode, percent } = c.what_it_does.commission
   if (mode === 'waive') {
     return 'No commission'
@@ -47,9 +68,9 @@ export function whatItDoesNotes (c: PromoCodeRow): string[] {
   } else if (c.what_it_does.gives_spread) {
     notes.push('Spread goes to them')
   }
-  const deposit = depositWords(c)
-  if (deposit !== null) {
-    notes.push(deposit)
+  const funded = fundedByWords(c)
+  if (funded !== null) {
+    notes.push(funded)
   }
   if (c.product_type) {
     notes.push(`For ${productWords(c).toLowerCase()} only`)
@@ -159,6 +180,12 @@ export function effectLines (c: PromoCodeRow): string[] {
   if (deposit !== null) {
     lines.push(`${deposit}; the price itself is unchanged.`)
   }
+  const price = priceWords(c)
+  if (price !== null) {
+    lines.push(c.what_it_does.price?.funded_by === 'spread'
+      ? `${price}, out of Dahab's buy and sell difference on the sale (never more than it).`
+      : `${price}, out of Dahab's commission on the sale before VAT (never more than it). The seller still pays the commission.`)
+  }
   if (c.what_it_does.pays_advance) {
     lines.push('The seller\'s first gold sale is paid in advance.')
   }
@@ -182,6 +209,11 @@ export function exampleLine (c: PromoCodeRow): string {
   if (mode === 'amount') {
     const pays = Math.max(0, commission - Number(c.what_it_does.commission.amount_egp ?? 0))
     return `A sale with a ${egp(commission)} commission: the seller pays ${egp(pays)} (or the minimum, if higher).`
+  }
+  const p = c.what_it_does.price
+  if (p && p.mode !== 'none') {
+    const off = p.mode === 'percent' ? 31_500 * Number(p.percent ?? 0) / 100 : Number(p.amount_egp ?? 0)
+    return `A piece at ${egp(31_500)}: the buyer pays ${egp(31_500 - off)} (${egp(off)} off, if the ${p.funded_by === 'spread' ? 'difference' : 'commission'} covers it).`
   }
   if (c.what_it_does.gives_spread) {
     return `A gold piece at ${egp(31_500)} for buyers and ${egp(31_000)} for sellers: the buyer pays ${egp(31_000)}.`
