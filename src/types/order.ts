@@ -204,6 +204,8 @@ export interface OrderSettlement {
   commissionAmount: Money
   vatAmount: Money
   spreadAmount: Money
+  // The stone certificate cost taken from the seller's proceeds (0 when none).
+  certificateFee: Money
   sellerProceeds: Money
   balanceAmount: Money
 }

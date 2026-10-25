@@ -83,6 +83,7 @@
         <KeyValueRow label="Commission before VAT" :value="`${formatMoney(order.settlement.commissionAmount)} EGP`" />
         <KeyValueRow label="VAT in the commission" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
         <KeyValueRow label="Spread" :value="`${formatMoney(order.settlement.spreadAmount)} EGP`" />
+        <KeyValueRow v-if="Number(order.settlement.certificateFee) > 0" label="Stone certificate fee" :value="`${formatMoney(order.settlement.certificateFee)} EGP`" />
         <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
       </template>
 

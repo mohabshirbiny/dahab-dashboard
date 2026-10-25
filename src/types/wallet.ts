@@ -74,6 +74,10 @@ export interface StatementSummary {
   // Dahab's money fronted, not earned, so not in `in`/`out`.
   advanceOut?: Money
   advanceBack?: Money
+  // view = dahab: what sellers paid for IGI's stone certificates — owed to IGI, not earned, so not in `in`/`out`.
+  certificatesPayable?: Money
+  certificateIn?: Money
+  certificateOut?: Money
   // view = equity: the period by what moved it, Dahab's earnings and own money together at the end of
   // the period, and — as of today, whatever the period — the first-sale advances not back yet.
   groups?: EquityGroup[]
@@ -118,6 +122,8 @@ export interface StatementMovement {
   vat: Money | null
   // view = dahab only: the first-sale advance, signed (− paid to a seller, + recovered), outside the balance.
   advance: Money | null
+  // view = dahab only: the entry's change to the IGI certificates account (the seller's certificate fee), outside the balance.
+  certificate: Money | null
 }
 
 // One day or month (grain = day | month).
@@ -133,6 +139,7 @@ export interface StatementPeriod {
   spread: Money | null
   vat: Money | null
   advance: Money | null
+  certificate: Money | null
 }
 
 export type StatementRow = StatementMovement | StatementPeriod

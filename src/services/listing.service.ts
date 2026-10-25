@@ -32,6 +32,9 @@ interface ApiListing {
   price_available: boolean
   price_is_indicative: boolean
   you_would_receive: string | null
+  // Package D: the certificate the seller brings (stones) and what it costs them; already out of you_would_receive.
+  certificate_kind?: 'igi' | 'other_lab' | 'none' | null
+  certificate_fee?: string | null
   gold_rate_per_gram: string | null
   seller: { id: string, display_ref: string, full_name: string | null, phone_masked: string, status: string }
   created_at: string
@@ -118,6 +121,8 @@ function toListing (l: ApiListing): Listing {
     priceAvailable: l.price_available,
     priceIsIndicative: l.price_is_indicative,
     youWouldReceive: l.you_would_receive,
+    certificateKind: l.certificate_kind ?? null,
+    certificateFee: l.certificate_fee ?? null,
     goldRatePerGram: l.gold_rate_per_gram,
     seller: {
       id: l.seller.id,
