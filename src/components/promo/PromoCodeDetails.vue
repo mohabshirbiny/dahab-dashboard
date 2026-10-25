@@ -1,48 +1,78 @@
 <template>
-  <Panel class="d-pcd" :subtitle="code.is_active ? 'On — customers can use it now' : 'Off — nobody can use it'" :title="`Code ${code.code}`">
+  <Panel class="d-pcd" :title="`Code ${code.code}`">
     <template #actions>
+      <StatusTag :label="code.is_active ? 'On' : 'Off'" :variant="code.is_active ? 'ok' : 'off'" />
       <DBtn @click="emit('close')">Close</DBtn>
     </template>
 
-    <dl class="d-pcd__list">
-      <dt>Who types it</dt>
-      <dd>{{ sideWords(code) }}</dd>
+    <template #body>
+      <p class="d-pcd__lead">{{ code.is_active ? 'Customers can use this code now.' : 'This code is off: nobody can use it.' }}</p>
 
-      <dt>For which pieces</dt>
-      <dd>{{ productWords(code) }}</dd>
+      <div class="d-pcd__grid">
+        <section class="d-pcd__card">
+          <h3 class="d-pcd__h">What it does</h3>
 
-      <dt>What it does</dt>
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Who types it</span>
+            <span class="d-pcd__v">{{ sideWords(code) }}</span>
+          </div>
 
-      <dd>
-        <div v-for="line in effectLines(code)" :key="line">{{ line }}</div>
-      </dd>
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">For which pieces</span>
+            <span class="d-pcd__v">{{ productWords(code) }}</span>
+          </div>
 
-      <dt>Example</dt>
-      <dd>{{ exampleLine(code) }}</dd>
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Effect</span>
 
-      <dt>Who can use it</dt>
+            <span class="d-pcd__v">
+              <span v-for="line in effectLines(code)" :key="line" class="d-pcd__line">{{ line }}</span>
+            </span>
+          </div>
 
-      <dd>
-        <template v-if="code.tied_to.audience === 'account'">
-          Only {{ code.tied_to.customer.full_name }} ({{ code.tied_to.customer.display_ref }}<template v-if="code.tied_to.customer.phone_masked">, {{ code.tied_to.customer.phone_masked }}</template>)
-        </template>
+          <div class="d-pcd__example">
+            <span class="d-pcd__k">Example</span>
+            <span>{{ exampleLine(code) }}</span>
+          </div>
+        </section>
 
-        <template v-else>Everyone</template>
-        <div v-if="code.first_sale_only" class="who2">Only on the seller's first sale</div>
-      </dd>
+        <section class="d-pcd__card">
+          <h3 class="d-pcd__h">Who and how often</h3>
 
-      <dt>Limits</dt>
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Who can use it</span>
 
-      <dd>
-        <div v-for="line in limitLines(code)" :key="line">{{ line }}</div>
-      </dd>
+            <span class="d-pcd__v">
+              <template v-if="code.tied_to.audience === 'account'">
+                <span class="d-pcd__line">{{ code.tied_to.customer.full_name }}</span>
+                <span class="who2">{{ code.tied_to.customer.display_ref }}<template v-if="code.tied_to.customer.phone_masked"> · {{ code.tied_to.customer.phone_masked }}</template></span>
+              </template>
 
-      <dt>Used this month</dt>
-      <dd class="mono">{{ usedThisMonth(code) }}</dd>
+              <template v-else>Everyone</template>
+              <span v-if="code.first_sale_only" class="who2">Only on the seller's first sale</span>
+            </span>
+          </div>
 
-      <dt>Made</dt>
-      <dd>{{ formatDateTime(code.created_at) }}</dd>
-    </dl>
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Limits</span>
+
+            <span class="d-pcd__v">
+              <span v-for="line in limitLines(code)" :key="line" class="d-pcd__line">{{ line }}</span>
+            </span>
+          </div>
+
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Used this month</span>
+            <span class="d-pcd__v mono">{{ usedThisMonth(code) }}</span>
+          </div>
+
+          <div class="d-pcd__row">
+            <span class="d-pcd__k">Made</span>
+            <span class="d-pcd__v">{{ formatDateTime(code.created_at) }}</span>
+          </div>
+        </section>
+      </div>
+    </template>
   </Panel>
 </template>
 
@@ -51,6 +81,7 @@
   import { effectLines, exampleLine, limitLines, productWords, sideWords, usedThisMonth } from '@/components/promo/promoFormat'
   import DBtn from '@/components/ui/DBtn.vue'
   import Panel from '@/components/ui/Panel.vue'
+  import StatusTag from '@/components/ui/StatusTag.vue'
   import { formatDateTime } from '@/composables/useFormatters'
 
   // Every term of one code in plain words (owner note 2026-10-25: "I don't remember what this code does").
@@ -61,7 +92,18 @@
 
 <style lang="scss" scoped>
 .d-pcd { margin-top: 16px; }
-.d-pcd__list { display: grid; grid-template-columns: 180px 1fr; gap: 10px 18px; margin: 0; }
-.d-pcd__list dt { color: var(--ink-3); font-size: 13px; }
-.d-pcd__list dd { margin: 0; }
+.d-pcd__lead { margin: 0 0 14px; font-size: 12.5px; color: var(--ink-2); }
+.d-pcd__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.d-pcd__card { border: 1px solid var(--line); border-radius: var(--r-panel); padding: 4px 14px 10px; }
+.d-pcd__h { margin: 10px 0 4px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.d-pcd__row { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.d-pcd__row:last-child { border-bottom: 0; }
+.d-pcd__k { color: var(--ink-2); }
+.d-pcd__v { display: flex; flex-direction: column; gap: 3px; font-weight: 500; }
+.d-pcd__line { display: block; }
+.d-pcd__example { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--row-head); font-size: 12.5px; display: flex; flex-direction: column; gap: 4px; }
+
+@media (max-width: 900px) {
+  .d-pcd__grid { grid-template-columns: 1fr; }
+}
 </style>
