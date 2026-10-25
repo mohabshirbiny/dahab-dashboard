@@ -22,6 +22,9 @@ export interface Branch {
   nameAr: string
   addressEn: string
   addressAr: string
+  // Shown to customers with the address and hours; null when not set.
+  phone: string | null
+  mapUrl: string | null
   timezone: string
   isEnabled: boolean
   hours: BranchHour[]
@@ -46,6 +49,8 @@ export interface BranchInput {
   nameAr: string
   addressEn: string
   addressAr: string
+  phone: string | null
+  mapUrl: string | null
   timezone: string
   isEnabled: boolean
   // Always the whole week: the Backend replaces it.

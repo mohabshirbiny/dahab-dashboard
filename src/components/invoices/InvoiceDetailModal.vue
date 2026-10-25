@@ -33,10 +33,22 @@
       </template>
 
       <KeyValueRow v-else label="Price of the piece" :value="formatMoney(invoice.lines.askingPrice)" />
-      <KeyValueRow big :label="invoice.party === 'seller' ? 'Gross' : 'Total paid'" :value="formatMoney(invoice.lines.subtotal)" />
+      <!-- A buyer code handed the spread back: the price, the discount and what was paid. -->
+      <template v-if="invoice.party === 'buyer' && invoice.lines.promoDiscount !== null">
+        <KeyValueRow big label="Price" :value="formatMoney(invoice.lines.priceBeforeDiscount)" />
+        <KeyValueRow :label="`Discount, code ${invoice.lines.promoCode ?? ''}`" :value="`− ${formatMoney(invoice.lines.promoDiscount)}`" />
+        <KeyValueRow big label="Total paid" :value="formatMoney(invoice.lines.totalPaid)" />
+      </template>
+
+      <KeyValueRow v-else big :label="invoice.party === 'seller' ? 'Gross' : 'Total paid'" :value="formatMoney(invoice.lines.subtotal)" />
 
       <template v-if="invoice.party === 'seller'">
         <h3 class="d-idm__h">Dahab charges</h3>
+
+        <template v-if="invoice.lines.commissionWaived">
+          <KeyValueRow label="Commission on an ordinary sale, VAT included" :value="formatMoney(invoice.lines.commissionOrdinaryTotal)" />
+          <KeyValueRow :label="waiverLabel(invoice.lines.commissionWaived)" :value="`− ${formatMoney(invoice.lines.commissionWaived.amount)}`" />
+        </template>
         <!-- Backend package C: since then the rate includes VAT, which is carved out of it. -->
         <KeyValueRow
           :label="invoice.lines.commissionVatInclusive ? `Commission before VAT (${invoice.lines.commissionPct ?? '—'}%, VAT included)` : `Commission (${invoice.lines.commissionPct ?? '—'}%)`"
@@ -134,6 +146,15 @@
     } finally {
       opening.value = null
     }
+  }
+
+  // Why the seller paid less than an ordinary sale (2026-10-25: a sale of no commission has an invoice of 0).
+  function waiverLabel (w: { kind: string, code: string | null }): string {
+    const why = w.kind === 'free_relist' ? 'Free relist' : (w.kind === 'market_maker' ? 'Dealer purchase' : 'Promo code')
+    if (!w.code) {
+      return why
+    }
+    return w.kind === 'credit' ? `${why} ${w.code}` : `${why}, code ${w.code}`
   }
 </script>
 

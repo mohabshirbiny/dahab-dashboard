@@ -5,6 +5,7 @@ import type {
   InvoiceCustomer,
   InvoiceDetail,
   InvoiceFigures,
+  InvoiceLines,
   InvoicePage,
   InvoiceQuery,
   InvoiceSummary,
@@ -104,6 +105,14 @@ function toCreditNote (n: ApiCreditNote): CreditNote {
 
 const str = (v: string | number | boolean | null | undefined) => (v === null || v === undefined ? null : String(v))
 
+function waivedOf (v: unknown): InvoiceLines['commissionWaived'] {
+  if (v === null || typeof v !== 'object') {
+    return null
+  }
+  const w = v as { kind?: unknown, code?: unknown, amount?: unknown }
+  return { kind: String(w.kind ?? ''), code: w.code ? String(w.code) : null, amount: String(w.amount ?? '0') }
+}
+
 function toDetail (i: ApiInvoice): InvoiceDetail {
   const l = i.lines ?? {}
   return {
@@ -129,6 +138,12 @@ function toDetail (i: ApiInvoice): InvoiceDetail {
       sellerUnitRate: str(l.seller_unit_rate),
       goldValueAtSellerRate: str(l.gold_value_at_seller_rate),
       priceDifference: str(l.price_difference),
+      commissionOrdinaryTotal: str(l.commission_ordinary_total),
+      commissionWaived: waivedOf(l.commission_waived),
+      priceBeforeDiscount: str(l.price_before_discount),
+      promoDiscount: str(l.promo_discount),
+      promoCode: str(l.promo_code),
+      totalPaid: str(l.total_paid),
     },
     issuer: i.issuer ?? null,
     partyDetails: i.party_details ? { fullName: i.party_details.full_name, displayRef: i.party_details.display_ref } : null,

@@ -45,6 +45,7 @@
 
           <td>
             {{ branch.addressEn }}
+            <div v-if="branch.phone" class="who2 mono" dir="ltr">{{ branch.phone }}</div>
             <div v-if="branch.timezone !== DEFAULT_TIMEZONE" class="who2">{{ branch.timezone }}</div>
           </td>
 
