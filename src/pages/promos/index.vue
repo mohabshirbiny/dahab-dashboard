@@ -57,6 +57,7 @@
 
           <td class="r">
             <DBtn @click="viewing = c.code">View</DBtn>
+            <DBtn :disabled="!canManage" @click="startEdit(c)">Edit</DBtn>
             <DBtn @click="selected = c.code">Uses</DBtn>
 
             <DBtn
@@ -64,6 +65,14 @@
               :kind="c.is_active ? 'danger' : 'success'"
               @click="onToggle(c)"
             >{{ c.is_active ? 'Turn off' : 'Turn on' }}</DBtn>
+
+            <!-- A used code stays for its history; only a code nobody has used can go. -->
+            <DBtn
+              :disabled="!canManage || c.in_use"
+              kind="danger"
+              :title="c.in_use ? 'Used codes cannot be deleted. Turn it off instead.' : undefined"
+              @click="askDelete(c)"
+            >Delete</DBtn>
           </td>
         </tr>
       </DataTable>
@@ -74,6 +83,27 @@
     <PromoCodeDetails v-if="viewed" :code="viewed" @close="viewing = null" />
 
     <NewCodePanel v-if="adding" :loading="create.isPending.value" :submit-error="createError" @submit="onCreate" />
+
+    <NewCodePanel
+      v-if="editingRow"
+      :key="editingRow.code"
+      :editing="editingRow"
+      :loading="replace.isPending.value || update.isPending.value"
+      :submit-error="editError"
+      @cancel="editing = null"
+      @submit="onSave"
+    />
+
+    <ConfirmDialog
+      v-model="deleteOpen"
+      confirm-kind="danger"
+      confirm-label="Delete"
+      :error="deleteError"
+      :loading="remove.isPending.value"
+      :message="deleting ? `Nobody has used ${deleting} yet. It will be removed for good; the deletion is logged against your name.` : undefined"
+      :title="`Delete code ${deleting ?? ''}?`"
+      @confirm="confirmDelete"
+    />
 
     <Panel v-if="selected" class="d-pr__block" subtitle="Every attempt, allowed or blocked" :title="`Code use log: ${selected}`">
       <LoadingState v-if="uses.isPending.value" label="Loading…" />
@@ -112,6 +142,7 @@
   import PromoCodeDetails from '@/components/promo/PromoCodeDetails.vue'
   import { capPercent, commissionWords, conditionLines, promoCreateError, usedThisMonth, whatItDoesNotes } from '@/components/promo/promoFormat'
   import { accessErrorMessage } from '@/components/staff/accessErrors'
+  import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
   import DataTable from '@/components/ui/DataTable.vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import EmptyState from '@/components/ui/EmptyState.vue'
@@ -123,7 +154,7 @@
   import StatusTag from '@/components/ui/StatusTag.vue'
   import { formatDateTime, formatMoney } from '@/composables/useFormatters'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
-  import { useCreatePromoCode, usePromoCodes, usePromoUses, useUpdatePromoCode } from '@/composables/useMarketMakers'
+  import { useCreatePromoCode, useDeletePromoCode, usePromoCodes, usePromoUses, useReplacePromoCode, useUpdatePromoCode } from '@/composables/useMarketMakers'
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
 
@@ -156,6 +187,71 @@
       },
       onError: error => {
         createError.value = promoCreateError(error, accessErrorMessage(error))
+      },
+    })
+  }
+
+  // Edit: every term of a code nobody has used; a used one only its cap and end date.
+  const replace = useReplacePromoCode()
+  const editing = ref<string | null>(null)
+  const editingRow = computed(() => (codes.data.value ?? []).find(c => c.code === editing.value) ?? null)
+  const editError = ref('')
+
+  function startEdit (c: PromoCodeRow) {
+    adding.value = false
+    editError.value = ''
+    editing.value = c.code
+  }
+
+  function onSave (body: NewCodeInput) {
+    const row = editingRow.value
+    if (!row) return
+    editError.value = ''
+    const done = {
+      onSuccess: () => {
+        key.reset()
+        editing.value = null
+        toast.ok('Code saved and logged against your name.')
+      },
+      onError: (error: unknown) => {
+        editError.value = promoCreateError(error, accessErrorMessage(error))
+      },
+    }
+    if (row.in_use) {
+      const changes = { monthlyCap: body.monthly_cap_egp ?? null, endsOn: body.ends_on ?? null }
+      update.mutate({ code: row.code, ...changes, idempotencyKey: key.keyFor([row.code, changes]) }, done)
+      return
+    }
+    const { code: _code, ...terms } = body
+    replace.mutate({ code: row.code, body: terms, idempotencyKey: key.keyFor([row.code, terms]) }, done)
+  }
+
+  // Delete: only a code nobody has used.
+  const remove = useDeletePromoCode()
+  const deleting = ref<string | null>(null)
+  const deleteOpen = ref(false)
+  const deleteError = ref('')
+
+  function askDelete (c: PromoCodeRow) {
+    deleting.value = c.code
+    deleteError.value = ''
+    deleteOpen.value = true
+  }
+
+  function confirmDelete () {
+    const code = deleting.value
+    if (!code) return
+    remove.mutate({ code, idempotencyKey: key.keyFor(['delete', code]) }, {
+      onSuccess: () => {
+        key.reset()
+        deleteOpen.value = false
+        if (viewing.value === code) viewing.value = null
+        if (editing.value === code) editing.value = null
+        if (selected.value === code) selected.value = null
+        toast.ok('Code deleted and logged against your name.')
+      },
+      onError: error => {
+        deleteError.value = promoCreateError(error, accessErrorMessage(error))
       },
     })
   }

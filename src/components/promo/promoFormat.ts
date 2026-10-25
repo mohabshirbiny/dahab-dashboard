@@ -231,6 +231,9 @@ export function promoCreateError (error: unknown, fallback: string): string {
     case 'promo_account_not_found': {
       return 'No account matches that number or phone.'
     }
+    case 'promo_code_in_use': {
+      return 'This code has been used, so its terms stay and it cannot be deleted. Turn it off or make a new code.'
+    }
     case 'promo_customer_not_market_maker': {
       return 'The account a dealer code is tied to must be a market maker.'
     }
