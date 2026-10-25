@@ -21,6 +21,8 @@ export interface PromoCodeRow {
   what_it_does: {
     commission: { mode: CommissionMode, percent: string | null, amount_egp?: string | null }
     deposit?: { mode: DepositMode, percent: string | null, amount_egp: string | null }
+    // A buyer code's discount off the price and what pays for it (2026-10-26).
+    price?: { mode: 'none' | 'percent' | 'amount', percent: string | null, amount_egp: string | null, funded_by: 'commission' | 'spread' | null }
     gives_spread: boolean
     pays_advance: boolean
   }
@@ -99,6 +101,9 @@ export interface NewCodeInput {
   commission_amount_egp?: string
   deposit_percent?: string
   deposit_amount_egp?: string
+  price_percent?: string
+  price_amount_egp?: string
+  discount_funded_by?: 'commission' | 'spread'
   audience: 'account' | 'anyone'
   tied_to?: string
   use_limit: UseLimit

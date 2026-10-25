@@ -96,24 +96,49 @@
           </div>
 
           <div v-if="type === 'buyer'" class="d-nc__g3">
-            <NoteBanner v-if="product === 'gold'" class="d-nc__note">
-              The buyer pays the seller's price: the buy and sell difference is given back. The deposit does not change.
-            </NoteBanner>
+            <FormField v-slot="{ controlId }" label="What the buyer gets">
+              <DSelect :id="controlId" v-model="buyerEffect" :options="buyerEffectOptions" />
+            </FormField>
 
-            <template v-else>
-              <FormField v-slot="{ controlId }" label="Take off the deposit">
-                <DSelect :id="controlId" v-model="depositMode" :options="depositModeOptions" />
-              </FormField>
-
+            <template v-if="buyerEffect === 'percent' || buyerEffect === 'amount'">
               <FormField
                 v-slot="{ controlId, invalid }"
-                :error="errors.deposit"
-                :hint="depositMode === 'percent' ? 'Percent of the deposit' : 'EGP; the deposit never goes below 1 EGP'"
-                label="Reduce by"
+                :error="errors.price"
+                :hint="buyerEffect === 'percent' ? 'Percent of the price' : 'EGP off the price'"
+                label="Take off the price"
               >
-                <DInput :id="controlId" v-model="depositValue" inputmode="numeric" :invalid="invalid" />
+                <DInput :id="controlId" v-model="priceValue" inputmode="numeric" :invalid="invalid" />
+              </FormField>
+
+              <FormField v-slot="{ controlId }" hint="The discount never goes above it" label="Paid for by">
+                <DSelect :id="controlId" v-model="fundedBy" :options="fundedByOptions" />
               </FormField>
             </template>
+          </div>
+
+          <NoteBanner v-if="type === 'buyer' && buyerEffect === 'spread'" class="d-nc__note">
+            The buyer pays the seller's price: the buy and sell difference is given back. The deposit does not change.
+          </NoteBanner>
+
+          <NoteBanner v-if="type === 'buyer' && (buyerEffect === 'percent' || buyerEffect === 'amount')" class="d-nc__note">
+            {{ fundedBy === 'spread'
+              ? 'The discount comes out of Dahab\'s buy and sell difference on this sale, and never goes above it.'
+              : 'The discount comes out of Dahab\'s commission on this sale (before VAT), and never goes above it. The seller still pays the commission.' }}
+          </NoteBanner>
+
+          <div v-if="type === 'buyer' && buyerEffect === 'deposit'" class="d-nc__g3">
+            <FormField v-slot="{ controlId }" label="Take off the deposit">
+              <DSelect :id="controlId" v-model="depositMode" :options="depositModeOptions" />
+            </FormField>
+
+            <FormField
+              v-slot="{ controlId, invalid }"
+              :error="errors.deposit"
+              :hint="depositMode === 'percent' ? 'Percent of the deposit' : 'EGP; the deposit never goes below 1 EGP'"
+              label="Reduce by"
+            >
+              <DInput :id="controlId" v-model="depositValue" inputmode="numeric" :invalid="invalid" />
+            </FormField>
           </div>
 
           <div class="d-nc__g3">
@@ -237,6 +262,21 @@
   const firstSaleOnly = ref<'yes' | 'no'>('no')
   const paysAdvance = ref<'yes' | 'no'>('no')
   const errors = ref<Record<string, string>>({})
+  // A buyer code does one thing (2026-10-26): the seller's price (gold), a lower deposit (stones), or a
+  // percentage or an amount off the price, paid for by Dahab's commission or (gold) the spread.
+  const buyerEffect = ref<'spread' | 'deposit' | 'percent' | 'amount'>('spread')
+  const priceValue = ref('')
+  const fundedBy = ref<'commission' | 'spread'>('commission')
+  const buyerEffectOptions = computed(() => [
+    product.value === 'gold'
+      ? { value: 'spread', label: 'The seller\'s price (no spread)' }
+      : { value: 'deposit', label: 'A lower deposit' },
+    { value: 'percent', label: 'A percentage off the price' },
+    { value: 'amount', label: 'An amount off the price' },
+  ])
+  const fundedByOptions = computed(() => product.value === 'gold'
+    ? [{ value: 'commission', label: 'Dahab\'s commission' }, { value: 'spread', label: 'The buy and sell difference' }]
+    : [{ value: 'commission', label: 'Dahab\'s commission' }])
 
   // Filling the form from a code must not trigger the defaults below.
   let filling = false
@@ -250,7 +290,12 @@
   })
   watch(product, p => {
     if (filling) return
-    if (p !== 'gold') paysAdvance.value = 'no'
+    if (p !== 'gold') {
+      paysAdvance.value = 'no'
+      fundedBy.value = 'commission'
+    }
+    if (buyerEffect.value === 'spread' && p !== 'gold') buyerEffect.value = 'deposit'
+    if (buyerEffect.value === 'deposit' && p === 'gold') buyerEffect.value = 'spread'
   })
 
   // The Edit form starts from the code as it is.
@@ -277,6 +322,16 @@
     endsOn.value = c.conditions.ends_on ?? ''
     firstSaleOnly.value = c.first_sale_only ? 'yes' : 'no'
     paysAdvance.value = w.pays_advance ? 'yes' : 'no'
+    const price = w.price
+    if (price && price.mode !== 'none') {
+      buyerEffect.value = price.mode
+      priceValue.value = String(Number(price.mode === 'percent' ? price.percent : price.amount_egp))
+      fundedBy.value = price.funded_by ?? 'commission'
+    } else {
+      buyerEffect.value = c.product_type === 'gold' ? 'spread' : 'deposit'
+      priceValue.value = ''
+      fundedBy.value = 'commission'
+    }
     errors.value = {}
     await nextTick()
     filling = false
@@ -306,7 +361,13 @@
     if (type.value !== 'buyer' && mode.value === 'amount' && !(Number(amount.value.replaceAll(',', '')) > 0)) {
       e.commission_amount_egp = 'An amount above 0.'
     }
-    if (type.value === 'buyer' && product.value !== 'gold') {
+    if (type.value === 'buyer' && (buyerEffect.value === 'percent' || buyerEffect.value === 'amount')) {
+      const v = Number(priceValue.value.replaceAll(',', ''))
+      if (!(v > 0) || (buyerEffect.value === 'percent' && v >= 100)) {
+        e.price = buyerEffect.value === 'percent' ? 'A percentage above 0 and below 100.' : 'An amount above 0.'
+      }
+    }
+    if (type.value === 'buyer' && buyerEffect.value === 'deposit') {
       const v = Number(depositValue.value.replaceAll(',', ''))
       if (!(v > 0) || (depositMode.value === 'percent' && v >= 100)) {
         e.deposit = depositMode.value === 'percent' ? 'A percentage above 0 and below 100.' : 'An amount above 0.'
@@ -337,10 +398,16 @@
       body.product_type = product.value
       if (type.value === 'buyer') {
         body.kind = 'buyer'
-        if (product.value !== 'gold') {
+        if (buyerEffect.value === 'deposit') {
           const v = depositValue.value.replaceAll(',', '').trim()
           if (depositMode.value === 'percent') body.deposit_percent = v
           else body.deposit_amount_egp = v
+        }
+        if (buyerEffect.value === 'percent' || buyerEffect.value === 'amount') {
+          const v = priceValue.value.replaceAll(',', '').trim()
+          if (buyerEffect.value === 'percent') body.price_percent = v
+          else body.price_amount_egp = v
+          body.discount_funded_by = product.value === 'gold' ? fundedBy.value : 'commission'
         }
       } else {
         body.commission_mode = mode.value
