@@ -48,6 +48,7 @@
       <KeyValueRow label="Original invoice" :value="has('invoice') ? 'Uploaded' : 'None'" />
       <KeyValueRow v-if="listing.category !== 'gold'" label="Stone certificate" :value="has('stone_certificate') ? 'Uploaded' : 'None'" />
       <KeyValueRow v-if="listing.certificateKind" label="Certificate brought" :value="`${certificateWords[listing.certificateKind]}${listing.certificateFee && Number(listing.certificateFee) > 0 ? ` · ${formatMoney(listing.certificateFee)} EGP from the seller` : ''}`" />
+      <KeyValueRow v-if="stoneWords" label="The stone, as stated" :value="stoneWords" />
       <KeyValueRow v-if="listing.listedAt" label="Went live" :value="formatDateTime(listing.listedAt)" />
 
       <ListingQueuePanel v-if="listing.state === 'reserved' || listing.queue.length > 0" :queue="listing.queue" />
@@ -127,6 +128,14 @@
   const branches = computed(() => props.listing.branchOptions.map(b => b.nameEn).join(', ') || '—')
   const has = (kind: ListingMediaKind) => props.listing.media.some(m => m.kind === kind)
   const certificateWords = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
+  // The stone as the seller states it: "0.70 ct · VS · Very good cut" (IGI checks it at handover).
+  const stoneWords = computed(() => {
+    const s = props.listing.stone
+    if (!s) return null
+    const cut = { excellent: 'Excellent', very_good: 'Very good', good: 'Good' } as Record<string, string>
+    const parts = [s.carat ? `${Number(s.carat)} ct` : null, s.clarity ? s.clarity.toUpperCase() : null, s.cut ? `${cut[s.cut] ?? s.cut} cut` : null]
+    return parts.filter(Boolean).join(' · ') || null
+  })
 
   const makingShare = computed(() => makingShareOfGold(props.listing.makingChargePerG, props.listing.goldRatePerGram))
   // A hint for the reviewer only, as in the design ("21%" in amber).

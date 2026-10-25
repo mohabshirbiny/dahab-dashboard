@@ -60,6 +60,15 @@ export interface InvoiceLines {
   sellerUnitRate: string | null
   goldValueAtSellerRate: string | null
   priceDifference: string | null
+  // Since 2026-10-25. Seller: what an ordinary sale would charge (VAT included) and why less was charged
+  // (free relist, a dealer purchase or a seller code); a sale of no commission has an invoice of 0.
+  commissionOrdinaryTotal: string | null
+  commissionWaived: { kind: 'free_relist' | 'market_maker' | 'credit' | string, code: string | null, amount: string } | null
+  // Buyer: a code that handed the spread back — the price, the discount and what was paid.
+  priceBeforeDiscount: string | null
+  promoDiscount: string | null
+  promoCode: string | null
+  totalPaid: string | null
 }
 
 export interface CreditNote {

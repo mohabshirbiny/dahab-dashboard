@@ -111,6 +111,117 @@ export function capPercent (c: PromoCodeRow): number | null {
   return Math.min(100, Math.round((Number(c.value_this_month_egp) / cap) * 100))
 }
 
+// ---- The View panel: every term of a code in plain words (owner note 2026-10-25) ----
+
+function egp (amount: number): string {
+  return `${formatMoney(String(amount))} EGP`
+}
+
+/** Who types the code, and where. */
+export function sideWords (c: PromoCodeRow): string {
+  if (c.kind === 'market_maker') {
+    return 'A dealer (market maker), when sending a buy request'
+  }
+  if (c.kind === 'buyer' || c.side === 'buyer') {
+    return 'The buyer, when sending a buy request'
+  }
+  return 'The seller, on the sell form or on their listing'
+}
+
+/** What the code changes, one line each: the commission, the spread, the deposit, the advance. */
+export function effectLines (c: PromoCodeRow): string[] {
+  const lines: string[] = []
+  const { mode, percent } = c.what_it_does.commission
+  switch (mode) {
+    case 'waive': {
+      lines.push('The seller pays no commission, and so no VAT either.')
+
+      break
+    }
+    case 'percent': {
+      lines.push(`${trimPercent(percent)}% off the seller's commission (VAT included), never below the minimum commission.`)
+
+      break
+    }
+    case 'amount': {
+      lines.push(`${formatMoney(c.what_it_does.commission.amount_egp ?? '0')} EGP off the seller's commission (VAT included), never below the minimum commission.`)
+
+      break
+    }
+  // No default
+  }
+  if (c.what_it_does.gives_spread) {
+    lines.push(c.kind === 'market_maker'
+      ? 'The dealer pays the price the seller gets: the spread goes to the dealer, not to Dahab.'
+      : 'The buyer pays the price the seller gets: the spread comes off the buyer\'s total as a discount.')
+  }
+  const deposit = depositWords(c)
+  if (deposit !== null) {
+    lines.push(`${deposit}; the price itself is unchanged.`)
+  }
+  if (c.what_it_does.pays_advance) {
+    lines.push('The seller\'s first gold sale is paid in advance.')
+  }
+  if (lines.length === 0) {
+    lines.push('Nothing changes in the price; the use is recorded.')
+  }
+  return lines
+}
+
+/** One worked example with round figures, so the effect is clear at a glance. */
+export function exampleLine (c: PromoCodeRow): string {
+  const { mode, percent } = c.what_it_does.commission
+  const commission = 300
+  if (mode === 'waive') {
+    return `A sale with a ${egp(commission)} commission: the seller pays 0 and receives ${egp(commission)} more.`
+  }
+  if (mode === 'percent') {
+    const pays = commission * (100 - Number(percent ?? 0)) / 100
+    return `A sale with a ${egp(commission)} commission: the seller pays ${egp(pays)} (or the minimum, if higher).`
+  }
+  if (mode === 'amount') {
+    const pays = Math.max(0, commission - Number(c.what_it_does.commission.amount_egp ?? 0))
+    return `A sale with a ${egp(commission)} commission: the seller pays ${egp(pays)} (or the minimum, if higher).`
+  }
+  if (c.what_it_does.gives_spread) {
+    return `A gold piece at ${egp(31_500)} for buyers and ${egp(31_000)} for sellers: the buyer pays ${egp(31_000)}.`
+  }
+  const d = c.what_it_does.deposit
+  if (d && d.mode === 'percent') {
+    return `A deposit of ${egp(10_000)} becomes ${egp(10_000 * (100 - Number(d.percent ?? 0)) / 100)}.`
+  }
+  if (d && d.mode === 'amount') {
+    return `A deposit of ${egp(10_000)} becomes ${egp(Math.max(1, 10_000 - Number(d.amount_egp ?? 0)))}.`
+  }
+  return '—'
+}
+
+/** How often, when and how much: the use limit, the dates, a dealer's conditions and the monthly cap. */
+export function limitLines (c: PromoCodeRow): string[] {
+  const { conditions } = c
+  const lines: string[] = [
+    conditions.use_limit === 'once'
+      ? 'Once per person (per national ID)'
+      : (conditions.use_limit === 'monthly' ? 'Once a month per person' : 'No limit per person'),
+  ]
+  if (conditions.starts_on) {
+    lines.push(`From ${formatDate(conditions.starts_on, true)}`)
+  }
+  if (conditions.ends_on) {
+    lines.push(`Until ${formatDate(conditions.ends_on, true)}`)
+  }
+  if (conditions.min_listed_days !== null) {
+    lines.push(`Only on pieces listed at least ${conditions.min_listed_days} days`)
+  }
+  if (conditions.requires_approval) {
+    lines.push('Only on pieces an admin approved for dealers')
+  }
+  if (c.monthly_cap_egp !== null) {
+    lines.push(`At most ${formatMoney(c.monthly_cap_egp)} EGP a month in total`)
+  }
+  return lines
+}
+
 /** One sentence per refusal of "Create the code" (Backend contracts/codes-and-events.md). */
 export function promoCreateError (error: unknown, fallback: string): string {
   switch (backendCodeOf(error)) {

@@ -124,6 +124,8 @@ export interface Listing {
   // Stones only: the certificate the seller brings and what it costs them (null before it existed).
   certificateKind: 'igi' | 'other_lab' | 'none' | null
   certificateFee: Money | null
+  // Stones only: the stone as the seller states it (carat, clarity vvs|vs|si|i, cut excellent|very_good|good).
+  stone: { carat: string | null, clarity: string | null, cut: string | null } | null
   // What buyers pay per gram of this karat now (gold only).
   goldRatePerGram: Money | null
   seller: ListingSeller

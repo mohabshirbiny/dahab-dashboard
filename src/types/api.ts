@@ -381,6 +381,9 @@ export interface ApiBranch {
   name_ar: string
   address_en: string
   address_ar: string
+  // Optional (2026-10-25); absent from an older Backend.
+  contact_phone?: string | null
+  map_url?: string | null
   timezone: string
   is_enabled: boolean
   hours: ApiBranchHour[]

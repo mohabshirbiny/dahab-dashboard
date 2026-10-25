@@ -56,6 +56,7 @@
           <td><StatusTag :label="c.is_active ? 'On' : 'Off'" :variant="c.is_active ? 'ok' : 'off'" /></td>
 
           <td class="r">
+            <DBtn @click="viewing = c.code">View</DBtn>
             <DBtn @click="selected = c.code">Uses</DBtn>
 
             <DBtn
@@ -69,6 +70,8 @@
     </Panel>
 
     <NoteBanner class="d-pr__note">Turning a code off stops it instantly. Anything already in progress carries on as normal.</NoteBanner>
+
+    <PromoCodeDetails v-if="viewed" :code="viewed" @close="viewing = null" />
 
     <NewCodePanel v-if="adding" :loading="create.isPending.value" :submit-error="createError" @submit="onCreate" />
 
@@ -104,8 +107,9 @@
 
 <script lang="ts" setup>
   import type { NewCodeInput, PromoCodeRow } from '@/composables/useMarketMakers'
-  import { ref } from 'vue'
+  import { computed, ref } from 'vue'
   import NewCodePanel from '@/components/promo/NewCodePanel.vue'
+  import PromoCodeDetails from '@/components/promo/PromoCodeDetails.vue'
   import { capPercent, commissionWords, conditionLines, promoCreateError, usedThisMonth, whatItDoesNotes } from '@/components/promo/promoFormat'
   import { accessErrorMessage } from '@/components/staff/accessErrors'
   import DataTable from '@/components/ui/DataTable.vue'
@@ -131,6 +135,9 @@
   const codes = usePromoCodes()
   const selected = ref<string | null>(null)
   const uses = usePromoUses(selected)
+  // The code whose terms are open in the View panel.
+  const viewing = ref<string | null>(null)
+  const viewed = computed(() => (codes.data.value ?? []).find(c => c.code === viewing.value) ?? null)
 
   const create = useCreatePromoCode()
   const update = useUpdatePromoCode()

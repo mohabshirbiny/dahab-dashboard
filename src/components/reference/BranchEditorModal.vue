@@ -54,6 +54,30 @@
           />
         </FormField>
 
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="errorFor('contact_phone')" hint="Optional. Customers see it with the address and hours." label="Phone">
+          <DInput
+            :id="controlId"
+            v-model="form.phone"
+            :describedby="describedBy"
+            dir="ltr"
+            :disabled="loading"
+            :invalid="invalid"
+            :maxlength="30"
+          />
+        </FormField>
+
+        <FormField v-slot="{ controlId, describedBy, invalid }" :error="errorFor('map_url')" hint="Optional. A Google Maps link, opened from the app." label="Map link">
+          <DInput
+            :id="controlId"
+            v-model="form.mapUrl"
+            :describedby="describedBy"
+            dir="ltr"
+            :disabled="loading"
+            :invalid="invalid"
+            :maxlength="500"
+          />
+        </FormField>
+
         <FormField
           v-slot="{ controlId, describedBy, invalid }"
           :error="errorFor('timezone')"
@@ -159,6 +183,8 @@
     nameAr: '',
     addressEn: '',
     addressAr: '',
+    phone: '',
+    mapUrl: '',
     timezone: DEFAULT_TIMEZONE,
     isEnabled: true,
     hours: [] as Row[],
@@ -177,6 +203,8 @@
     form.nameAr = b?.nameAr ?? ''
     form.addressEn = b?.addressEn ?? ''
     form.addressAr = b?.addressAr ?? ''
+    form.phone = b?.phone ?? ''
+    form.mapUrl = b?.mapUrl ?? ''
     form.timezone = b?.timezone ?? DEFAULT_TIMEZONE
     form.isEnabled = b?.isEnabled ?? true
     form.hours = b
@@ -247,6 +275,9 @@
       nameAr: form.nameAr.trim(),
       addressEn: form.addressEn.trim(),
       addressAr: form.addressAr.trim(),
+      // An emptied field clears the value.
+      phone: form.phone.trim() === '' ? null : form.phone.trim(),
+      mapUrl: form.mapUrl.trim() === '' ? null : form.mapUrl.trim(),
       timezone: form.timezone.trim(),
       isEnabled: form.isEnabled,
       hours: form.hours.map(row => ({ dow: Number(row.dow), opensAt: row.opensAt, closesAt: row.closesAt })),
