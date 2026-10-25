@@ -20,10 +20,10 @@
 
       <h3 class="d-idm__h">{{ invoice.party === 'seller' ? 'Settlement' : 'Price' }}</h3>
 
-      <!-- Backend package C item 13: the price difference is Dahab's commission (VAT 0); the total is unchanged. -->
+      <!-- The price difference (spread) between the buyer's and the seller's rates (VAT 0); the total is unchanged. -->
       <template v-if="invoice.party === 'buyer' && invoice.lines.priceDifference !== null">
         <KeyValueRow :label="`Gold value at ${formatMoney(invoice.lines.sellerUnitRate)} per gram`" :value="formatMoney(invoice.lines.goldValueAtSellerRate)" />
-        <KeyValueRow label="Commission" :value="formatMoney(invoice.lines.priceDifference)" />
+        <KeyValueRow label="Price difference (spread)" :value="formatMoney(invoice.lines.priceDifference)" />
         <KeyValueRow label="Making charge" :value="formatMoney(invoice.lines.makingTotal)" />
       </template>
 
