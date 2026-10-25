@@ -17,14 +17,42 @@ export function commissionWords (c: PromoCodeRow): string {
   if (mode === 'percent') {
     return `${trimPercent(percent)}% off commission`
   }
+  if (mode === 'amount') {
+    return `${trimPercent(c.what_it_does.commission.amount_egp ?? null)} EGP off commission`
+  }
   return 'Commission as it is'
+}
+
+const PRODUCT_WORDS = { gold: 'Gold', diamond: 'Diamond', gold_with_diamond: 'Gold with diamond' } as const
+
+/** "Gold" · "Diamond" · "Gold with diamond" · "Any product". */
+export function productWords (c: PromoCodeRow): string {
+  return c.product_type ? PRODUCT_WORDS[c.product_type] : 'Any product'
+}
+
+/** What a buyer code does on stones: "50% off the deposit" · "500 EGP off the deposit". */
+export function depositWords (c: PromoCodeRow): string | null {
+  const d = c.what_it_does.deposit
+  if (!d || d.mode === 'none') {
+    return null
+  }
+  return d.mode === 'percent' ? `${trimPercent(d.percent)}% off the deposit` : `${trimPercent(d.amount_egp)} EGP off the deposit`
 }
 
 /** Small lines under "What it does". */
 export function whatItDoesNotes (c: PromoCodeRow): string[] {
   const notes: string[] = []
-  if (c.what_it_does.gives_spread) {
+  if (c.kind === 'buyer' && c.what_it_does.gives_spread) {
+    notes.push('Pays the price the seller gets (no spread)')
+  } else if (c.what_it_does.gives_spread) {
     notes.push('Spread goes to them')
+  }
+  const deposit = depositWords(c)
+  if (deposit !== null) {
+    notes.push(deposit)
+  }
+  if (c.product_type) {
+    notes.push(`For ${productWords(c).toLowerCase()} only`)
   }
   if (c.what_it_does.pays_advance) {
     notes.push('Pays the first gold sale in advance')

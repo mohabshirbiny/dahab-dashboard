@@ -6,15 +6,21 @@ import { retryTransient } from './queryRetry'
 // Promo codes and market makers, staff side (Backend spec 019 US6 / 6A, spec 023 Stories 5-6).
 // Plain shapes: the Backend's own names.
 
-export type CommissionMode = 'waive' | 'percent' | 'none'
+export type CommissionMode = 'waive' | 'percent' | 'amount' | 'none'
+export type ProductType = 'gold' | 'diamond' | 'gold_with_diamond'
+export type DepositMode = 'none' | 'percent' | 'amount'
 export type UseLimit = 'unlimited' | 'once' | 'monthly'
 
 export interface PromoCodeRow {
   code: string
-  kind: 'market_maker' | 'first_sale' | 'discount' | string
+  kind: 'market_maker' | 'first_sale' | 'discount' | 'buyer' | string
+  side?: 'seller' | 'buyer'
+  // null: every product (dealer and first-sale codes, and seller codes made before products).
+  product_type?: ProductType | null
   customer: { id: string, display_ref: string, full_name: string } | null
   what_it_does: {
-    commission: { mode: CommissionMode, percent: string | null }
+    commission: { mode: CommissionMode, percent: string | null, amount_egp?: string | null }
+    deposit?: { mode: DepositMode, percent: string | null, amount_egp: string | null }
     gives_spread: boolean
     pays_advance: boolean
   }
@@ -83,14 +89,21 @@ export interface CostPanel {
 // What the New-code form sends (Backend contracts/staff-promo-api.md §2); absent = not sent.
 export interface NewCodeInput {
   code: string
+  // Sent for a seller or buyer code by product; a dealer code leaves them out.
+  kind?: 'buyer'
+  side?: 'seller' | 'buyer'
+  product_type?: ProductType
+  commission_amount_egp?: string
+  deposit_percent?: string
+  deposit_amount_egp?: string
   audience: 'account' | 'anyone'
   tied_to?: string
   use_limit: UseLimit
-  commission_mode: CommissionMode
+  commission_mode?: CommissionMode
   commission_percent?: string
-  gives_spread: boolean
+  gives_spread?: boolean
   min_listed_days?: string
-  requires_approval: boolean
+  requires_approval?: boolean
   monthly_cap_egp?: string
   starts_on?: string
   ends_on?: string

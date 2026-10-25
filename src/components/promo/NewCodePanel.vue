@@ -3,6 +3,16 @@
     <template #body>
       <form class="d-nc" novalidate @submit.prevent="onSubmit">
         <div class="d-nc__g2">
+          <FormField v-slot="{ controlId }" hint="A dealer code is for a market maker; seller and buyer codes are for one product" label="Kind of code">
+            <DSelect :id="controlId" v-model="type" :options="typeOptions" />
+          </FormField>
+
+          <FormField v-if="type !== 'dealer'" v-slot="{ controlId, invalid }" :error="errors.product_type" label="Product">
+            <DSelect :id="controlId" v-model="product" :invalid="invalid" :options="productOptions" />
+          </FormField>
+        </div>
+
+        <div class="d-nc__g2">
           <FormField v-slot="{ controlId, invalid }" :error="errors.code" hint="Letters, numbers and dashes. People will type this." label="The code itself">
             <DInput :id="controlId" v-model="code" :invalid="invalid" placeholder="MM-KARIM" />
           </FormField>
@@ -28,9 +38,9 @@
           </FormField>
         </div>
 
-        <div class="d-nc__g3">
+        <div v-if="type !== 'buyer'" class="d-nc__g3">
           <FormField v-slot="{ controlId }" label="Commission">
-            <DSelect :id="controlId" v-model="mode" :options="modeOptions" />
+            <DSelect :id="controlId" v-model="mode" :options="type === 'dealer' ? modeOptions : sellerModeOptions" />
           </FormField>
 
           <FormField
@@ -49,17 +59,60 @@
             />
           </FormField>
 
-          <FormField v-slot="{ controlId }" :error="errors.gives_spread" label="Buy and sell difference">
+          <FormField
+            v-if="mode === 'amount'"
+            v-slot="{ controlId, invalid }"
+            :error="errors.commission_amount_egp"
+            hint="EGP, VAT included"
+            label="Reduce by"
+          >
+            <DInput
+              :id="controlId"
+              v-model="amount"
+              inputmode="numeric"
+              :invalid="invalid"
+              placeholder="200"
+            />
+          </FormField>
+
+          <FormField v-if="type === 'dealer'" v-slot="{ controlId }" :error="errors.gives_spread" label="Buy and sell difference">
             <DSelect :id="controlId" v-model="spread" :options="spreadOptions" />
           </FormField>
         </div>
 
+        <div v-if="type === 'buyer'" class="d-nc__g3">
+          <NoteBanner v-if="product === 'gold'" class="d-nc__note">
+            The buyer pays the seller's price: the buy and sell difference is given back. The deposit does not change.
+          </NoteBanner>
+
+          <template v-else>
+            <FormField v-slot="{ controlId }" label="Take off the deposit">
+              <DSelect :id="controlId" v-model="depositMode" :options="depositModeOptions" />
+            </FormField>
+
+            <FormField
+              v-slot="{ controlId, invalid }"
+              :error="errors.deposit"
+              :hint="depositMode === 'percent' ? 'Percent of the deposit' : 'EGP; the deposit never goes below 1 EGP'"
+              label="Reduce by"
+            >
+              <DInput :id="controlId" v-model="depositValue" inputmode="numeric" :invalid="invalid" />
+            </FormField>
+          </template>
+        </div>
+
         <div class="d-nc__g3">
-          <FormField v-slot="{ controlId, invalid }" :error="errors.min_listed_days" hint="Days. Zero means no wait" label="Piece must be listed for">
+          <FormField
+            v-if="type === 'dealer'"
+            v-slot="{ controlId, invalid }"
+            :error="errors.min_listed_days"
+            hint="Days. Zero means no wait"
+            label="Piece must be listed for"
+          >
             <DInput :id="controlId" v-model="listedDays" inputmode="numeric" :invalid="invalid" />
           </FormField>
 
-          <FormField v-slot="{ controlId }" label="Piece must be admin approved">
+          <FormField v-if="type === 'dealer'" v-slot="{ controlId }" label="Piece must be admin approved">
             <DSelect :id="controlId" v-model="approval" :options="yesNo" />
           </FormField>
 
@@ -85,17 +138,17 @@
         </div>
 
         <!-- Two fields the design's form does not show but its own table and the Technical Spec need (Backend spec 023 P23-3). -->
-        <div class="d-nc__g2">
+        <div v-if="type !== 'buyer'" class="d-nc__g2">
           <FormField v-slot="{ controlId }" hint="Shown as First sale only in the table" label="For a customer's first sale only">
             <DSelect :id="controlId" v-model="firstSaleOnly" :disabled="paysAdvance === 'yes'" :options="yesNo" />
           </FormField>
 
-          <FormField v-slot="{ controlId }" hint="Only for the first gold sale, behind the first-sale switch in commission rates" label="Also pays the first gold sale in advance">
+          <FormField v-if="type === 'dealer' || product === 'gold'" v-slot="{ controlId }" hint="Only for the first gold sale, behind the first-sale switch in commission rates" label="Also pays the first gold sale in advance">
             <DSelect :id="controlId" v-model="paysAdvance" :options="noYes" />
           </FormField>
         </div>
 
-        <NoteBanner class="d-nc__note">
+        <NoteBanner v-if="type !== 'buyer'" class="d-nc__note">
           The minimum commission of {{ minimum }} EGP is never broken, whatever this code says.
         </NoteBanner>
 
@@ -108,8 +161,8 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CommissionMode, NewCodeInput, UseLimit } from '@/composables/useMarketMakers'
-  import { computed, ref } from 'vue'
+  import type { CommissionMode, DepositMode, NewCodeInput, ProductType, UseLimit } from '@/composables/useMarketMakers'
+  import { computed, ref, watch } from 'vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
   import DSelect from '@/components/ui/DSelect.vue'
@@ -127,6 +180,16 @@
   const useLimitOptions = [
     { value: 'unlimited', label: 'No limit' }, { value: 'once', label: 'Once' }, { value: 'monthly', label: 'Once a month' },
   ] as const
+  const typeOptions = [
+    { value: 'dealer', label: 'Dealer (market maker)' }, { value: 'seller', label: 'Seller' }, { value: 'buyer', label: 'Buyer' },
+  ] as const
+  const productOptions = [
+    { value: 'gold', label: 'Gold' }, { value: 'diamond', label: 'Diamond' }, { value: 'gold_with_diamond', label: 'Gold with diamond' },
+  ] as const
+  const sellerModeOptions = [
+    { value: 'waive', label: 'Waive it entirely' }, { value: 'percent', label: 'Reduce by a percentage' }, { value: 'amount', label: 'Reduce by an amount' },
+  ] as const
+  const depositModeOptions = [{ value: 'percent', label: 'A percentage' }, { value: 'amount', label: 'An amount' }] as const
   const modeOptions = [
     { value: 'waive', label: 'Waive it entirely' }, { value: 'percent', label: 'Reduce by a percentage' }, { value: 'none', label: 'Leave it as it is' },
   ] as const
@@ -134,6 +197,11 @@
   const yesNo = [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }] as const
   const noYes = [{ value: 'no', label: 'No' }, { value: 'yes', label: 'Yes' }] as const
 
+  const type = ref<'dealer' | 'seller' | 'buyer'>('dealer')
+  const product = ref<ProductType>('gold')
+  const amount = ref('')
+  const depositMode = ref<Exclude<DepositMode, 'none'>>('percent')
+  const depositValue = ref('')
   const code = ref('')
   const audience = ref<'account' | 'anyone'>('account')
   const tiedTo = ref('')
@@ -150,6 +218,16 @@
   const paysAdvance = ref<'yes' | 'no'>('no')
   const errors = ref<Record<string, string>>({})
 
+  // A dealer code is for one account; seller and buyer codes are for anyone unless the staff member narrows them.
+  watch(type, t => {
+    audience.value = t === 'dealer' ? 'account' : 'anyone'
+    mode.value = 'waive'
+    if (t !== 'dealer') paysAdvance.value = 'no'
+  })
+  watch(product, p => {
+    if (p !== 'gold') paysAdvance.value = 'no'
+  })
+
   // The note quotes the live minimum, not a literal.
   const settings = useSettingsQuery()
   const minimum = computed(() => {
@@ -161,11 +239,20 @@
     const e: Record<string, string> = {}
     if (!/^[A-Z0-9-]{3,32}$/i.test(code.value.trim())) e.code = 'Letters, numbers and dashes, 3 to 32 characters.'
     if (audience.value === 'account' && tiedTo.value.trim() === '') e.tied_to = 'Enter the account number or phone.'
-    if (mode.value === 'percent') {
+    if (type.value !== 'buyer' && mode.value === 'percent') {
       const p = Number(percent.value)
       if (!(p > 0 && p < 100)) e.commission_percent = 'A percentage above 0 and below 100.'
     }
-    if (listedDays.value.trim() !== '' && !/^\d{1,4}$/.test(listedDays.value.trim())) e.min_listed_days = 'A whole number of days.'
+    if (type.value !== 'buyer' && mode.value === 'amount' && !(Number(amount.value.replaceAll(',', '')) > 0)) {
+      e.commission_amount_egp = 'An amount above 0.'
+    }
+    if (type.value === 'buyer' && product.value !== 'gold') {
+      const v = Number(depositValue.value.replaceAll(',', ''))
+      if (!(v > 0) || (depositMode.value === 'percent' && v >= 100)) {
+        e.deposit = depositMode.value === 'percent' ? 'A percentage above 0 and below 100.' : 'An amount above 0.'
+      }
+    }
+    if (type.value === 'dealer' && listedDays.value.trim() !== '' && !/^\d{1,4}$/.test(listedDays.value.trim())) e.min_listed_days = 'A whole number of days.'
     if (cap.value.trim() !== '' && !(Number(cap.value.replaceAll(',', '')) > 0)) e.monthly_cap_egp = 'An amount above 0.'
     if (startsOn.value && endsOn.value && endsOn.value < startsOn.value) e.ends_on = 'Not before the start.'
     errors.value = e
@@ -178,15 +265,31 @@
       code: code.value.trim(),
       audience: audience.value,
       use_limit: useLimit.value,
-      commission_mode: mode.value,
-      gives_spread: spread.value === 'give',
-      requires_approval: approval.value === 'yes',
-      first_sale_only: firstSaleOnly.value === 'yes' || paysAdvance.value === 'yes',
-      pays_advance: paysAdvance.value === 'yes',
+      first_sale_only: type.value !== 'buyer' && (firstSaleOnly.value === 'yes' || paysAdvance.value === 'yes'),
+      pays_advance: type.value !== 'buyer' && paysAdvance.value === 'yes',
+    }
+    if (type.value === 'dealer') {
+      body.commission_mode = mode.value
+      body.gives_spread = spread.value === 'give'
+      body.requires_approval = approval.value === 'yes'
+    } else {
+      body.side = type.value
+      body.product_type = product.value
+      if (type.value === 'buyer') {
+        body.kind = 'buyer'
+        if (product.value !== 'gold') {
+          const v = depositValue.value.replaceAll(',', '').trim()
+          if (depositMode.value === 'percent') body.deposit_percent = v
+          else body.deposit_amount_egp = v
+        }
+      } else {
+        body.commission_mode = mode.value
+      }
     }
     if (audience.value === 'account') body.tied_to = tiedTo.value.trim()
-    if (mode.value === 'percent') body.commission_percent = percent.value.trim()
-    if (listedDays.value.trim() !== '') body.min_listed_days = listedDays.value.trim()
+    if (type.value !== 'buyer' && mode.value === 'percent') body.commission_percent = percent.value.trim()
+    if (type.value !== 'buyer' && mode.value === 'amount') body.commission_amount_egp = amount.value.replaceAll(',', '').trim()
+    if (type.value === 'dealer' && listedDays.value.trim() !== '') body.min_listed_days = listedDays.value.trim()
     if (cap.value.trim() !== '') body.monthly_cap_egp = cap.value.replaceAll(',', '').trim()
     if (startsOn.value) body.starts_on = startsOn.value
     if (endsOn.value) body.ends_on = endsOn.value
