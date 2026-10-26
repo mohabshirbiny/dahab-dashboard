@@ -155,16 +155,26 @@ export interface DeviceApprovalPending {
   pollIntervalSeconds: number
 }
 
+// A sign-in from a device not yet known, held for the SMS code.
+export interface DeviceCodePending {
+  challengeId: string
+  phoneHint: string
+  expiresAt: string
+  resendAvailableAt: string
+}
+
 export type StaffLoginResult
   = | ({ status: 'authenticated' } & StaffSession)
     | ({ status: 'mfa_required' } & MfaChallenge)
     | ({ status: 'mfa_enrollment_required' } & MfaEnrollment)
     | ({ status: 'device_approval_required' } & DeviceApprovalPending)
+    | ({ status: 'device_code_required' } & DeviceCodePending)
 
 // What the MFA step (verify or enroll) ends in.
 export type StaffSignInResult
   = | ({ status: 'authenticated' } & StaffSession)
     | ({ status: 'device_approval_required' } & DeviceApprovalPending)
+    | ({ status: 'device_code_required' } & DeviceCodePending)
 
 // One poll of a held sign-in.
 export type DeviceApprovalPoll

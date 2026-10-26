@@ -20,6 +20,11 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
     return { name: 'login', query: redirectQuery(to.query.redirect) }
   }
 
+  // The code screen only makes sense while a sign-in waits for its SMS code.
+  if (to.name === 'device-code' && !auth.pendingDeviceCode) {
+    return { name: 'login', query: redirectQuery(to.query.redirect) }
+  }
+
   // The two MFA screens only make sense for the step the Backend asked for.
   if (to.name === 'mfa' || to.name === 'mfa-enroll') {
     if (!auth.pendingMfa) {
@@ -35,6 +40,9 @@ export async function companyMiddleware (to: RouteLocationNormalized): Promise<R
   if (requiresAuth && !auth.isAuthenticated) {
     if (auth.pendingApproval) {
       return { name: 'device-approval', query: redirectQuery(to.fullPath) }
+    }
+    if (auth.pendingDeviceCode) {
+      return { name: 'device-code', query: redirectQuery(to.fullPath) }
     }
     if (auth.pendingMfa) {
       return { name: mfaRouteName(auth.pendingMfa.kind), query: redirectQuery(to.fullPath) }
@@ -72,7 +80,7 @@ export function mfaRouteName (kind: 'verify' | 'enroll'): 'mfa' | 'mfa-enroll' {
 export function safeRedirect (value: LocationQueryValue | LocationQueryValue[] | undefined): string {
   const target = Array.isArray(value) ? value[0] : value
   if (target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/login') && !target.startsWith('/mfa')
-    && !target.startsWith('/device-approval') && !target.startsWith('/frozen')) {
+    && !target.startsWith('/device-approval') && !target.startsWith('/device-code') && !target.startsWith('/frozen')) {
     return target
   }
   return '/dashboard/overview'

@@ -1,8 +1,8 @@
 <template>
   <div class="d-page">
     <PageLead>
-      What Dahab charges, and the deadlines and limits the platform runs on. Changing any of these affects every new listing
-      immediately, and is logged with the old and new values.
+      Every rule the platform runs on: what Dahab charges, the deadlines and limits, the switches and how staff sign in. Open a
+      section to change it. A change applies at once and is logged with the old and new values.
     </PageLead>
 
     <LoadingState v-if="settings.isPending.value" label="Loading settings…" />
@@ -16,7 +16,14 @@
     />
 
     <template v-else-if="settings.data.value">
-      <Panel v-for="panel in panels" :key="panel.title" :subtitle="panel.subtitle" :title="panel.title">
+      <Panel
+        v-for="(panel, index) in panels"
+        :key="panel.title"
+        collapsible
+        :open="index === 0"
+        :subtitle="panel.subtitle"
+        :title="panel.title"
+      >
         <template #body>
           <NoteBanner v-if="panel.note" class="d-rt__note">{{ panel.note }}</NoteBanner>
 
@@ -72,7 +79,7 @@
 
       <FirstSaleExposure v-if="can(PERMISSIONS.firstSaleManage)" />
 
-      <Panel title="Recent changes">
+      <Panel collapsible :open="false" title="Recent changes">
         <EmptyState v-if="(history.data.value ?? []).length === 0" title="No changes yet" />
 
         <DataTable v-else>
@@ -135,8 +142,8 @@
   interface Field { key: string, label: string, hint?: string }
   interface PanelDef { title: string, subtitle?: string, note?: string, fields: Field[] }
 
-  // Labels and grouping follow the design's "Commission rates" screen; the third
-  // panel lists the remaining settings (a UI extension: the design has no place for them).
+  // The Settings page (formerly "Commission rates"). The first panels follow the design's
+  // "Commission rates" screen; the rest give every other setting a place (a UI extension).
   const panels: PanelDef[] = [
     {
       title: 'Commission',
@@ -202,6 +209,14 @@
         { key: 'certificate.igi_cost_egp', label: 'They bring an IGI certificate', hint: 'EGP. 0 = free' },
         { key: 'certificate.other_lab_cost_egp', label: 'They bring another lab\'s certificate', hint: 'EGP. IGI starts from it, so it costs less' },
         { key: 'certificate.none_cost_egp', label: 'They bring no certificate', hint: 'EGP. The full cost' },
+      ],
+    },
+    {
+      title: 'Sign-in security',
+      subtitle: 'How staff confirm a device they sign in from for the first time',
+      note: 'With this on, a staff member on a new device gets a code by SMS to the phone on their staff account, and a founder\'s first device is confirmed the same way instead of with php artisan founder:trust-device on the server. A founder\'s later new devices still wait for the other founder. Staff with no phone on file are not asked.',
+      fields: [
+        { key: 'auth.staff_new_device_sms', label: 'A new device is confirmed by an SMS code', hint: 'Off: only the founders\' device approval applies, and a founder\'s first device needs the server command' },
       ],
     },
     {

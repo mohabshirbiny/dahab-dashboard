@@ -1,6 +1,7 @@
 import type {
   ApiDeviceApprovalPending,
   ApiDeviceApprovalStatus,
+  ApiDeviceCodePending,
   ApiEnvelope,
   ApiFrozenConfirmUnfreeze,
   ApiLoginData,
@@ -14,6 +15,7 @@ import type { FrozenConfirmPayload } from '@/types/security'
 import type {
   DeviceApprovalPending,
   DeviceApprovalPoll,
+  DeviceCodePending,
   EnrollMfaPayload,
   StaffLoginPayload,
   StaffLoginResult,
@@ -54,10 +56,23 @@ function toPending (data: ApiDeviceApprovalPending): DeviceApprovalPending {
   }
 }
 
-// The MFA step ends in a session, or (Backend spec 021) a founder's new device held for approval.
+function toCodePending (data: ApiDeviceCodePending): DeviceCodePending {
+  return {
+    challengeId: data.challenge_id,
+    phoneHint: data.phone_hint,
+    expiresAt: data.expires_at,
+    resendAvailableAt: data.resend_available_at,
+  }
+}
+
+// The MFA step ends in a session, or (Backend spec 021) a founder's new device held for approval,
+// or a device not yet known held for the SMS code.
 function toSignInResult (data: ApiMfaVerifyData | ApiMfaEnrollData): StaffSignInResult {
   if ('device_approval_required' in data) {
     return { status: 'device_approval_required', ...toPending(data) }
+  }
+  if ('device_code_required' in data) {
+    return { status: 'device_code_required', ...toCodePending(data) }
   }
   return { status: 'authenticated', ...toStaffSession(data) }
 }
@@ -79,6 +94,10 @@ export const staffAuthService = {
     // Only when MFA is switched off locally: a founder's new device is held at the password step.
     if ('device_approval_required' in result) {
       return { status: 'device_approval_required', ...toPending(result) }
+    }
+    // A device not yet known for this staff member, when no MFA step comes first.
+    if ('device_code_required' in result) {
+      return { status: 'device_code_required', ...toCodePending(result) }
     }
     if ('mfa_enrollment_required' in result) {
       return {
@@ -112,6 +131,27 @@ export const staffAuthService = {
       AUTH_STEP,
     )
     return toSignInResult(data.data)
+  },
+
+  // POST /dashboard/auth/device-code/verify: the SMS code makes this device known and signs in.
+  // Wrong → `otp_invalid` (five void the code); expired → `otp_expired`.
+  async verifyDeviceCode (challengeId: string, code: string): Promise<StaffSession> {
+    const { data } = await http.post<ApiEnvelope<ApiStaffSignIn>>(
+      endpoints.staffDeviceCodeVerify,
+      { challenge_id: challengeId, code },
+      AUTH_STEP,
+    )
+    return toStaffSession(data.data)
+  },
+
+  // POST /dashboard/auth/device-code/resend: a fresh code after the cooldown.
+  async resendDeviceCode (challengeId: string): Promise<DeviceCodePending> {
+    const { data } = await http.post<ApiEnvelope<ApiDeviceCodePending>>(
+      endpoints.staffDeviceCodeResend,
+      { challenge_id: challengeId },
+      AUTH_STEP,
+    )
+    return toCodePending(data.data)
   },
 
   // POST /dashboard/auth/device-approval/status (Backend spec 021). Pending, or the session once

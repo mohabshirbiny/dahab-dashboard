@@ -47,6 +47,13 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true, guestOnly: true, title: 'Waiting for approval' },
   },
   {
+    // A sign-in from a device not yet known: the code sent by SMS (auth.staff_new_device_sms).
+    path: '/device-code',
+    name: 'device-code',
+    component: () => import('@/pages/device-code.vue'),
+    meta: { public: true, guestOnly: true, title: 'Confirm this device' },
+  },
+  {
     // Backend spec 021: a frozen founder's sign-in, with the first unfreeze confirmation.
     path: '/frozen',
     name: 'frozen',
@@ -234,7 +241,7 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard/rates',
         name: 'rates',
         component: () => import('@/pages/rates/index.vue'),
-        meta: { title: 'Commission rates', permissions: [PERMISSIONS.pricingView] },
+        meta: { title: 'Platform settings', permissions: [PERMISSIONS.pricingView] },
       },
       {
         // Reference data (Backend spec 004). Changes need their own permissions too.

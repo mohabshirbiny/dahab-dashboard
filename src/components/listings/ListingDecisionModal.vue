@@ -105,13 +105,23 @@
     },
     'takedown': {
       title: 'Take this listing down',
-      lead: 'leaves the market at once and cannot be put back; the seller would have to list the piece again.',
+      lead: 'leaves the market at once. It can be put back later from Taken down.',
       field: 'Reason',
       placeholder: 'This goes to the seller. Say plainly why the piece was taken down.',
       action: 'Take it down',
       kind: 'danger',
       what: 'why it is taken down',
       done: 'Taken down and the seller was told why.',
+    },
+    'relist': {
+      title: 'Put it back on the market',
+      lead: 'goes live again at once, at its current price, with no new review. The seller is told.',
+      field: 'Reason',
+      placeholder: 'This goes to the seller. Say plainly why the piece is back on the market.',
+      action: 'Put it back',
+      kind: 'primary',
+      what: 'why it is back on the market',
+      done: 'Back on the market and the seller was told.',
     },
   }
 

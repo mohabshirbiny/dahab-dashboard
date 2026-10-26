@@ -62,6 +62,9 @@ const BACKEND_CODES: Readonly<Record<string, ServiceErrorCode>> = {
   account_locked: 'too_many_requests',
   too_many_requests: 'too_many_requests',
   mfa_invalid: 'mfa_invalid',
+  // The new-device SMS code of a staff sign-in.
+  otp_invalid: 'mfa_invalid',
+  otp_expired: 'mfa_expired',
   unauthenticated: 'unauthenticated',
   token_invalid: 'unauthenticated',
   token_expired: 'unauthenticated',

@@ -15,6 +15,10 @@ export const endpoints = {
   // founder gives the first unfreeze confirmation without a session.
   staffDeviceApprovalStatus: '/dashboard/auth/device-approval/status',
   staffFrozenConfirmUnfreeze: '/dashboard/auth/frozen/confirm-unfreeze',
+  // A sign-in from a device not yet known, held for the code sent by SMS (setting
+  // auth.staff_new_device_sms). Public, like the approval poll.
+  staffDeviceCodeVerify: '/dashboard/auth/device-code/verify',
+  staffDeviceCodeResend: '/dashboard/auth/device-code/resend',
   // Founders only (`staff.founder`); the freezes and unfreeze also for founder.unfreeze_second.
   founderDeviceApprovals: '/dashboard/founder/device-approvals',
   founderDeviceApprove: (id: string) => `/dashboard/founder/device-approvals/${encodeURIComponent(id)}/approve`,
@@ -91,7 +95,7 @@ export const endpoints = {
   listings: '/dashboard/listings',
   listing: (id: string) => `/dashboard/listings/${encodeURIComponent(id)}`,
   listingMedia: (id: string, mediaId: string) => `/dashboard/listings/${encodeURIComponent(id)}/media/${encodeURIComponent(mediaId)}`,
-  listingAction: (id: string, action: 'approve' | 'request-changes' | 'reject' | 'takedown') => `/dashboard/listings/${encodeURIComponent(id)}/${action}`,
+  listingAction: (id: string, action: 'approve' | 'request-changes' | 'reject' | 'takedown' | 'relist') => `/dashboard/listings/${encodeURIComponent(id)}/${action}`,
   // Buy requests (Backend spec 011): cancel an acceptance — order.cancel.
   orderCancel: (orderId: string) => `/dashboard/orders/${encodeURIComponent(orderId)}/cancel`,
   // Orders (Backend spec 012): each action has its own permission (order.view, order.receive,

@@ -130,9 +130,10 @@
     try {
       const outcome = await auth.verifyMfa(code.value)
       // Backend spec 021: a founder's new device waits for the other founder's approval.
+      const query = route.query.redirect ? { redirect: route.query.redirect } : {}
       await router.replace(outcome === 'device_approval_required'
-        ? { name: 'device-approval', query: route.query.redirect ? { redirect: route.query.redirect } : {} }
-        : safeRedirect(route.query.redirect))
+        ? { name: 'device-approval', query }
+        : (outcome === 'device_code_required' ? { name: 'device-code', query } : safeRedirect(route.query.redirect)))
     } catch (error) {
       failure.value = errorCodeOf(error)
       if (failure.value === 'mfa_invalid') {

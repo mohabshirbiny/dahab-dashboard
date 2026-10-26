@@ -40,6 +40,13 @@ export function listingErrorMessage (error: unknown): string {
     case 'karat_disabled': {
       return 'This karat has been turned off, so the piece cannot go live. It stays waiting; turn the karat on again, send it back or reject it.'
     }
+    case 'listing_not_relistable': {
+      return 'This piece did not come off the market by a take-down, or its seller closed the account, so it cannot go back.'
+    }
+    case 'platform_stopped':
+    case 'category_stopped': {
+      return 'New listings are stopped on the Switches page, so the piece cannot go back on the market yet.'
+    }
     case 'order_not_cancellable': {
       return 'This sale is no longer waiting for delivery, so it cannot be cancelled here. It has been refreshed.'
     }
