@@ -50,7 +50,20 @@ export interface PayCompensationInput {
   amount: string
   reason: CompensationReason
   note: string
-  orderId: string | null
+  // Every payment names the order it is for (Backend, app notes 2026-10-26).
+  orderId: string
+}
+
+// One of the customer's orders a compensation can name (GET /dashboard/compensation/orders).
+export interface CompensationOrder {
+  id: string
+  orderRef: string
+  party: 'buyer' | 'seller'
+  state: string
+  category: 'gold' | 'diamond' | 'gold_with_diamond'
+  pieceTypeName: string | null
+  karat: number | null
+  acceptedAt: string
 }
 
 export type AdjustmentDirection = 'credit' | 'debit'

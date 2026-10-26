@@ -315,6 +315,8 @@
       pieceName: title.value,
       statedKarat: props.order.piece.karat,
       statedWeightG: props.order.piece.weightG,
+      stone: props.order.piece.stone,
+      certificates: props.order.certificates,
       correcting,
     }
   }

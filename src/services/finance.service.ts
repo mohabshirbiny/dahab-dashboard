@@ -8,6 +8,7 @@ import type {
   BankMovementPage,
   CloseDay,
   Compensation,
+  CompensationOrder,
   CompensationPage,
   CompensationQuery,
   DailyClose,
@@ -34,6 +35,17 @@ interface ApiCompensation {
   paid_by: { id: string, name: string | null }
   dispute: { id: string, ref: string | null } | null
   order: { id: string, ref: string | null } | null
+}
+
+interface ApiCompensationOrder {
+  id: string
+  order_ref: string
+  party: 'buyer' | 'seller'
+  state: string
+  category: CompensationOrder['category']
+  piece_type: { name_en: string | null }
+  karat: number | null
+  accepted_at: string
 }
 
 interface ApiAdjustment {
@@ -240,6 +252,15 @@ export const financeService = {
 
   async exportCompensation (query: CompensationQuery): Promise<ExportResult> {
     return toExport(await http.get<Blob>(endpoints.compensationExport, { params: compensationParams(query), responseType: 'blob' }), 'compensation.csv')
+  },
+
+  // GET /dashboard/compensation/orders?customer_id=   (compensation.pay) — the orders a payment can name.
+  async compensationOrders (customerId: string): Promise<CompensationOrder[]> {
+    const { data } = await http.get<{ data: ApiCompensationOrder[] }>(endpoints.compensationOrders, { params: { customer_id: customerId } })
+    return data.data.map(o => ({
+      id: o.id, orderRef: o.order_ref, party: o.party, state: o.state, category: o.category,
+      pieceTypeName: o.piece_type?.name_en ?? null, karat: o.karat, acceptedAt: o.accepted_at,
+    }))
   },
 
   // POST /dashboard/compensation   (compensation.pay)

@@ -203,6 +203,8 @@
           pieceName: pieceTitle(item.category, item.pieceType.nameEn, item.statedKarat),
           statedKarat: item.statedKarat,
           statedWeightG: item.statedWeightG,
+          stone: item.stone,
+          certificates: item.certificates,
           correcting: item.task === 'correct' ? item.latestInspection : null,
         }
         break

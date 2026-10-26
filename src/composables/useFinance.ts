@@ -13,6 +13,7 @@ export const financeKeys = {
   day: (date: string | null) => [...financeKeys.all, 'day', date ?? 'today'] as const,
   closes: (from: string, to: string) => [...financeKeys.all, 'closes', from, to] as const,
   adjustments: (customerId: string | null) => [...financeKeys.all, 'adjustments', customerId ?? 'all'] as const,
+  compensationOrders: (customerId: string) => [...financeKeys.all, 'compensation-orders', customerId] as const,
 }
 
 // Save a CSV the Backend made (it records each export).
@@ -43,6 +44,16 @@ export function useCompensationQuery (query: MaybeRefOrGetter<CompensationQuery>
     initialPageParam: null as string | null,
     getNextPageParam: last => last.nextCursor,
     enabled: computed(() => toValue(enabled)),
+    retry: retryTransient,
+  })
+}
+
+// The customer's orders, for the order a compensation names.
+export function useCompensationOrdersQuery (customerId: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => financeKeys.compensationOrders(toValue(customerId))),
+    queryFn: () => financeService.compensationOrders(toValue(customerId)),
+    enabled: computed(() => toValue(customerId) !== ''),
     retry: retryTransient,
   })
 }
