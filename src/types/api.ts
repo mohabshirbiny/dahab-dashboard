@@ -100,15 +100,26 @@ export interface ApiDeviceApprovalPending {
   poll_interval_seconds: number
 }
 
-export type ApiLoginData = ApiStaffSignIn | ApiMfaChallenge | ApiMfaEnrollmentPending | ApiDeviceApprovalPending
+// A device not yet known for this staff member: a code went by SMS to the staff phone
+// (setting auth.staff_new_device_sms). A founder gets this only for a first device.
+export interface ApiDeviceCodePending {
+  device_code_required: true
+  challenge_id: string
+  // The last three digits only, for example "••• 123".
+  phone_hint: string
+  expires_at: string
+  resend_available_at: string
+}
+
+export type ApiLoginData = ApiStaffSignIn | ApiMfaChallenge | ApiMfaEnrollmentPending | ApiDeviceApprovalPending | ApiDeviceCodePending
 
 export interface ApiMfaEnrolled extends ApiStaffSignIn {
   recovery_codes: string[]
 }
 
 // `mfa/verify` and `mfa/enroll` may also hold a founder's new device (spec 021).
-export type ApiMfaVerifyData = ApiStaffSignIn | ApiDeviceApprovalPending
-export type ApiMfaEnrollData = ApiMfaEnrolled | ApiDeviceApprovalPending
+export type ApiMfaVerifyData = ApiStaffSignIn | ApiDeviceApprovalPending | ApiDeviceCodePending
+export type ApiMfaEnrollData = ApiMfaEnrolled | ApiDeviceApprovalPending | ApiDeviceCodePending
 
 // `POST /dashboard/auth/device-approval/status`: pending, or the session (first poll only).
 export type ApiDeviceApprovalStatus

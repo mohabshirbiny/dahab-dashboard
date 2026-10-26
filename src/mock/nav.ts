@@ -36,7 +36,7 @@ export const navGroups: NavGroup[] = [
     label: 'Controls',
     items: [
       { key: 'pricing', title: 'Gold pricing', to: '/dashboard/pricing', permission: 'pricing.view' },
-      { key: 'rates', title: 'Commission rates', to: '/dashboard/rates', permission: 'pricing.view' },
+      { key: 'rates', title: 'Platform settings', to: '/dashboard/rates', permission: 'pricing.view' },
       // Not in the design: Backend spec 009 asked for a settings-like place for Dahab's receiving accounts.
       { key: 'receiving-accounts', title: 'Receiving accounts', to: '/dashboard/receiving-accounts', anyPermission: ['topup.match', 'topup.accounts.manage'] },
       { key: 'promos', title: 'Promo codes', to: '/dashboard/promos', permission: 'promo.manage' },

@@ -66,11 +66,18 @@
         <template v-if="listing.canReject">You can reject it for good without waiting.</template>
       </NoteBanner>
 
+      <NoteBanner v-if="listing.state === 'withdrawn'" class="d-lrp__note" variant="info">
+        <template v-if="listing.takenDownBy === 'staff'">Taken down by Dahab on {{ formatDateTime(listing.stateChangedAt) }}. Only Dahab can put it back.</template>
+        <template v-else-if="listing.takenDownBy === 'seller'">The seller took it down on {{ formatDateTime(listing.stateChangedAt) }}. They can put it back from the app too.</template>
+        <template v-else>Off the market since {{ formatDateTime(listing.stateChangedAt) }}, after a sale or a return. It cannot go back; the seller lists the piece again.</template>
+      </NoteBanner>
+
       <div v-if="hasActions" class="d-lrp__actions">
         <DBtn v-if="listing.canApprove" class="d-lrp__main" kind="primary" @click="decision = 'approve'">Approve and publish</DBtn>
         <DBtn v-if="listing.canRequestChanges" @click="decision = 'request-changes'">Ask for changes</DBtn>
         <DBtn v-if="listing.canReject" kind="danger" @click="decision = 'reject'">Reject</DBtn>
         <DBtn v-if="listing.canTakeDown" kind="danger" @click="decision = 'takedown'">Take down</DBtn>
+        <DBtn v-if="listing.canRelist" kind="primary" @click="decision = 'relist'">Put it back on the market</DBtn>
       </div>
 
       <p v-if="hasActions" class="who2 d-lrp__logged">Whatever you choose is logged against your name.</p>
@@ -124,7 +131,7 @@
     decision.value = null
   })
 
-  const hasActions = computed(() => props.listing.canApprove || props.listing.canRequestChanges || props.listing.canReject || props.listing.canTakeDown)
+  const hasActions = computed(() => props.listing.canApprove || props.listing.canRequestChanges || props.listing.canReject || props.listing.canTakeDown || props.listing.canRelist)
   const branches = computed(() => props.listing.branchOptions.map(b => b.nameEn).join(', ') || '—')
   const has = (kind: ListingMediaKind) => props.listing.media.some(m => m.kind === kind)
   const certificateWords = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }

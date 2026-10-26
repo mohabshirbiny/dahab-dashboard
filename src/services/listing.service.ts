@@ -46,6 +46,8 @@ interface ApiListing {
   can_request_changes: boolean
   can_reject: boolean
   can_take_down: boolean
+  can_relist?: boolean
+  taken_down_by?: 'seller' | 'staff' | null
   relisted_from_order?: { id: string, order_ref: string } | null
 }
 
@@ -102,7 +104,7 @@ interface ApiListingPage {
   meta: {
     per_page: number
     next_cursor: string | null
-    counts: { in_review: number, changes_requested: number, approved_today: number, rejected: number, live: number, reserved?: number, accepted?: number }
+    counts: { in_review: number, changes_requested: number, approved_today: number, rejected: number, live: number, reserved?: number, accepted?: number, withdrawn?: number }
   }
 }
 
@@ -141,6 +143,8 @@ function toListing (l: ApiListing): Listing {
     canRequestChanges: l.can_request_changes,
     canReject: l.can_reject,
     canTakeDown: l.can_take_down,
+    canRelist: l.can_relist ?? false,
+    takenDownBy: l.taken_down_by ?? null,
     relistedFromOrder: l.relisted_from_order ? { id: l.relisted_from_order.id, orderRef: l.relisted_from_order.order_ref } : null,
   }
 }
@@ -211,6 +215,7 @@ export const listingService = {
         live: counts.live,
         reserved: counts.reserved ?? 0,
         accepted: counts.accepted ?? 0,
+        withdrawn: counts.withdrawn ?? 0,
       },
     }
   },
@@ -233,7 +238,7 @@ export const listingService = {
     return response.data
   },
 
-  // POST /dashboard/listings/{id}/approve | request-changes | reject | takedown
+  // POST /dashboard/listings/{id}/approve | request-changes | reject | takedown | relist
   async decide (id: string, decision: ListingDecision, note: string | null, idempotencyKey: string): Promise<ListingDetail> {
     const body = decision === 'approve' ? {} : (decision === 'request-changes' ? { message: note } : { reason: note })
     const { data } = await http.post<ApiEnvelope<ApiListingDetail>>(endpoints.listingAction(id, decision), body, keyHeader(idempotencyKey))

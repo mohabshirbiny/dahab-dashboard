@@ -64,6 +64,7 @@
     reserved: { title: 'Buyers in line', subtitle: 'Most recent first', empty: 'No piece has buyers in line' },
     accepted: { title: 'Accepted', subtitle: 'A seller chose a buyer; waiting for delivery', empty: 'No accepted sale' },
     rejected: { title: 'Rejected', subtitle: 'Most recent first', empty: 'No listing was rejected' },
+    withdrawn: { title: 'Taken down', subtitle: 'Off the market, most recent first. Open one to put it back', empty: 'No piece is taken down' },
   }
 
   const route = useRoute()
@@ -91,6 +92,7 @@
     // Backend spec 011: pieces with buyers in line, and sales a seller accepted.
     { value: 'reserved' as const, label: 'Buyers in line', count: counts.value?.reserved },
     { value: 'accepted' as const, label: 'Accepted', count: counts.value?.accepted },
+    { value: 'withdrawn' as const, label: 'Taken down', count: counts.value?.withdrawn },
   ])
 
   function setQueue (value: string) {

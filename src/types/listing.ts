@@ -28,11 +28,12 @@ export type ListingState = KnownListingState | (string & {})
 
 export type ListingCategory = 'gold' | 'diamond' | 'gold_with_diamond'
 export type ListingMediaKind = 'photo' | 'video' | 'invoice' | 'stone_certificate'
-export type ListingDecision = 'approve' | 'request-changes' | 'reject' | 'takedown'
+export type ListingDecision = 'approve' | 'request-changes' | 'reject' | 'takedown' | 'relist'
 
 // The queues of the screen: the design's chips, plus Live as the way to the take-down,
-// and (spec 011) Reserved and Accepted to follow the buyers in line and the accepted sales.
-export type ListingQueue = 'in_review' | 'changes_requested' | 'live' | 'reserved' | 'accepted' | 'rejected'
+// and (spec 011) Reserved and Accepted to follow the buyers in line and the accepted sales,
+// and Taken down (`withdrawn`), where a piece taken off the market can be put back.
+export type ListingQueue = 'in_review' | 'changes_requested' | 'live' | 'reserved' | 'accepted' | 'rejected' | 'withdrawn'
 
 const STATE_META: Record<KnownListingState, { label: string, variant: StatusVariant }> = {
   draft: { label: 'Draft', variant: 'off' },
@@ -137,6 +138,10 @@ export interface Listing {
   canRequestChanges: boolean
   canReject: boolean
   canTakeDown: boolean
+  // A piece taken down from live or reserved goes back live (listing.takedown).
+  canRelist: boolean
+  // Who took a withdrawn piece off the market; null when it left another way (a sale, a return).
+  takenDownBy: 'seller' | 'staff' | null
   // Spec 018: set when this listing is a buyer's free relist (0% commission) of a collected order.
   relistedFromOrder: { id: string, orderRef: string } | null
 }
@@ -193,6 +198,7 @@ export interface ListingCounts {
   live: number
   reserved: number
   accepted: number
+  withdrawn: number
 }
 
 export interface ListingPage {

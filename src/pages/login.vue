@@ -159,12 +159,22 @@
       const query = redirect === '/dashboard/overview' ? {} : { redirect }
       // A second step means the Backend wants a code, or first-time authenticator setup, or
       // (Backend spec 021, only with MFA off locally) the other founder's approval of this device.
-      if (outcome === 'authenticated') {
-        await router.replace(redirect)
-      } else if (outcome === 'device_approval_required') {
-        await router.replace({ name: 'device-approval', query })
-      } else {
-        await router.replace({ name: mfaRouteName(outcome === 'mfa_required' ? 'verify' : 'enroll'), query })
+      switch (outcome) {
+        case 'authenticated': {
+          await router.replace(redirect)
+          break
+        }
+        case 'device_approval_required': {
+          await router.replace({ name: 'device-approval', query })
+          break
+        }
+        case 'device_code_required': {
+          await router.replace({ name: 'device-code', query })
+          break
+        }
+        default: {
+          await router.replace({ name: mfaRouteName(outcome === 'mfa_required' ? 'verify' : 'enroll'), query })
+        }
       }
     } catch (error) {
       // Backend spec 021: a frozen founder gets the plain message and the unfreeze form.

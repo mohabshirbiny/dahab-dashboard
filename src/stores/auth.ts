@@ -1,5 +1,6 @@
 import type {
   DeviceApprovalPending,
+  DeviceCodePending,
   MfaChallenge,
   MfaEnrollment,
   Permission,
@@ -28,9 +29,12 @@ export type PendingApproval = DeviceApprovalPending & { email: string }
 // How a held sign-in ended without a session.
 export type ApprovalEnd = 'refused' | 'ended' | 'frozen'
 
-export type LoginOutcome = 'authenticated' | 'mfa_required' | 'mfa_enrollment_required' | 'device_approval_required'
+// A sign-in from a device not yet known, held for the code sent by SMS to the staff phone.
+export type PendingDeviceCode = DeviceCodePending & { email: string }
 
-export type SignInOutcome = 'authenticated' | 'device_approval_required'
+export type LoginOutcome = 'authenticated' | 'mfa_required' | 'mfa_enrollment_required' | 'device_approval_required' | 'device_code_required'
+
+export type SignInOutcome = 'authenticated' | 'device_approval_required' | 'device_code_required'
 
 let initialization: Promise<void> | null = null
 
@@ -39,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
   const pendingMfa = ref<PendingMfa | null>(null)
   const pendingApproval = ref<PendingApproval | null>(null)
   const approvalEnd = ref<ApprovalEnd | null>(null)
+  const pendingDeviceCode = ref<PendingDeviceCode | null>(null)
   // Backend spec 021: the email a frozen founder tried to sign in with, for the unfreeze form.
   const frozenEmail = ref<string | null>(null)
   let pollTimer: ReturnType<typeof setTimeout> | null = null
@@ -66,6 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
     pendingMfa.value = null
     pendingApproval.value = null
     approvalEnd.value = null
+    pendingDeviceCode.value = null
     setSession(session.tokens)
     user.value = session.staff
   }
@@ -75,6 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     pendingMfa.value = null
     pendingApproval.value = null
+    pendingDeviceCode.value = null
     setSession(null)
     // Cached identity data belongs to the previous staff member.
     queryClient.clear()
@@ -141,6 +148,10 @@ export const useAuthStore = defineStore('auth', () => {
         holdForApproval(result, email)
         return 'device_approval_required'
       }
+      case 'device_code_required': {
+        holdForCode(result, email)
+        return 'device_code_required'
+      }
       default: {
         startSession(result)
         return 'authenticated'
@@ -152,6 +163,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (result.status === 'device_approval_required') {
       holdForApproval(result, email)
       return 'device_approval_required'
+    }
+    if (result.status === 'device_code_required') {
+      holdForCode(result, email)
+      return 'device_code_required'
     }
     startSession(result)
     return 'authenticated'
@@ -171,6 +186,35 @@ export const useAuthStore = defineStore('auth', () => {
     }
     const email = pendingMfa.value.email
     return finishSignIn(await staffAuthService.enrollMfa({ sessionRef: pendingMfa.value.sessionRef, code }), email)
+  }
+
+  // ---- Sign-in held for the new-device SMS code ----
+
+  function holdForCode (pending: DeviceCodePending, email: string) {
+    stopApprovalPolling()
+    pendingMfa.value = null
+    pendingApproval.value = null
+    pendingDeviceCode.value = { ...pending, email }
+  }
+
+  async function verifyDeviceCode (code: string): Promise<void> {
+    if (!pendingDeviceCode.value) {
+      throw new Error('No device code in progress')
+    }
+    startSession(await staffAuthService.verifyDeviceCode(pendingDeviceCode.value.challengeId, code))
+  }
+
+  async function resendDeviceCode (): Promise<void> {
+    const current = pendingDeviceCode.value
+    if (!current) {
+      throw new Error('No device code in progress')
+    }
+    pendingDeviceCode.value = { ...(await staffAuthService.resendDeviceCode(current.challengeId)), email: current.email }
+  }
+
+  // Back from the code screen to sign in. The Backend challenge simply expires.
+  function cancelDeviceCode () {
+    pendingDeviceCode.value = null
   }
 
   // ---- Held founder sign-in (Backend spec 021) ----
@@ -285,6 +329,7 @@ export const useAuthStore = defineStore('auth', () => {
     pendingMfa,
     pendingApproval,
     approvalEnd,
+    pendingDeviceCode,
     frozenEmail,
     status,
     isAuthenticated,
@@ -301,6 +346,9 @@ export const useAuthStore = defineStore('auth', () => {
     startApprovalPolling,
     stopApprovalPolling,
     cancelApproval,
+    verifyDeviceCode,
+    resendDeviceCode,
+    cancelDeviceCode,
     markFrozen,
     logout,
     startSession,
