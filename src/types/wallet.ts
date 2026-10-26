@@ -102,6 +102,8 @@ export interface StatementMovement {
   eventKind: string
   label: string
   reference: string | null
+  // The bank the money came into (Dahab's receiving account, a top-up) or went to (the customer's payout bank).
+  bank: { direction: 'in' | 'out', name: string } | null
   memo: string | null
   byHand: boolean
   actor: StatementActor

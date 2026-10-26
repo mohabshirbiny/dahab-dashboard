@@ -17,6 +17,12 @@
 
       <p v-else-if="lookup.trim().length > 2 && !search.isFetching.value" class="who2">No verified customer matches this.</p>
 
+      <FormField v-if="customerId !== ''" v-slot="{ controlId }" :error="orderMessage" label="Order">
+        <DSelect :id="controlId" v-model="orderId" :disabled="busy || orderOptions.length === 0" :options="orderOptions" />
+      </FormField>
+
+      <p v-if="customerId !== '' && orders.isSuccess.value && orderOptions.length === 0" class="who2">This customer has no orders. A payment always names the order it is for.</p>
+
       <FormField v-slot="{ controlId, describedBy, invalid }" :error="amountMessage" label="Amount in EGP">
         <DInput
           :id="controlId"
@@ -52,7 +58,7 @@
 
       <DBtn
         block
-        :disabled="customerId === ''"
+        :disabled="customerId === '' || orderId === ''"
         kind="primary"
         :loading="busy"
         type="submit"
@@ -76,12 +82,13 @@
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { useCustomerSearchQuery } from '@/composables/useCustomerFile'
-  import { usePayCompensation } from '@/composables/useFinance'
+  import { useCompensationOrdersQuery, usePayCompensation } from '@/composables/useFinance'
   import { formatMoney } from '@/composables/useFormatters'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { useToast } from '@/composables/useToast'
   import { useAuthStore } from '@/stores/auth'
   import { COMPENSATION_REASONS } from '@/types/finance'
+  import { pieceTitle } from '@/types/order'
   import { amountError, financeFormError, lengthError } from './financeErrors'
 
   // Pay compensation outside a dispute (Backend spec 015 FR-004, compensation.pay): the
@@ -117,6 +124,17 @@
     if (!list.some(m => m.value === customerId.value)) customerId.value = list[0]?.value ?? ''
   })
 
+  // Every payment names the order it is for (Backend, app notes 2026-10-26): the customer's orders, newest first.
+  const orderId = ref('')
+  const orders = useCompensationOrdersQuery(customerId)
+  const orderOptions = computed(() => (orders.data.value ?? []).map(o => ({
+    value: o.id,
+    label: `${o.orderRef} · ${pieceTitle(o.category, o.pieceTypeName, o.karat)} · ${o.party === 'buyer' ? 'bought' : 'sold'}`,
+  })))
+  watch(orderOptions, list => {
+    if (!list.some(o => o.value === orderId.value)) orderId.value = list[0]?.value ?? ''
+  })
+
   const mutation = usePayCompensation()
   const idempotency = useIdempotencyKey()
   const toast = useToast()
@@ -125,13 +143,14 @@
   const amountMessage = computed(() => (submitted.value ? amountError(amount.value) : undefined) ?? fieldError(mutation.error.value, 'amount'))
   const noteMessage = computed(() => (submitted.value ? lengthError(note.value, 10, 1000, 'a note for the record') : undefined) ?? fieldError(mutation.error.value, 'note'))
   const customerError = computed(() => fieldError(mutation.error.value, 'customer_id'))
+  const orderMessage = computed(() => fieldError(mutation.error.value, 'order_id'))
   const submitError = computed(() => financeFormError(mutation.error.value))
 
   async function onSubmit () {
-    if (busy.value || customerId.value === '') return
+    if (busy.value || customerId.value === '' || orderId.value === '') return
     submitted.value = true
     if (amountMessage.value || noteMessage.value) return
-    const body = { customerId: customerId.value, amount: amount.value.trim(), reason: reason.value, note: note.value.trim(), orderId: null }
+    const body = { customerId: customerId.value, amount: amount.value.trim(), reason: reason.value, note: note.value.trim(), orderId: orderId.value }
     try {
       await mutation.mutateAsync({ body, idempotencyKey: idempotency.keyFor(body) })
       idempotency.reset()

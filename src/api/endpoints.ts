@@ -104,6 +104,7 @@ export const endpoints = {
   orderProxyId: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}/proxy-id`,
   // The buyer's own verified ID at the handover (order.handover | order.view).
   orderBuyerId: (id: string) => `/dashboard/orders/${encodeURIComponent(id)}/buyer-id`,
+  orderCertificate: (id: string, mediaId: string) => `/dashboard/orders/${encodeURIComponent(id)}/certificates/${encodeURIComponent(mediaId)}`,
   // Spec 014: sellers' requests for more time (order.extend_deadline; reads also order.view).
   extensionRequests: '/dashboard/extension-requests',
   extensionRequestAction: (id: string, action: 'accept' | 'refuse') => `/dashboard/extension-requests/${encodeURIComponent(id)}/${action}`,
@@ -131,6 +132,7 @@ export const endpoints = {
   // Finance operations (Backend spec 015): compensation.pay, wallet.adjust, bank.record, day.close (reads also wallet.view).
   compensation: '/dashboard/compensation',
   compensationExport: '/dashboard/compensation/export',
+  compensationOrders: '/dashboard/compensation/orders',
   walletAdjustments: '/dashboard/wallet-adjustments',
   customerWalletAdjust: (customerId: string) => `/dashboard/customers/${encodeURIComponent(customerId)}/wallet-adjustments`,
   staffUploads: '/dashboard/uploads',

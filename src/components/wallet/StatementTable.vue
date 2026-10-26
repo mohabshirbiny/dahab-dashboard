@@ -31,6 +31,7 @@
           <div v-if="row.wallet" class="who2">Wallet {{ row.wallet.displayRef }}{{ row.wallet.fullName ? ` · ${row.wallet.fullName}` : '' }}</div>
           <div v-if="row.movedToHeld && row.movedToHeld !== '0.0000'" class="who2">{{ movedNote(row.movedToHeld) }}</div>
           <div v-if="row.heldAfter !== null && isHoldMove(row.eventKind)" class="who2">Held after: {{ formatMoney(row.heldAfter) }}</div>
+          <div v-if="row.bank" class="who2">{{ row.bank.direction === 'in' ? 'Received in' : 'Paid to' }} {{ row.bank.name }}</div>
           <div v-if="row.memo" class="who2">{{ row.memo }}</div>
           <div v-if="row.actor.type !== 'customer' && row.actor.name" class="who2">By {{ row.actor.name }}</div>
         </td>

@@ -114,6 +114,35 @@ export interface OrderPiece {
   karat: number | null
   weightG: string | null
   listingState: ListingState
+  // Stones only: the stone and its certificate as the seller stated them.
+  stone: PieceStone | null
+}
+
+// The stone as the seller stated it (carat, clarity vvs|vs|si|i, cut excellent|very_good|good) and the certificate they named.
+export interface PieceStone {
+  certificateKind: 'igi' | 'other_lab' | 'none' | null
+  carat: string | null
+  clarity: string | null
+  cut: string | null
+}
+
+// A stone certificate file the seller uploaded, opened through the order (GET /dashboard/orders/{id}/certificates/{media}).
+export interface PieceCertificate { id: string, mime: string }
+
+const CERTIFICATE_WORDS = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
+const CUT_WORDS: Record<string, string> = { excellent: 'Excellent', very_good: 'Very good', good: 'Good' }
+
+// "0.70 ct · VS · Very good cut", or null when the seller stated nothing.
+export function stoneWords (s: PieceStone | null): string | null {
+  if (!s) {
+    return null
+  }
+  const parts = [s.carat ? `${Number(s.carat)} ct` : null, s.clarity ? s.clarity.toUpperCase() : null, s.cut ? `${CUT_WORDS[s.cut] ?? s.cut} cut` : null]
+  return parts.filter(Boolean).join(' · ') || null
+}
+
+export function certificateWords (s: PieceStone | null): string | null {
+  return s?.certificateKind ? CERTIFICATE_WORDS[s.certificateKind] : null
 }
 
 export interface OrderDeadline { kind: DeadlineKind, at: string, overdue: boolean }
@@ -297,6 +326,7 @@ export interface OrderAdvance {
 }
 
 export interface OrderDetail extends Order {
+  certificates: PieceCertificate[]
   lockedTotalPrice: Money
   depositAmount: Money
   lockedSellerUnitRate: Money | null
@@ -368,6 +398,8 @@ export interface WorkListItem {
   latestInspection: InspectionResult | null
   branch: { id: number | null, nameEn: string | null }
   since: string
+  stone: PieceStone | null
+  certificates: PieceCertificate[]
   // Spec 014: on a handover only, the person the buyer named to collect.
   proxy: OrderProxy | null
   // On a handover only, the buyer's own verified ID.
@@ -415,6 +447,8 @@ export interface InspectionTarget {
   pieceName: string | null
   statedKarat: number | null
   statedWeightG: string | null
+  stone: PieceStone | null
+  certificates: PieceCertificate[]
   // Set when the result corrects the latest one.
   correcting: InspectionResult | null
 }

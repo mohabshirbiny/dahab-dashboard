@@ -13,6 +13,24 @@
         A submitted result cannot be edited; a correction is a new entry and both are kept.
       </p>
 
+      <div v-if="hasStone" class="d-irm__stone">
+        <div class="d-irm__stone-title">The stone, as the seller stated it</div>
+        <div>{{ stoneWords(target.stone) ?? 'No details given' }}</div>
+        <div class="who2">{{ certificateWords(target.stone) ?? 'Certificate not stated' }}</div>
+
+        <div v-if="target.certificates.length > 0" class="d-irm__files">
+          <DBtn
+            v-for="(file, i) in target.certificates"
+            :key="file.id"
+            :loading="opening === file.id"
+            @click="openCertificate(file.id)"
+          >{{ target.certificates.length > 1 ? `Open certificate ${i + 1}` : 'Open the certificate' }}</DBtn>
+        </div>
+
+        <div v-else class="who2">The seller uploaded no certificate file.</div>
+        <div v-if="openError" class="who2 d-irm__bad">{{ openError }}</div>
+      </div>
+
       <NoteBanner v-if="target.correcting" class="d-irm__banner" variant="wait">
         This replaces the result of {{ formatDateTime(target.correcting.inspectedAt) }} ({{ outcomeMeta(target.correcting.outcome).label }}).
       </NoteBanner>
@@ -43,7 +61,7 @@
         </FormField>
       </div>
 
-      <div v-if="hasStone" class="d-irm__row">
+      <div v-if="hasStone">
         <FormField v-slot="{ controlId, describedBy, invalid }" :error="fieldError(mutation.error.value, 'measured_stone_grade')" label="Measured stone grade">
           <DInput
             :id="controlId"
@@ -53,17 +71,6 @@
             :invalid="invalid"
             :maxlength="100"
             placeholder="VS2 · G"
-          />
-        </FormField>
-
-        <FormField v-slot="{ controlId, describedBy, invalid }" :error="fieldError(mutation.error.value, 'certificate_number')" label="Certificate number">
-          <DInput
-            :id="controlId"
-            v-model="certificate"
-            :describedby="describedBy"
-            :disabled="busy"
-            :invalid="invalid"
-            :maxlength="100"
           />
         </FormField>
       </div>
@@ -117,7 +124,8 @@
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { useOrderAction } from '@/composables/useOrders'
   import { useToast } from '@/composables/useToast'
-  import { outcomeMeta } from '@/types/order'
+  import { orderService } from '@/services/order.service'
+  import { certificateWords, outcomeMeta, stoneWords } from '@/types/order'
   import { orderFormError } from './orderErrors'
 
   // Record an immutable inspection result (Backend spec 012 FR-011, inspection.enter).
@@ -133,7 +141,6 @@
   const karat = ref('')
   const weight = ref('')
   const grade = ref('')
-  const certificate = ref('')
   const note = ref('')
   const counterfeit = ref(false)
   const stoneBelow = ref(false)
@@ -157,7 +164,7 @@
     karat.value = c?.measuredKarat?.toString() ?? ''
     weight.value = c?.measuredWeightG ?? ''
     grade.value = c?.measuredStoneGrade ?? ''
-    certificate.value = c?.certificateNumber ?? ''
+    openError.value = ''
     note.value = ''
     counterfeit.value = c?.isCounterfeit ?? false
     stoneBelow.value = c?.stoneBelowClaim ?? false
@@ -169,6 +176,24 @@
   function close (value: boolean) {
     if (!value && !busy.value) {
       emit('close')
+    }
+  }
+
+  // The certificate file the seller uploaded, opened in a new tab (fetched with the staff token).
+  const opening = ref<string | null>(null)
+  const openError = ref('')
+  async function openCertificate (mediaId: string) {
+    if (!props.target) return
+    opening.value = mediaId
+    openError.value = ''
+    try {
+      const url = URL.createObjectURL(await orderService.certificate(props.target.orderId, mediaId))
+      window.open(url, '_blank', 'noopener')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch {
+      openError.value = 'The certificate could not be opened. Try again.'
+    } finally {
+      opening.value = null
     }
   }
 
@@ -185,7 +210,8 @@
       measuredKarat: hasGold.value ? Number(karat.value.trim()) : null,
       measuredWeightG: hasGold.value ? weight.value.trim() : null,
       measuredStoneGrade: hasStone.value ? blank(grade.value) : null,
-      certificateNumber: hasStone.value ? blank(certificate.value) : null,
+      // The certificate number is no longer asked (app notes 2026-10-26): the inspector opens the file itself.
+      certificateNumber: null,
       inspectorNote: blank(note.value),
       isCounterfeit: counterfeit.value,
       stoneBelowClaim: hasStone.value && stoneBelow.value,
@@ -208,6 +234,10 @@
 .d-irm__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .d-irm__check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 4px 0 10px; }
 .d-irm__banner { margin: 8px 0 12px; }
+.d-irm__stone { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-size: 13px; }
+.d-irm__stone-title { font-weight: 500; margin-bottom: 4px; }
+.d-irm__files { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.d-irm__bad { color: var(--bad); }
 .who2 { font-size: 11px; color: var(--ink-3); margin: 6px 0 0; }
 @media (max-width: 600px) { .d-irm__row { grid-template-columns: 1fr; } }
 </style>

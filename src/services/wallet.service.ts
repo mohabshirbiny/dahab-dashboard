@@ -74,6 +74,7 @@ interface ApiStatementRow {
   kind?: string
   label?: string
   reference?: string | null
+  bank?: { direction: 'in' | 'out', name: string } | null
   memo?: string | null
   by_hand?: boolean
   actor?: { type: 'customer' | 'staff' | 'system', name: string | null }
@@ -160,6 +161,7 @@ function toRow (r: ApiStatementRow): StatementRow {
     eventKind: r.kind ?? '',
     label: r.label ?? '',
     reference: r.reference ?? null,
+    bank: r.bank ?? null,
     memo: r.memo ?? null,
     byHand: r.by_hand ?? false,
     actor: r.actor ?? { type: 'system', name: null },

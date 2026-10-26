@@ -20,6 +20,8 @@ import type {
   OrderFilters,
   OrderPage,
   OrderState,
+  PieceCertificate,
+  PieceStone,
   WorkListItem,
   WorkListPage,
   WorkTask,
@@ -37,7 +39,7 @@ interface ApiOrder {
   state: OrderState
   group: string
   listing_state: ListingState
-  piece: { listing_id: string, category: ListingCategory, piece_type: ApiPieceType, karat: number | null, weight_g: string | null, listing_state: ListingState }
+  piece: { listing_id: string, category: ListingCategory, piece_type: ApiPieceType, karat: number | null, weight_g: string | null, listing_state: ListingState, stone?: ApiStone | null }
   seller: { customer_id: string, display_ref: string | null }
   buyer: { customer_id: string, display_ref: string | null }
   branch: { id: number | null, name_en: string | null, name_ar: string | null }
@@ -94,7 +96,14 @@ interface ApiInspection {
   superseded?: boolean
 }
 
+interface ApiStone { certificate_kind: PieceStone['certificateKind'], carat: string | null, clarity: string | null, cut: string | null }
+
+function toStone (s: ApiStone | null | undefined): PieceStone | null {
+  return s ? { certificateKind: s.certificate_kind ?? null, carat: s.carat, clarity: s.clarity, cut: s.cut } : null
+}
+
 export interface ApiOrderDetail extends ApiOrder {
+  certificates?: PieceCertificate[]
   locked_total_price: string
   deposit_amount: string
   locked_seller_unit_rate: string | null
@@ -197,6 +206,8 @@ interface ApiWorkListItem {
   latest_inspection: ApiInspection | null
   branch: { id: number | null, name_en: string | null, name_ar: string | null }
   since: string
+  stone?: ApiStone | null
+  certificates?: PieceCertificate[]
   proxy?: { name: string, phone: string, has_id_photo: boolean, id_kind?: IdKind | null, has_back?: boolean } | null
   buyer_id?: ApiBuyerId | null
 }
@@ -232,6 +243,7 @@ function toOrder (o: ApiOrder): Order {
       karat: o.piece.karat,
       weightG: o.piece.weight_g,
       listingState: o.piece.listing_state,
+      stone: toStone(o.piece.stone),
     },
     seller: { customerId: o.seller.customer_id, displayRef: o.seller.display_ref },
     buyer: { customerId: o.buyer.customer_id, displayRef: o.buyer.display_ref },
@@ -299,6 +311,7 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
   const r = o.seller_return
   return {
     ...toOrder(o),
+    certificates: o.certificates ?? [],
     lockedTotalPrice: o.locked_total_price,
     depositAmount: o.deposit_amount,
     lockedSellerUnitRate: o.locked_seller_unit_rate,
@@ -415,6 +428,8 @@ function toWorkItem (w: ApiWorkListItem): WorkListItem {
     latestInspection: w.latest_inspection ? toInspection(w.latest_inspection) : null,
     branch: { id: w.branch.id, nameEn: w.branch.name_en },
     since: w.since,
+    stone: toStone(w.stone),
+    certificates: w.certificates ?? [],
     proxy: w.proxy
       ? { name: w.proxy.name, phone: w.proxy.phone, namedAt: null, hasIdPhoto: w.proxy.has_id_photo, collectedByProxy: false, idKind: w.proxy.id_kind ?? null, hasBack: w.proxy.has_back ?? false }
       : null,
@@ -545,6 +560,12 @@ export const orderService = {
   async handoverId (id: string, who: 'buyer' | 'proxy', side: 'front' | 'back'): Promise<Blob> {
     const url = who === 'buyer' ? endpoints.orderBuyerId(id) : endpoints.orderProxyId(id)
     const response = await http.get<Blob>(url, { params: { side }, responseType: 'blob' })
+    return response.data
+  },
+
+  // GET /dashboard/orders/{id}/certificates/{media}   (inspection.enter | order.view) — a stone certificate the seller uploaded.
+  async certificate (id: string, mediaId: string): Promise<Blob> {
+    const response = await http.get<Blob>(endpoints.orderCertificate(id, mediaId), { responseType: 'blob' })
     return response.data
   },
 

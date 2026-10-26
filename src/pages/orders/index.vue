@@ -210,6 +210,7 @@
     { value: 'returns' as Chip, label: 'Held for the seller', count: counts.value?.returns },
     { value: 'past' as Chip, label: 'Past deadline', count: counts.value?.pastDeadline },
     { value: 'closed' as Chip, label: 'Closed' },
+    { value: 'all' as Chip, label: 'All, closed too' },
   ])
 
   function setChip (value: Chip) {
@@ -222,8 +223,11 @@
     router.replace({ query })
   }
 
+  // A free-relist offer belongs to a collected (closed) order: picking one looks at every order,
+  // not only the open ones.
   function setFreeRelist (value: string) {
-    router.replace({ query: { ...route.query, id: undefined, free_relist: value === '' ? undefined : value } })
+    const everything = value !== '' && group.value === 'open' && !pastDeadline.value
+    router.replace({ query: { ...route.query, id: undefined, free_relist: value === '' ? undefined : value, group: everything ? 'all' : route.query.group } })
   }
 
   function applySearch () {
