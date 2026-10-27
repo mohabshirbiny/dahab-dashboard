@@ -35,7 +35,7 @@
         />
       </FormField>
 
-      <FormField v-slot="{ controlId, describedBy, invalid }" :error="errors.phone" hint="Optional. International format, for example +201000000009." label="Phone">
+      <FormField v-slot="{ controlId, describedBy, invalid }" :error="errors.phone" hint="International format, for example +201000000009. Sign-in codes on a new device go here." label="Phone">
         <DInput
           :id="controlId"
           v-model="phone"
@@ -143,7 +143,7 @@
     if (submitted.value) {
       if (fullName.value.trim().length < 2) result.fullName = 'Enter their full name.'
       if (!EMAIL_PATTERN.test(email.value.trim())) result.email = 'Enter a valid email, for example name@dahab.eg.'
-      if (phone.value.trim() && !PHONE_PATTERN.test(phone.value.trim())) result.phone = 'Use the international format, for example +201000000009.'
+      if (!PHONE_PATTERN.test(phone.value.trim())) result.phone = 'Use the international format, for example +201000000009.'
       if (picked.value.length === 0) result.roles = 'Choose at least one role.'
       if (reason.value.trim().length < REASON_MIN) result.reason = `Write at least ${REASON_MIN} characters.`
     }
@@ -184,7 +184,7 @@
     emit('confirm', {
       fullName: fullName.value.trim(),
       email: email.value.trim().toLowerCase(),
-      phone: phone.value.trim() || null,
+      phone: phone.value.trim(),
       roles: [...picked.value],
       branchId: branch.value === NO_BRANCH ? null : Number(branch.value),
       reason: reason.value.trim(),

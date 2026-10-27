@@ -7,6 +7,7 @@ import type {
   StaffMember,
   StaffStatusFilter,
   UpdateRoleInput,
+  UpdateStaffInput,
 } from '@/types/access'
 import type { ApiEnvelope, ApiPaginated, ApiPermission, ApiRole, ApiStaffMember } from '@/types/api'
 import { http } from '@/api/axios'
@@ -124,7 +125,7 @@ export const accessService = {
     const { data } = await http.post<ApiEnvelope<ApiStaffMember>>(endpoints.staff, {
       full_name: input.fullName,
       email: input.email,
-      phone: input.phone || undefined,
+      phone: input.phone,
       roles: input.roles,
       branch_id: input.branchId,
       reason: input.reason,
@@ -147,6 +148,24 @@ export const accessService = {
       headers: { 'Idempotency-Key': idempotencyKey },
     })
     return toStaffMember(data.data)
+  },
+
+  // PATCH /dashboard/staff/{staff}   (staff.manage, Idempotency-Key) — name, email, phone; only what is
+  // sent changes. A founder's details only by a founder (403 founder_protected).
+  async updateStaff (id: string, input: UpdateStaffInput, idempotencyKey: string): Promise<StaffMember> {
+    const { data } = await http.patch<ApiEnvelope<ApiStaffMember>>(endpoints.staffMember(id), {
+      full_name: input.fullName,
+      email: input.email,
+      phone: input.phone,
+      reason: input.reason,
+    }, { headers: { 'Idempotency-Key': idempotencyKey } })
+    return toStaffMember(data.data)
+  },
+
+  // DELETE /dashboard/staff/{staff}   (staff.manage, Idempotency-Key) — a soft delete, final; 204.
+  // Not yourself, never a founder; the reason goes in the body.
+  async deleteStaff (id: string, reason: string, idempotencyKey: string): Promise<void> {
+    await http.delete(endpoints.staffMember(id), { data: { reason }, headers: { 'Idempotency-Key': idempotencyKey } })
   },
 
   // PUT /dashboard/staff/{staff}/roles   (roles.manage) — replaces the whole set; reason required.

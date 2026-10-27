@@ -1,4 +1,4 @@
-import type { CreateRoleInput, CreateStaffInput, StaffStatusFilter, UpdateRoleInput } from '@/types/access'
+import type { CreateRoleInput, CreateStaffInput, StaffStatusFilter, UpdateRoleInput, UpdateStaffInput } from '@/types/access'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { accessService } from '@/services/access.service'
@@ -103,6 +103,23 @@ export function useDisableStaff () {
   const refresh = useRefreshAccess()
   return useMutation({
     mutationFn: (input: { id: string, reason: string, key: string }) => accessService.disableStaff(input.id, input.reason, input.key),
+    onSuccess: refresh,
+  })
+}
+
+// Edit a member's details and delete a member (Backend docs/features/staff-edit-delete.md).
+export function useUpdateStaff () {
+  const refresh = useRefreshAccess()
+  return useMutation({
+    mutationFn: (input: { id: string, staff: UpdateStaffInput, key: string }) => accessService.updateStaff(input.id, input.staff, input.key),
+    onSuccess: refresh,
+  })
+}
+
+export function useDeleteStaff () {
+  const refresh = useRefreshAccess()
+  return useMutation({
+    mutationFn: (input: { id: string, reason: string, key: string }) => accessService.deleteStaff(input.id, input.reason, input.key),
     onSuccess: refresh,
   })
 }

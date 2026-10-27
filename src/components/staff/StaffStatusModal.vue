@@ -11,6 +11,11 @@
         The reason is recorded in the audit log.
       </template>
 
+      <template v-else-if="action === 'delete'">
+        {{ member?.fullName }} is removed from the staff list and signed out everywhere, for good: this cannot be undone.
+        Their history keeps their name, and their email can be used for a new account. The reason is recorded in the audit log.
+      </template>
+
       <template v-else>
         {{ member?.fullName }} gets a new link by email and chooses a new password; the old password is deleted.
         Their authenticator setup is kept. The reason is recorded in the audit log.
@@ -38,11 +43,11 @@
 
       <DBtn
         form="staff-status-form"
-        :kind="action === 'disable' ? 'danger' : 'primary'"
+        :kind="action === 'enable' ? 'primary' : 'danger'"
         :loading="loading"
         type="submit"
       >
-        {{ action === 'disable' ? 'Disable' : 'Enable' }}
+        {{ LABELS[action] }}
       </DBtn>
     </template>
   </DModal>
@@ -61,7 +66,7 @@
   const props = defineProps<{
     modelValue: boolean
     member: StaffMember | null
-    action: 'disable' | 'enable'
+    action: 'disable' | 'enable' | 'delete'
     loading?: boolean
     submitError?: string
   }>()
@@ -74,10 +79,9 @@
   const reason = ref('')
   const submitted = ref(false)
 
-  const title = computed(() => {
-    const name = props.member?.fullName ?? ''
-    return props.action === 'disable' ? `Disable ${name}` : `Enable ${name}`
-  })
+  const LABELS = { disable: 'Disable', enable: 'Enable', delete: 'Delete' } as const
+
+  const title = computed(() => `${LABELS[props.action]} ${props.member?.fullName ?? ''}`)
 
   const reasonError = computed(() =>
     submitted.value && reason.value.trim().length < REASON_MIN ? `Write at least ${REASON_MIN} characters.` : undefined,

@@ -21,7 +21,7 @@ export function accessErrorMessage (error: unknown): string {
     }
     // Create, disable and enable (Backend spec 020).
     case 'founder_protected': {
-      return 'A founder account can\'t be disabled here.'
+      return 'A founder account can\'t be disabled or deleted, and only a founder can change a founder\'s details.'
     }
     case 'staff_already_disabled': {
       return 'This person is already disabled. The list has been refreshed.'

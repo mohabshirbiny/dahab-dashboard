@@ -34,8 +34,11 @@
             :can-manage-staff="canManageStaff"
             :catalogue="catalogue.data.value"
             :current-user-id="auth.user?.id ?? null"
+            :current-user-is-founder="auth.user?.isFounder ?? false"
             :rows="staff.data.value.items"
+            @delete="openStatus($event, 'delete')"
             @disable="openStatus($event, 'disable')"
+            @edit="openEdit"
             @enable="openStatus($event, 'enable')"
             @permissions="openRoles"
           />
@@ -102,10 +105,19 @@
     <StaffStatusModal
       v-model="statusOpen"
       :action="statusAction"
-      :loading="disableStaff.isPending.value || enableStaff.isPending.value"
+      :loading="disableStaff.isPending.value || enableStaff.isPending.value || deleteStaff.isPending.value"
       :member="statusMember"
       :submit-error="statusError"
       @confirm="confirmStatus"
+    />
+
+    <EditStaffModal
+      v-model="editOpen"
+      :field-errors="editFieldErrors"
+      :loading="updateStaff.isPending.value"
+      :member="editMember"
+      :submit-error="editError"
+      @confirm="saveEdit"
     />
 
     <RoleEditorModal
@@ -131,11 +143,12 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CreateRoleInput, CreateStaffInput, Role, StaffMember, StaffStatusFilter, UpdateRoleInput } from '@/types/access'
+  import type { CreateRoleInput, CreateStaffInput, Role, StaffMember, StaffStatusFilter, UpdateRoleInput, UpdateStaffInput } from '@/types/access'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { accessErrorMessage, fieldError } from '@/components/staff/accessErrors'
   import AddStaffModal from '@/components/staff/AddStaffModal.vue'
+  import EditStaffModal from '@/components/staff/EditStaffModal.vue'
   import RoleDeleteModal from '@/components/staff/RoleDeleteModal.vue'
   import RoleEditorModal from '@/components/staff/RoleEditorModal.vue'
   import RolesTable from '@/components/staff/RolesTable.vue'
@@ -154,6 +167,7 @@
     useCreateRole,
     useCreateStaff,
     useDeleteRole,
+    useDeleteStaff,
     useDisableStaff,
     useEnableStaff,
     usePermissionCatalogueQuery,
@@ -161,6 +175,7 @@
     useSetStaffRoles,
     useStaffQuery,
     useUpdateRole,
+    useUpdateStaff,
   } from '@/composables/useAccessControl'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { usePermissions } from '@/composables/usePermissions'
@@ -291,22 +306,63 @@
     })
   }
 
-  // Disable or enable (reason required, Idempotency-Key).
+  // Edit a member's name, email or phone (reason required, Idempotency-Key).
+  const updateStaff = useUpdateStaff()
+  const editKey = useIdempotencyKey()
+  const editOpen = ref(false)
+  const editMember = ref<StaffMember | null>(null)
+  const editError = ref<string>()
+  const editFieldErrors = ref<Partial<Record<'full_name' | 'email' | 'phone', string>>>({})
+
+  function openEdit (member: StaffMember) {
+    editMember.value = member
+    editError.value = undefined
+    editFieldErrors.value = {}
+    editKey.reset()
+    updateStaff.reset()
+    editOpen.value = true
+  }
+
+  function saveEdit (input: UpdateStaffInput) {
+    const member = editMember.value
+    if (!member) return
+    editError.value = undefined
+    editFieldErrors.value = {}
+    updateStaff.mutate({ id: member.id, staff: input, key: editKey.keyFor({ id: member.id, ...input }) }, {
+      onSuccess: saved => {
+        editOpen.value = false
+        editKey.reset()
+        ok(`${saved.fullName}'s details were saved.`)
+      },
+      onError: error => {
+        editFieldErrors.value = {
+          full_name: fieldError(error, 'full_name'),
+          email: fieldError(error, 'email'),
+          phone: fieldError(error, 'phone'),
+        }
+        editError.value = accessErrorMessage(error)
+      },
+    })
+  }
+
+  // Disable, enable or delete (reason required, Idempotency-Key).
   const disableStaff = useDisableStaff()
   const enableStaff = useEnableStaff()
+  const deleteStaff = useDeleteStaff()
   const statusKey = useIdempotencyKey()
   const statusOpen = ref(false)
   const statusMember = ref<StaffMember | null>(null)
-  const statusAction = ref<'disable' | 'enable'>('disable')
+  const statusAction = ref<'disable' | 'enable' | 'delete'>('disable')
   const statusError = ref<string>()
 
-  function openStatus (member: StaffMember, action: 'disable' | 'enable') {
+  function openStatus (member: StaffMember, action: 'disable' | 'enable' | 'delete') {
     statusMember.value = member
     statusAction.value = action
     statusError.value = undefined
     statusKey.reset()
     disableStaff.reset()
     enableStaff.reset()
+    deleteStaff.reset()
     statusOpen.value = true
   }
 
@@ -325,6 +381,8 @@
     }
     if (statusAction.value === 'disable') {
       disableStaff.mutate(input, { onSuccess: () => done(`${member.fullName} was disabled and signed out everywhere.`), onError: failed })
+    } else if (statusAction.value === 'delete') {
+      deleteStaff.mutate(input, { onSuccess: () => done(`${member.fullName} was deleted.`), onError: failed })
     } else {
       enableStaff.mutate(input, { onSuccess: () => done(`${member.fullName} was enabled. A new set-password link is on its way.`), onError: failed })
     }

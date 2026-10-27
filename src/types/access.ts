@@ -40,9 +40,18 @@ export type StaffStatusFilter = 'all' | 'active' | 'disabled'
 export interface CreateStaffInput {
   fullName: string
   email: string
-  phone: string | null
+  // Required: the new-device code and the founder alerts go to it.
+  phone: string
   roles: string[]
   branchId: number | null
+  reason: string
+}
+
+// A member's details (PATCH /dashboard/staff/{id}): only the fields sent change.
+export interface UpdateStaffInput {
+  fullName?: string
+  email?: string
+  phone?: string
   reason: string
 }
 

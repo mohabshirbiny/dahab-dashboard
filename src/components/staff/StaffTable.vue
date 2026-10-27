@@ -57,6 +57,24 @@
           >
             Enable
           </DBtn>
+
+          <!-- A founder's details only by a founder: the Backend refuses anyone else. -->
+          <DBtn
+            v-if="canManageStaff && (!row.isFounder || currentUserIsFounder)"
+            :aria-label="`Edit ${row.fullName}`"
+            @click="emit('edit', row)"
+          >
+            Edit
+          </DBtn>
+
+          <DBtn
+            v-if="canManageStaff && row.id !== currentUserId && !row.isFounder"
+            :aria-label="`Delete ${row.fullName}`"
+            kind="danger"
+            @click="emit('delete', row)"
+          >
+            Delete
+          </DBtn>
         </div>
       </td>
     </tr>
@@ -75,13 +93,15 @@
     currentUserId: string | null
     // Only role managers can change someone's roles.
     canManage: boolean
-    // Create, disable and enable (staff.manage, Backend spec 020).
+    // Create, disable, enable, edit and delete (staff.manage, Backend spec 020 + staff-edit-delete).
     canManageStaff?: boolean
+    // A founder's details are edited only by a founder.
+    currentUserIsFounder?: boolean
     // Labels for the "Can do" column when the catalogue is available (role managers).
     catalogue?: readonly PermissionEntry[]
   }>()
 
-  const emit = defineEmits<{ (e: 'permissions' | 'disable' | 'enable', row: StaffMember): void }>()
+  const emit = defineEmits<{ (e: 'permissions' | 'disable' | 'enable' | 'edit' | 'delete', row: StaffMember): void }>()
 
   // The Backend lists permission codes; show their labels when known, otherwise a count.
   function canDoSummary (codes: readonly string[]): string {
