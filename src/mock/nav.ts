@@ -27,6 +27,8 @@ export const navGroups: NavGroup[] = [
       { key: 'statement', title: 'Wallet statement', to: '/dashboard/statement', permission: 'wallet.view' },
       // Backend spec 015: reads with the acting code or wallet.view.
       { key: 'compensation', title: 'Compensation', to: '/dashboard/compensation', anyPermission: ['compensation.pay', 'wallet.view'] },
+      // Backend spec 023: money paid ahead to first-time gold sellers, and the room left under the ceiling.
+      { key: 'first-sale', title: 'First-sale advances', to: '/dashboard/first-sale', permission: 'first_sale.manage' },
       { key: 'bankbook', title: 'Bank movements', to: '/dashboard/bankbook', anyPermission: ['bank.record', 'wallet.view'] },
       { key: 'closing', title: 'Daily closing', to: '/dashboard/closing', anyPermission: ['day.close', 'wallet.view'] },
       { key: 'invoices', title: 'Invoices', to: '/dashboard/invoices', anyPermission: ['invoice.view'] },

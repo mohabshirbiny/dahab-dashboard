@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { http } from '@/api/axios'
 import { retryTransient } from './queryRetry'
@@ -10,8 +10,9 @@ export type AdvanceStatus = 'outstanding' | 'recovered' | 'written_off'
 
 export interface AdvanceRow {
   advance_id: string
+  order_id: string
   order_ref: string | null
-  seller: { display_ref: string | null, full_name: string | null }
+  seller: { customer_id: string, display_ref: string | null, full_name: string | null }
   amount_egp: string
   basis: 'promo_code' | 'staff_enablement' | 'automatic'
   promo_code: string | null
@@ -20,6 +21,8 @@ export interface AdvanceRow {
   recovered_egp: string | null
   shortfall_absorbed_egp: string | null
   written_off_reason: string | null
+  recovered_at: string | null
+  written_off_at: string | null
 }
 
 export interface ExposureMeta {
@@ -44,6 +47,19 @@ export function useFirstSaleAdvances (status: MaybeRefOrGetter<AdvanceStatus | n
       params: { status: toValue(status) ?? undefined },
     })).data,
     enabled: computed(() => toValue(enabled)),
+    retry: retryTransient,
+  })
+}
+
+// Every advance, page by page (the First-sale advances page); each page's meta carries the totals.
+export function useFirstSaleAdvancesPages (status: MaybeRefOrGetter<AdvanceStatus | null>) {
+  return useInfiniteQuery({
+    queryKey: computed(() => [...root, 'advances-pages', toValue(status)]),
+    queryFn: async ({ pageParam }) => (await http.get<{ data: AdvanceRow[], meta: ExposureMeta }>('/dashboard/first-sale-advances', {
+      params: { status: toValue(status) ?? undefined, cursor: pageParam ?? undefined, per_page: 50 },
+    })).data,
+    initialPageParam: null as string | null,
+    getNextPageParam: last => last.meta.next_cursor,
     retry: retryTransient,
   })
 }

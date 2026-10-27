@@ -1,5 +1,9 @@
 <template>
   <Panel subtitle="Money paid ahead to first-time gold sellers" title="First-sale advances">
+    <template #actions>
+      <RouterLink to="/dashboard/first-sale">See every advance</RouterLink>
+    </template>
+
     <template #body>
       <LoadingState v-if="advances.isPending.value" label="Loading…" />
       <ErrorState v-else-if="advances.isError.value" :message="accessErrorMessage(advances.error.value)" title="Could not load the advances" @retry="advances.refetch()" />
