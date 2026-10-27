@@ -1,8 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { customerService } from '@/services/customer.service'
+import { getNavCounts } from '@/services/overview.service'
 import { CUSTOMER_PAGE_SIZE, type CustomerFilters } from '@/types/customer'
 import { retryTransient } from './queryRetry'
+import { navCountsKey } from './useOverview'
 
 // The list and the detail only depend on what the Backend filters by, so opening a
 // customer does not refetch the list.
@@ -12,8 +14,6 @@ export const customerKeys = {
   all: ['customers'] as const,
   list: (filters: ListFilters) => [...customerKeys.all, 'list', filters] as const,
   detail: (id: string) => [...customerKeys.all, 'detail', id] as const,
-  counts: () => [...customerKeys.all, 'counts'] as const,
-  waitingCount: () => [...customerKeys.all, 'waiting-count'] as const,
 }
 
 export function useCustomersQuery (filters: MaybeRefOrGetter<ListFilters>) {
@@ -44,21 +44,13 @@ export function useCustomerQuery (id: MaybeRefOrGetter<string>) {
   })
 }
 
-// Counts for the tabs. The Backend has no counts endpoint, so the service
-// derives them from the list totals.
+// Counts for the tabs: GET /dashboard/nav-counts, the same request (and cache entry)
+// as the sidebar badges.
 export function useCustomerCountsQuery () {
   return useQuery({
-    queryKey: customerKeys.counts(),
-    queryFn: () => customerService.getCounts(),
-    retry: false,
-  })
-}
-
-export function useCustomerWaitingCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: customerKeys.waitingCount(),
-    queryFn: () => customerService.getWaitingCount(),
-    enabled: computed(() => toValue(enabled)),
+    queryKey: navCountsKey,
+    queryFn: getNavCounts,
+    select: counts => counts.customersByStatus,
     retry: false,
   })
 }

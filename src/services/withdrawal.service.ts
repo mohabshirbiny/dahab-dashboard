@@ -170,12 +170,6 @@ export const withdrawalService = {
     }
   },
 
-  // The sidebar badge: withdrawals waiting for a person.
-  async waitingCount (): Promise<number> {
-    const { data } = await http.get<ApiWithdrawalPage>(endpoints.withdrawals, { params: { per_page: 1 } })
-    return data.meta.figures.waiting_count
-  },
-
   async show (id: string): Promise<Withdrawal> {
     const { data } = await http.get<ApiEnvelope<ApiWithdrawal>>(endpoints.withdrawal(id))
     return toWithdrawal(data.data)

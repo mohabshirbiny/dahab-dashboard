@@ -39,16 +39,11 @@
   import { computed, ref } from 'vue'
   import { RouterLink, useRouter } from 'vue-router'
   import BrandMark from '@/components/ui/BrandMark.vue'
-  import { useCustomerWaitingCountQuery } from '@/composables/useCustomers'
-  import { useUnresolvedDisputeCountQuery } from '@/composables/useDisputes'
-  import { useOpenReportCountQuery } from '@/composables/useListingReports'
-  import { useWaitingListingCountQuery } from '@/composables/useListings'
+  import { useNavCountsQuery } from '@/composables/useOverview'
   import { usePermissions } from '@/composables/usePermissions'
-  import { useOpenTopUpCountQuery } from '@/composables/useTopUps'
-  import { useWaitingWithdrawalCountQuery } from '@/composables/useWithdrawals'
   import { navGroups } from '@/mock/nav'
   import { useAuthStore } from '@/stores/auth'
-  import { PERMISSIONS, roleSummary } from '@/types/staff'
+  import { roleSummary } from '@/types/staff'
 
   defineProps<{ mobileOpen: boolean }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
@@ -75,23 +70,17 @@
       .filter(group => group.items.length > 0),
   )
 
-  const { data: customersWaiting } = useCustomerWaitingCountQuery(() => can(PERMISSIONS.customerView))
-  const { data: topUpsToMatch } = useOpenTopUpCountQuery(() => can(PERMISSIONS.topupMatch))
-  const { data: listingsToReview } = useWaitingListingCountQuery(
-    () => canAny([PERMISSIONS.listingReview, PERMISSIONS.listingRequestChanges, PERMISSIONS.listingTakedown]),
-  )
-
-  const { data: withdrawalsWaiting } = useWaitingWithdrawalCountQuery(() => can(PERMISSIONS.withdrawalRelease))
-  const { data: disputesOpen } = useUnresolvedDisputeCountQuery(() => can(PERMISSIONS.disputeHandle))
-  // Spec 017: open listing reports count on the same page's badge.
-  const { data: reportsOpen } = useOpenReportCountQuery(() => can(PERMISSIONS.listingReportHandle))
+  // Every badge from one request (GET /dashboard/nav-counts); a count the viewer may not
+  // see comes back null and shows no badge.
+  const { data: counts } = useNavCountsQuery()
 
   function badgeFor (item: NavItem): number | undefined {
-    if (item.liveBadge === 'customersPending') return customersWaiting.value || undefined
-    if (item.liveBadge === 'topupsToMatch') return topUpsToMatch.value || undefined
-    if (item.liveBadge === 'listingsToReview') return listingsToReview.value || undefined
-    if (item.liveBadge === 'withdrawalsWaiting') return withdrawalsWaiting.value || undefined
-    if (item.liveBadge === 'disputesOpen') return ((disputesOpen.value ?? 0) + (reportsOpen.value ?? 0)) || undefined
+    const c = counts.value
+    if (item.liveBadge === 'customersPending') return c?.customersPending || undefined
+    if (item.liveBadge === 'topupsToMatch') return c?.topupsOpen || undefined
+    if (item.liveBadge === 'listingsToReview') return c?.listingsInReview || undefined
+    if (item.liveBadge === 'withdrawalsWaiting') return c?.withdrawalsWaiting || undefined
+    if (item.liveBadge === 'disputesOpen') return ((c?.disputesUnresolved ?? 0) + (c?.listingReportsOpen ?? 0)) || undefined
     return item.badge
   }
 

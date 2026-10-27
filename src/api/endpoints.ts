@@ -157,6 +157,8 @@ export const endpoints = {
   dailyCloses: '/dashboard/daily-closes',
   // The Overview's figures (Backend spec 015): any staff; each section by permission.
   overview: '/dashboard/overview',
+  // The navigation badges in one read: any staff; each count by its page's permission.
+  navCounts: '/dashboard/nav-counts',
   // The Orders list as CSV (Backend spec 015): order.view.
   ordersExport: '/dashboard/orders/export',
   // App text (Backend spec 019): content.edit. Keys are readable (`order.free_relist.card_title`).

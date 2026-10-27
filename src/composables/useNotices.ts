@@ -8,13 +8,13 @@ export const noticeKeys = {
   list: () => [...noticeKeys.all, 'list'] as const,
 }
 
-// The latest notices and the unread count, refreshed every 30 seconds.
+// The latest notices and the unread count, refreshed every minute (and when the bell opens).
 export function useNoticesQuery (enabled: MaybeRefOrGetter<boolean> = true) {
   return useQuery({
     queryKey: noticeKeys.list(),
     queryFn: () => noticesService.list(false, 1),
     enabled: computed(() => toValue(enabled)),
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
     retry: false,
   })
 }

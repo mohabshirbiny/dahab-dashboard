@@ -220,12 +220,6 @@ export const listingService = {
     }
   },
 
-  // The sidebar badge: listings waiting for review. One row is enough, meta.counts has the number.
-  async waitingCount (): Promise<number> {
-    const { data } = await http.get<ApiListingPage>(endpoints.listings, { params: { state: 'in_review', per_page: 1 } })
-    return data.meta.counts.in_review
-  },
-
   // GET /dashboard/listings/{id}
   async show (id: string): Promise<ListingDetail> {
     const { data } = await http.get<ApiEnvelope<ApiListingDetail>>(endpoints.listing(id))

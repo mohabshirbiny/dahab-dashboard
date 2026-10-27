@@ -18,11 +18,12 @@ export function useSwitchesQuery () {
 }
 
 // The banner on every page: public, so it works before the permission set is known.
+// Checked every two minutes; a switch changed on Switches refreshes it at once.
 export function useStoppedBanner () {
   return useQuery({
     queryKey: controlsKeys.banner(),
     queryFn: () => controlsService.stopped(),
-    refetchInterval: 60_000,
+    refetchInterval: 120_000,
     retry: false,
   })
 }

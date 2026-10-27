@@ -1,8 +1,15 @@
 import { createVuetify } from 'vuetify'
-import '@mdi/font/css/materialdesignicons.css'
+import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import 'vuetify/styles'
 
+// Vuetify's own icons (menus, selects, close buttons) as inline SVG: the app names no icon
+// itself, so the 400 kB Material Design Icons font and its 7,000 classes are not loaded.
 export default createVuetify({
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: { mdi },
+  },
   defaults: {
     VBtn: {
       variant: 'flat',

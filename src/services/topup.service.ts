@@ -180,16 +180,6 @@ export const topUpService = {
     return { rows: data.data.map(t => toTopUp(t)), nextCursor: data.meta.next_cursor, totals: data.meta.totals }
   },
 
-  // The sidebar badge: every transfer still waiting for staff (pending or on hold),
-  // however old. The list defaults to the last 30 days, so the count asks from a
-  // date before any notice could exist; one row is enough, meta.totals has the count.
-  async openCount (): Promise<number> {
-    const { data } = await http.get<ApiTopUpPage>(endpoints.topUps, {
-      params: { status: 'pending,on_hold', from: '2000-01-01', per_page: 1 },
-    })
-    return data.meta.totals.count
-  },
-
   // GET /dashboard/topups/{id}
   async show (id: string): Promise<TopUp> {
     const { data } = await http.get<ApiEnvelope<ApiTopUp>>(endpoints.topUp(id))

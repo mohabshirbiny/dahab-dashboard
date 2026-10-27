@@ -9,7 +9,6 @@ export const withdrawalKeys = {
   all: ['withdrawals'] as const,
   list: (query: WithdrawalListQuery) => [...withdrawalKeys.all, 'list', query] as const,
   // Under 'list', so every action that refreshes the lists refreshes the badge too.
-  waiting: () => [...withdrawalKeys.all, 'list', 'waiting'] as const,
   one: (id: string) => [...withdrawalKeys.all, 'one', id] as const,
   accounts: (state: PayoutAccountState, q: string) => [...withdrawalKeys.all, 'accounts', state, q] as const,
 }
@@ -23,17 +22,6 @@ export function useWithdrawalsQuery (query: MaybeRefOrGetter<WithdrawalListQuery
     getNextPageParam: last => last.nextCursor,
     enabled: computed(() => toValue(enabled)),
     retry: retryTransient,
-  })
-}
-
-// The sidebar badge. Callers pass `enabled` from withdrawal.release.
-export function useWaitingWithdrawalCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: withdrawalKeys.waiting(),
-    queryFn: () => withdrawalService.waitingCount(),
-    enabled: computed(() => toValue(enabled)),
-    refetchInterval: 60_000,
-    retry: false,
   })
 }
 

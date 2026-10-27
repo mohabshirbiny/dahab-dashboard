@@ -20,17 +20,6 @@ export function useListingReportsQuery (state: MaybeRefOrGetter<ReportState | nu
   })
 }
 
-// The sidebar badge: open reports. Callers pass `enabled` from listing_report.handle.
-export function useOpenReportCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: computed(() => [...listingReportKeys.list('open'), 'count'] as const),
-    queryFn: async () => (await listingReportService.list('open')).counts.open,
-    enabled: computed(() => toValue(enabled)),
-    refetchInterval: 60_000,
-    retry: false,
-  })
-}
-
 export function useListingReportQuery (id: MaybeRefOrGetter<string | null>) {
   return useQuery({
     queryKey: computed(() => listingReportKeys.one(toValue(id) ?? '')),

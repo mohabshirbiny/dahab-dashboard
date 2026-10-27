@@ -62,7 +62,7 @@
 
 <script lang="ts" setup>
   import type { StaffNotice } from '@/types/notices'
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { formatRelativeTime } from '@/composables/useFormatters'
   import { useMarkAllNoticesRead, useMarkNoticeRead, useNoticesQuery } from '@/composables/useNotices'
@@ -72,6 +72,10 @@
   const open = ref(false)
 
   const notices = useNoticesQuery()
+  // The bell polls once a minute; opening it reads the latest at once.
+  watch(open, isOpen => {
+    if (isOpen) notices.refetch()
+  })
   const markRead = useMarkNoticeRead()
   const markAll = useMarkAllNoticesRead()
 

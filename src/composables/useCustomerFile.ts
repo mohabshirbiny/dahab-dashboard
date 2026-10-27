@@ -60,13 +60,14 @@ export function useCustomerSearchQuery (q: MaybeRefOrGetter<string>) {
 }
 
 // The response is the updated file, so it replaces the cached one: refetching the
-// file would write another "file opened" audit entry. Lists and counts do refetch.
+// file would write another "file opened" audit entry. Lists do refetch (the counts
+// with every mutation, plugins/vue-query.ts).
 function useApplyFile () {
   const queryClient = useQueryClient()
   return (file: CustomerFile) => {
     queryClient.setQueryData(customerKeys.detail(file.id), file)
     // History gains the suspend / reinstate entry.
-    for (const part of ['list', 'counts', 'waiting-count', 'search', 'activity']) {
+    for (const part of ['list', 'search', 'activity']) {
       queryClient.invalidateQueries({ queryKey: [...customerKeys.all, part] })
     }
   }
