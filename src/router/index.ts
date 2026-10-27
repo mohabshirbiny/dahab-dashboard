@@ -124,6 +124,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Compensation', anyPermissions: [PERMISSIONS.compensationPay, PERMISSIONS.walletView] },
       },
       {
+        // The first-sale advance (Backend spec 023): what was paid ahead, to whom, recovered or not.
+        path: 'dashboard/first-sale',
+        name: 'first-sale',
+        component: () => import('@/pages/first-sale/index.vue'),
+        meta: { title: 'First-sale advances', permissions: [PERMISSIONS.firstSaleManage] },
+      },
+      {
         path: 'dashboard/bankbook',
         name: 'bankbook',
         component: () => import('@/pages/bankbook/index.vue'),
