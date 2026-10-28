@@ -26,10 +26,11 @@ export default defineConfig({
             name: 'Roboto Mono',
             weights: [400, 700],
           },
+          // Vuetify's body font (src/styles/tailwind.css); the pages use Inter.
           {
             name: 'Roboto',
-            weights: [100, 300, 400, 500, 700, 900],
-            styles: ['normal', 'italic'],
+            weights: [400, 500, 700],
+            styles: ['normal'],
           },
         ],
       },

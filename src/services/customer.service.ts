@@ -10,14 +10,12 @@ import type {
 } from '@/types/api'
 import type { AuditEntry } from '@/types/audit'
 import type {
-  CustomerCounts,
   CustomerFile,
   CustomerFileDocument,
   CustomerInboxPage,
   CustomerListParams,
   CustomerListResult,
   CustomerSessionsResult,
-  CustomerStatus,
   CustomerType,
   CustomerVerification,
   StaffRef,
@@ -25,7 +23,6 @@ import type {
 } from '@/types/customer'
 import { http } from '@/api/axios'
 import { endpoints } from '@/api/endpoints'
-import { CUSTOMER_STATUSES } from '@/types/customer'
 import { toEntry } from './audit.service'
 import { toPayoutAccount } from './withdrawal.service'
 
@@ -112,14 +109,6 @@ function toCustomerFile (file: ApiCustomerFile): CustomerFile {
         }
       : null,
   }
-}
-
-// One row per page is enough: the Backend reports the total of the whole filtered set.
-async function countWithStatus (status: CustomerStatus): Promise<number> {
-  const { data } = await http.get<ApiPaginated<ApiCustomerVerification>>(endpoints.customers, {
-    params: { status, per_page: 1 },
-  })
-  return data.meta.total
 }
 
 export const customerService = {
@@ -217,19 +206,4 @@ export const customerService = {
     }
   },
 
-  // The Backend has no counts endpoint, so each tab is counted from the
-  // `meta.total` of its own list.
-  async getCounts (): Promise<CustomerCounts> {
-    const totals = await Promise.all(CUSTOMER_STATUSES.map(status => countWithStatus(status)))
-    const counts = { pending_verification: 0, active: 0, rejected: 0, suspended: 0, closed: 0 } satisfies CustomerCounts
-    for (const [index, status] of CUSTOMER_STATUSES.entries()) {
-      counts[status] = totals[index] ?? 0
-    }
-    return counts
-  },
-
-  // Waiting count for the sidebar badge, counted the same way.
-  getWaitingCount (): Promise<number> {
-    return countWithStatus('pending_verification')
-  },
 }

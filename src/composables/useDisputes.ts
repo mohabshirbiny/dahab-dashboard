@@ -11,7 +11,6 @@ export const disputeKeys = {
   all: ['disputes'] as const,
   list: (filter: DisputeFilter, mine: boolean, q: string) => [...disputeKeys.all, 'list', filter, mine, q] as const,
   // Under 'list', so every action that refreshes the lists refreshes the badge too.
-  unresolved: () => [...disputeKeys.all, 'list', 'unresolved-count'] as const,
   one: (id: string) => [...disputeKeys.all, 'one', id] as const,
   photo: (id: string, photoId: string) => [...disputeKeys.all, 'photo', id, photoId] as const,
   assignees: () => [...disputeKeys.all, 'assignees'] as const,
@@ -26,17 +25,6 @@ export function useDisputesQuery (filter: MaybeRefOrGetter<DisputeFilter>, mine:
     getNextPageParam: last => last.nextCursor,
     enabled: computed(() => toValue(enabled)),
     retry: retryTransient,
-  })
-}
-
-// The sidebar badge. Callers pass `enabled` from dispute.handle.
-export function useUnresolvedDisputeCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: disputeKeys.unresolved(),
-    queryFn: () => disputeService.unresolvedCount(),
-    enabled: computed(() => toValue(enabled)),
-    refetchInterval: 60_000,
-    retry: false,
   })
 }
 

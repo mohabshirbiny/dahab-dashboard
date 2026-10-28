@@ -1,3 +1,4 @@
+import type { CustomerCounts } from './customer'
 import type { StatusVariant } from './status'
 
 export interface OverviewHeroStat {
@@ -77,4 +78,15 @@ export interface OverviewData {
   transactions: TransactionRow[] | null
   needsDecision: NeedsDecisionRow[] | null
   thisMonth: ThisMonth | null
+}
+
+// GET /dashboard/nav-counts: a count is null when the viewer lacks its permission.
+export interface NavCounts {
+  customersPending: number | null
+  customersByStatus: CustomerCounts | null
+  topupsOpen: number | null
+  listingsInReview: number | null
+  withdrawalsWaiting: number | null
+  disputesUnresolved: number | null
+  listingReportsOpen: number | null
 }

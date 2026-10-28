@@ -2,31 +2,59 @@
   <div class="d-page">
     <PageLead>Everything that needs a decision today, and where the money stands.</PageLead>
 
-    <template v-if="isLoading">
-      <div class="d-loading">Loading…</div>
-    </template>
+    <OverviewStats v-if="hero || stats.length > 0" :hero="hero" :stats="stats" />
 
-    <Panel v-else-if="isError">
-      <ErrorState message="The Overview figures could not be loaded." title="Could not load the Overview" @retry="refetch()" />
-    </Panel>
+    <!-- Each panel waits only for its own request: /overview, /wallets/overview and the gold price load apart. -->
+    <div class="d-split">
+      <div class="d-split__left">
+        <Panel v-if="isLoading">
+          <LoadingState />
+        </Panel>
 
-    <template v-else-if="data">
-      <OverviewStats :hero="hero" :stats="stats" />
+        <Panel v-else-if="isError">
+          <ErrorState message="The orders and the items waiting for a decision could not be loaded." title="Could not load the Overview" @retry="refetch()" />
+        </Panel>
 
-      <div class="d-split">
-        <div class="d-split__left">
+        <template v-else-if="data">
           <TransactionsPanel v-if="data.transactions" :rows="data.transactions" />
           <NeedsDecisionPanel v-if="data.needsDecision" :rows="data.needsDecision" />
-        </div>
-
-        <div class="d-split__right">
-          <CustomerLookupPanel />
-          <CustomerWalletsPanel v-if="wallets" :wallets="wallets" />
-          <GoldPriceNowPanel v-if="goldPrice" :price="goldPrice" />
-          <ThisMonthPanel v-if="data.thisMonth" :month="data.thisMonth" />
-        </div>
+        </template>
       </div>
-    </template>
+
+      <div class="d-split__right">
+        <CustomerLookupPanel />
+
+        <template v-if="canSeeWallets">
+          <Panel v-if="walletOverview.isLoading.value" title="Customer wallets">
+            <LoadingState />
+          </Panel>
+
+          <Panel v-else-if="walletOverview.isError.value" title="Customer wallets">
+            <ErrorState message="The wallet figures could not be loaded." title="Could not load the wallets" @retry="walletOverview.refetch()" />
+          </Panel>
+
+          <CustomerWalletsPanel v-else-if="wallets" :wallets="wallets" />
+        </template>
+
+        <template v-if="canSeePrices">
+          <Panel v-if="prices.isLoading.value" title="Gold price now">
+            <LoadingState />
+          </Panel>
+
+          <Panel v-else-if="prices.isError.value" title="Gold price now">
+            <ErrorState message="The gold price could not be loaded." title="Could not load the price" @retry="prices.refetch()" />
+          </Panel>
+
+          <GoldPriceNowPanel v-else-if="goldPrice" :price="goldPrice" />
+        </template>
+
+        <Panel v-if="isLoading && can(PERMISSIONS.orderView)" title="This month">
+          <LoadingState />
+        </Panel>
+
+        <ThisMonthPanel v-else-if="data?.thisMonth" :month="data.thisMonth" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -41,6 +69,7 @@
   import ThisMonthPanel from '@/components/dashboard/ThisMonthPanel.vue'
   import TransactionsPanel from '@/components/dashboard/TransactionsPanel.vue'
   import ErrorState from '@/components/ui/ErrorState.vue'
+  import LoadingState from '@/components/ui/LoadingState.vue'
   import PageLead from '@/components/ui/PageLead.vue'
   import Panel from '@/components/ui/Panel.vue'
   import { formatMoney } from '@/composables/useFormatters'
@@ -81,7 +110,8 @@
   })
 
   // Gold price now: the pricing page's figures (pricing.view).
-  const prices = useCurrentPricesQuery(() => can(PERMISSIONS.pricingView))
+  const canSeePrices = computed(() => can(PERMISSIONS.pricingView))
+  const prices = useCurrentPricesQuery(canSeePrices)
   const FEED: Record<string, { label: string, variant: 'ok' | 'bad' | 'off' }> = {
     healthy: { label: 'Healthy', variant: 'ok' },
     down: { label: 'Down', variant: 'bad' },
@@ -108,12 +138,6 @@
 <style lang="scss" scoped>
 .d-page {
   display: block;
-}
-.d-loading {
-  padding: 44px 20px;
-  text-align: center;
-  color: var(--ink-3);
-  font-size: 12.5px;
 }
 .d-split {
   display: grid;

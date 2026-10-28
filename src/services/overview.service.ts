@@ -1,4 +1,5 @@
-import type { NeedsDecisionRow, OverviewData, TransactionRow } from '@/types/overview'
+import type { CustomerCounts } from '@/types/customer'
+import type { NavCounts, NeedsDecisionRow, OverviewData, TransactionRow } from '@/types/overview'
 import type { StatusVariant } from '@/types/status'
 import { http } from '@/api/axios'
 import { endpoints } from '@/api/endpoints'
@@ -95,5 +96,31 @@ export async function getOverview (): Promise<OverviewData> {
           avgDaysToPaySellers: o.this_month.avg_days_to_pay_sellers,
         }
       : null,
+  }
+}
+
+// Backend shape of GET /dashboard/nav-counts: a key is absent when the viewer lacks its permission.
+interface ApiNavCounts {
+  customers_pending?: number
+  customers_by_status?: CustomerCounts
+  topups_open?: number
+  listings_in_review?: number
+  withdrawals_waiting?: number
+  disputes_unresolved?: number
+  listing_reports_open?: number
+}
+
+// GET /dashboard/nav-counts: the sidebar badges and the Users tabs in one request.
+export async function getNavCounts (): Promise<NavCounts> {
+  const { data } = await http.get<{ data: ApiNavCounts }>(endpoints.navCounts)
+  const c = data.data
+  return {
+    customersPending: c.customers_pending ?? null,
+    customersByStatus: c.customers_by_status ?? null,
+    topupsOpen: c.topups_open ?? null,
+    listingsInReview: c.listings_in_review ?? null,
+    withdrawalsWaiting: c.withdrawals_waiting ?? null,
+    disputesUnresolved: c.disputes_unresolved ?? null,
+    listingReportsOpen: c.listing_reports_open ?? null,
   }
 }

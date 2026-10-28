@@ -143,12 +143,6 @@ export const disputeService = {
     }
   },
 
-  // For the sidebar badge: open + passed on.
-  async unresolvedCount (): Promise<number> {
-    const page = await disputeService.list('unresolved', false, '', null, 1)
-    return page.counts.open + page.counts.passedOn
-  },
-
   async show (id: string): Promise<DisputeDetail> {
     const { data } = await http.get<ApiEnvelope<ApiDisputeDetail>>(endpoints.dispute(id))
     return toDisputeDetail(data.data)

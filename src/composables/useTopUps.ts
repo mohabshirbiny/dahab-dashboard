@@ -8,8 +8,6 @@ import { walletKeys } from './useWallet'
 export const topUpKeys = {
   all: ['topups'] as const,
   list: (query: TopUpListQuery) => [...topUpKeys.all, 'list', query] as const,
-  // Under 'list', so every action that refreshes the lists refreshes the badge too.
-  openCount: () => [...topUpKeys.all, 'list', 'open-count'] as const,
   one: (id: string) => [...topUpKeys.all, 'one', id] as const,
   receipt: (id: string) => [...topUpKeys.all, 'receipt', id] as const,
 }
@@ -23,19 +21,6 @@ export function useTopUpsQuery (query: MaybeRefOrGetter<TopUpListQuery>, enabled
     getNextPageParam: last => last.nextCursor,
     enabled: computed(() => toValue(enabled)),
     retry: retryTransient,
-  })
-}
-
-// The sidebar badge: transfers that still need staff action. Callers pass `enabled`
-// from topup.match, so staff without it never send the request.
-export function useOpenTopUpCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: topUpKeys.openCount(),
-    queryFn: () => topUpService.openCount(),
-    enabled: computed(() => toValue(enabled)),
-    // New notices arrive from customers, not from this screen.
-    refetchInterval: 60_000,
-    retry: false,
   })
 }
 

@@ -7,8 +7,6 @@ import { retryTransient } from './queryRetry'
 export const listingKeys = {
   all: ['listings'] as const,
   list: (queue: ListingQueue) => [...listingKeys.all, 'list', queue] as const,
-  // Under 'list', so every decision that refreshes the lists refreshes the badge too.
-  waitingCount: () => [...listingKeys.all, 'list', 'waiting-count'] as const,
   one: (id: string) => [...listingKeys.all, 'one', id] as const,
   media: (id: string, mediaId: string, use: 'thumb' | 'full') => [...listingKeys.all, 'media', id, mediaId, use] as const,
 }
@@ -22,19 +20,6 @@ export function useListingsQuery (queue: MaybeRefOrGetter<ListingQueue>) {
     initialPageParam: null as string | null,
     getNextPageParam: last => last.nextCursor,
     retry: retryTransient,
-  })
-}
-
-// The sidebar badge. Callers pass `enabled` from the listing permissions, so staff
-// without them never send the request.
-export function useWaitingListingCountQuery (enabled: MaybeRefOrGetter<boolean>) {
-  return useQuery({
-    queryKey: listingKeys.waitingCount(),
-    queryFn: () => listingService.waitingCount(),
-    enabled: computed(() => toValue(enabled)),
-    // New listings arrive from sellers, not from this screen.
-    refetchInterval: 60_000,
-    retry: false,
   })
 }
 
