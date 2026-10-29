@@ -31,7 +31,7 @@ export function useCustomerWalletQuery (id: MaybeRefOrGetter<string>, enabled: M
   })
 }
 
-// Oldest first; "Load more" follows the Backend's cursor.
+// Newest first; "Load more" follows the Backend's cursor.
 export function useWalletStatementQuery (query: MaybeRefOrGetter<StatementQuery | null>) {
   return useInfiniteQuery({
     queryKey: computed(() => walletKeys.statement({ ...(toValue(query) ?? ({} as StatementQuery)) })),

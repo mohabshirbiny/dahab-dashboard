@@ -1,6 +1,6 @@
 <template>
   <ol class="d-lh">
-    <li v-for="(entry, index) in history" :key="index" class="d-lh__row">
+    <li v-for="(entry, index) in newestFirst" :key="index" class="d-lh__row">
       <div class="d-lh__what">
         {{ entry.fromState === null ? 'Created' : listingStateMeta(entry.toState).label }}
         <span class="who2">· {{ entry.actor.type === 'staff' ? (entry.actor.name ?? 'Staff') : 'Seller' }} · {{ formatDateTime(entry.changedAt) }}</span>
@@ -13,12 +13,14 @@
 
 <script lang="ts" setup>
   import type { ListingHistoryEntry } from '@/types/listing'
+  import { computed } from 'vue'
   import { formatDateTime } from '@/composables/useFormatters'
   import { listingStateMeta } from '@/types/listing'
 
-  // Every move of a listing, oldest first, with who made it and what they wrote
-  // (Backend spec 010: listing_state_change).
-  defineProps<{ history: ListingHistoryEntry[] }>()
+  // Every move of a listing, newest first (the Backend sends them oldest first), with who
+  // made it and what they wrote (Backend spec 010: listing_state_change).
+  const props = defineProps<{ history: ListingHistoryEntry[] }>()
+  const newestFirst = computed(() => props.history.map((_, i, all) => all[all.length - 1 - i]!))
 
   // The suspension hold writes fixed notes; say them in plain words.
   function noteOf (entry: ListingHistoryEntry): string | null {

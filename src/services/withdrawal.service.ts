@@ -38,6 +38,7 @@ interface ApiWithdrawal {
   } | []
   released_at: string | null
   bank_txn_number: string | null
+  paid_from?: { id: number, label: string | null } | null
   transfer_reference: string | null
   value_date: string | null
   rejection: { reason: WithdrawalRejectReason, note: string } | null
@@ -108,6 +109,7 @@ function toWithdrawal (w: ApiWithdrawal): Withdrawal {
       : null,
     releasedAt: w.released_at,
     bankTxnNumber: w.bank_txn_number,
+    paidFrom: w.paid_from ?? null,
     transferReference: w.transfer_reference,
     valueDate: w.value_date,
     rejection: w.rejection,
@@ -134,7 +136,7 @@ export type WithdrawalAction
   = | { kind: 'review' }
     | { kind: 'hold', reason: WithdrawalHoldReason, message: string, note: string }
     | { kind: 'unhold', note?: string }
-    | { kind: 'release', bankTxnNumber: string, transferReference: string, valueDate: string }
+    | { kind: 'release', bankTxnNumber: string, transferReference: string, valueDate: string, paidFromAccountId: number }
     | { kind: 'reject', reason: WithdrawalRejectReason, note: string }
 
 function actionBody (action: WithdrawalAction): Record<string, unknown> {
@@ -142,7 +144,8 @@ function actionBody (action: WithdrawalAction): Record<string, unknown> {
     case 'hold': { return { reason: action.reason, message: action.message, note: action.note } }
     case 'unhold': { return action.note ? { note: action.note } : {} }
     case 'release': {
-      return { bank_txn_number: action.bankTxnNumber, transfer_reference: action.transferReference || null, value_date: action.valueDate || null }
+      return { bank_txn_number: action.bankTxnNumber, transfer_reference: action.transferReference || null, value_date: action.valueDate || null,
+        paid_from_account_id: action.paidFromAccountId }
     }
     case 'reject': { return { reason: action.reason, note: action.note } }
   }

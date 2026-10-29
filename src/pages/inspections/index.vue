@@ -15,7 +15,7 @@
         <ErrorState :message="orderErrorMessage(work.error.value)" :retryable="errorCodeOf(work.error.value) !== 'forbidden'" title="Could not load the work list" @retry="work.refetch()" />
       </Panel>
 
-      <Panel v-else subtitle="Oldest first" title="At the branch">
+      <Panel v-else subtitle="Newest first" title="At the branch">
         <EmptyState v-if="workRows.length === 0" title="Nothing waiting at the branch" />
 
         <template v-else>

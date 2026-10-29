@@ -3,6 +3,7 @@
     <template #head>
       <th>When</th>
       <th>What</th>
+      <th>Bank</th>
       <th class="r">In</th>
       <th class="r">Out</th>
       <th class="r">Cash after</th>
@@ -16,6 +17,9 @@
         {{ title(r) }}
         <div class="who2">{{ detail(r) }}</div>
       </td>
+
+      <!-- Owner notes of 2026-10-29: the Dahab account; none for money recorded before banks were named. -->
+      <td>{{ r.bank?.label ?? 'Not assigned' }}</td>
 
       <td class="r mono">{{ r.direction === 'in' ? formatMoney(r.amount) : '—' }}</td>
       <td class="r mono">{{ r.direction === 'out' ? formatMoney(r.amount) : '—' }}</td>

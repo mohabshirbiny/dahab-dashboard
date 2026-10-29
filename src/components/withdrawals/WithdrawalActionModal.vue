@@ -62,6 +62,11 @@
       <template v-else-if="kind === 'release'">
         <NoteBanner class="d-wam__banner" variant="info">Send the transfer at the bank first, then record its details here so the two records match.</NoteBanner>
 
+        <!-- Owner notes of 2026-10-29: the Dahab account the transfer left. -->
+        <FormField v-slot="{ controlId }" :error="paidFromError" label="Paid from">
+          <DSelect :id="controlId" v-model="paidFrom" :disabled="busy || banks.isLoading.value" :options="bankOptions" />
+        </FormField>
+
         <FormField v-slot="{ controlId, describedBy, invalid }" :error="bankTxnError" label="Bank transaction number">
           <DInput
             :id="controlId"
@@ -139,6 +144,7 @@
   import DTextarea from '@/components/ui/DTextarea.vue'
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
+  import { useBanksQuery } from '@/composables/useFinance'
   import { formatMoney } from '@/composables/useFormatters'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { useToast } from '@/composables/useToast'
@@ -180,11 +186,20 @@
   const bankTxn = ref('')
   const reference = ref('')
   const valueDate = ref('')
+  const paidFrom = ref('')
   const submitted = ref(false)
+
+  const banks = useBanksQuery(() => props.kind === 'release')
+  const bankOptions = computed(() => [
+    { value: '', label: 'Pick the account' },
+    ...(banks.data.value ?? []).filter(b => b.isActive).map(b => ({ value: String(b.id), label: `${b.label}${b.bankName && b.bankName !== b.label ? ` · ${b.bankName}` : ''}` })),
+  ])
 
   const messageError = computed(() => (submitted.value ? textError(message.value, 3, 500, 'what the customer is told') : undefined) ?? fieldError(mutation.error.value, 'message'))
   const noteError = computed(() => (submitted.value ? textError(note.value, 3, 1000, 'a note') : undefined) ?? fieldError(mutation.error.value, 'note'))
   const bankTxnError = computed(() => (submitted.value ? textError(bankTxn.value, 3, 64, 'the bank transaction number') : undefined) ?? fieldError(mutation.error.value, 'bank_txn_number'))
+  const paidFromError = computed(() => (submitted.value && paidFrom.value === '' ? 'Pick the account the transfer was sent from.' : undefined)
+    ?? fieldError(mutation.error.value, 'paid_from_account_id'))
   const submitError = computed(() => withdrawalFormError(mutation.error.value))
 
   watch(() => [props.kind, props.withdrawal.id], () => {
@@ -193,6 +208,7 @@
     message.value = 'We need to check something before this goes out. We will come back to you within one working day.'
     note.value = ''
     bankTxn.value = ''
+    paidFrom.value = ''
     reference.value = props.withdrawal.number
     valueDate.value = new Date().toISOString().slice(0, 10)
     submitted.value = false
@@ -213,8 +229,8 @@
       }
       case 'unhold': { return { kind: 'unhold', note: note.value.trim() || undefined } }
       case 'release': {
-        if (bankTxnError.value) return null
-        return { kind: 'release', bankTxnNumber: bankTxn.value.trim(), transferReference: reference.value.trim(), valueDate: valueDate.value }
+        if (bankTxnError.value || paidFromError.value) return null
+        return { kind: 'release', bankTxnNumber: bankTxn.value.trim(), transferReference: reference.value.trim(), valueDate: valueDate.value, paidFromAccountId: Number(paidFrom.value) }
       }
       case 'reject': {
         if (noteError.value) return null

@@ -113,7 +113,7 @@ function toCustomerFile (file: ApiCustomerFile): CustomerFile {
 
 export const customerService = {
   // GET /dashboard/customers?status=&per_page=&page=   (customer.view)
-  // The Backend filters by status only and sorts oldest first.
+  // The Backend filters by status only and sorts newest first.
   async listCustomers (params: CustomerListParams): Promise<CustomerListResult> {
     const { data } = await http.get<ApiPaginated<ApiCustomerVerification>>(endpoints.customers, {
       params: { status: params.status, per_page: params.pageSize, page: params.page },

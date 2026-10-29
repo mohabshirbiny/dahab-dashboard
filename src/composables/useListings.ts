@@ -11,7 +11,7 @@ export const listingKeys = {
   media: (id: string, mediaId: string, use: 'thumb' | 'full') => [...listingKeys.all, 'media', id, mediaId, use] as const,
 }
 
-// Waiting listings oldest first, the other queues most recent first; "Load more"
+// Every queue most recent first; "Load more"
 // follows the Backend's cursor.
 export function useListingsQuery (queue: MaybeRefOrGetter<ListingQueue>) {
   return useInfiniteQuery({

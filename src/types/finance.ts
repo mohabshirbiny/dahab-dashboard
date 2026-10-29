@@ -92,6 +92,18 @@ export const BANK_MOVEMENT_KINDS: ReadonlyArray<{ value: BankMovementKind, label
   { value: 'other', label: 'Something else', usually: 'out' },
 ]
 
+// A Dahab account (a receiving account) as the bank money came into or left
+// (owner notes of 2026-10-29: GET /dashboard/banks).
+export interface BankRef { id: number, label: string | null }
+
+export interface BankChoice {
+  id: number
+  label: string
+  bankName: string | null
+  method: 'bank_transfer' | 'instapay' | 'wallet'
+  isActive: boolean
+}
+
 export interface BankMovement {
   id: string
   number: string
@@ -105,6 +117,9 @@ export interface BankMovement {
   recordedBy: { id: string, name: string | null }
   recordedAt: string
   postsToLedger: boolean
+  // The account (an own-account transfer: the one it left; null: cash not assigned, or recorded before).
+  bank: BankRef | null
+  toBank: BankRef | null
 }
 
 export interface BankMovementPage {
@@ -120,6 +135,8 @@ export interface RecordBankMovementInput {
   occurredOn: string
   reason: string
   proofUploadToken: string | null
+  receivingAccountId: number | null
+  toReceivingAccountId: number | null
 }
 
 export type BankBookSource
@@ -138,6 +155,7 @@ export interface BankBookRow {
   cashAfter: string
   actor: { type: 'staff' | 'system' | 'customer', name: string | null }
   source: BankBookSource
+  bank: BankRef | null
 }
 
 export interface BankBookSummary { opening: string, in: string, out: string, closing: string }
@@ -177,12 +195,33 @@ export interface DailyClose {
   savedAt: string
   closedBy: { id: string, name: string | null } | null
   closedAt: string | null
+  // One line per account; the line with no account is the cash not assigned to one. Empty before 2026-10-29.
+  banks: DailyCloseLine[]
+}
+
+export interface DailyCloseLine {
+  receivingAccountId: number | null
+  label: string | null
+  statementBalance: string | null
+  books: string
+  difference: string
+}
+
+// An account the close asks a balance for, with its books at the cut-off.
+export interface CloseBank {
+  receivingAccountId: number
+  label: string
+  bankName: string | null
+  isActive: boolean
+  books: string
 }
 
 export interface CloseDay {
   date: string
   ended: boolean
   books: DayBooks
+  banks: CloseBank[]
+  notAssigned: string
   close: DailyClose | null
   canClose: boolean
 }

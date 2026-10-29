@@ -34,6 +34,7 @@
       <template v-if="withdrawal.releasedAt">
         <div class="d-wd__sub">Released</div>
         <KeyValueRow label="When" :value="formatDateTime(withdrawal.releasedAt)" />
+        <KeyValueRow label="Paid from" :value="withdrawal.paidFrom?.label ?? '—'" />
         <KeyValueRow label="Bank transaction" :value="withdrawal.bankTxnNumber ?? '—'" />
         <KeyValueRow label="Reference" :value="withdrawal.transferReference ?? '—'" />
         <KeyValueRow label="Value date" :value="withdrawal.valueDate ? formatDate(withdrawal.valueDate) : '—'" />

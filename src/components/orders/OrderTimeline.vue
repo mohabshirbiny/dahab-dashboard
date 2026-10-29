@@ -1,6 +1,6 @@
 <template>
   <ol class="d-otl">
-    <li v-for="(e, i) in events" :key="`${e.event}-${e.at}-${i}`" class="d-otl__item">
+    <li v-for="(e, i) in newestFirst" :key="`${e.event}-${e.at}-${i}`" class="d-otl__item">
       <div class="d-otl__when mono">{{ formatDateTime(e.at) }}</div>
 
       <div class="d-otl__what">
@@ -14,12 +14,15 @@
 
 <script lang="ts" setup>
   import type { OrderTimelineEvent } from '@/types/order'
+  import { computed } from 'vue'
   import { formatDateTime, formatMoney } from '@/composables/useFormatters'
   import { DEADLINE_LABELS, orderStateMeta, outcomeMeta } from '@/types/order'
 
   // An order's story (Backend spec 012 OrderTimeline, staff view): every move, result,
-  // decision, branch change, extension and the return of the piece, oldest first.
-  defineProps<{ events: OrderTimelineEvent[] }>()
+  // decision, branch change, extension and the return of the piece, newest first (the Backend
+  // sends them oldest first).
+  const props = defineProps<{ events: OrderTimelineEvent[] }>()
+  const newestFirst = computed(() => props.events.map((_, i, all) => all[all.length - 1 - i]!))
 
   const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 

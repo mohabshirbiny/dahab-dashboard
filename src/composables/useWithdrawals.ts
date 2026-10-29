@@ -13,7 +13,7 @@ export const withdrawalKeys = {
   accounts: (state: PayoutAccountState, q: string) => [...withdrawalKeys.all, 'accounts', state, q] as const,
 }
 
-// Oldest first; "Load more" follows the Backend's cursor.
+// Newest first; "Load more" follows the Backend's cursor.
 export function useWithdrawalsQuery (query: MaybeRefOrGetter<WithdrawalListQuery>, enabled: MaybeRefOrGetter<boolean> = true) {
   return useInfiniteQuery({
     queryKey: computed(() => withdrawalKeys.list({ ...toValue(query) })),

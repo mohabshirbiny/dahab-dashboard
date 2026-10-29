@@ -140,6 +140,8 @@ export const endpoints = {
   walletAdjustments: '/dashboard/wallet-adjustments',
   customerWalletAdjust: (customerId: string) => `/dashboard/customers/${encodeURIComponent(customerId)}/wallet-adjustments`,
   staffUploads: '/dashboard/uploads',
+  // Dahab's accounts as the money's banks (owner notes of 2026-10-29): the finance pickers.
+  banks: '/dashboard/banks',
   bankMovements: '/dashboard/bank-movements',
   bankMovementsExport: '/dashboard/bank-movements/export',
   bankMovementProof: (id: string) => `/dashboard/bank-movements/${encodeURIComponent(id)}/proof`,
