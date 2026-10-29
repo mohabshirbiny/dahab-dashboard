@@ -154,7 +154,7 @@ export interface CustomerSessionsResult {
   total: number
 }
 
-// The Backend lists one status at a time, oldest first.
+// The Backend lists one status at a time, newest first.
 export interface CustomerFilters {
   status: CustomerStatus
   page: number

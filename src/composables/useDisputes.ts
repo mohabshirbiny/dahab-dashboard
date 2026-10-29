@@ -16,7 +16,7 @@ export const disputeKeys = {
   assignees: () => [...disputeKeys.all, 'assignees'] as const,
 }
 
-// Oldest first; "Load more" follows the Backend's cursor.
+// Newest first; "Load more" follows the Backend's cursor.
 export function useDisputesQuery (filter: MaybeRefOrGetter<DisputeFilter>, mine: MaybeRefOrGetter<boolean>, q: MaybeRefOrGetter<string>, enabled: MaybeRefOrGetter<boolean> = true) {
   return useInfiniteQuery({
     queryKey: computed(() => disputeKeys.list(toValue(filter), toValue(mine), toValue(q))),

@@ -569,7 +569,7 @@ export const orderService = {
     return response.data
   },
 
-  // GET /dashboard/extension-requests   (order.extend_deadline | order.view) — oldest first.
+  // GET /dashboard/extension-requests   (order.extend_deadline | order.view) — newest first.
   async extensionRequests (state: ExtensionRequestState | 'all', month: string | null, cursor: string | null, perPage = 25): Promise<ExtensionRequestPage> {
     const { data } = await http.get<ApiPage<ApiExtensionRequest>>(endpoints.extensionRequests, {
       params: { state, month: month ?? undefined, cursor: cursor ?? undefined, per_page: perPage },

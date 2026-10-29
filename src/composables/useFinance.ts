@@ -14,6 +14,18 @@ export const financeKeys = {
   closes: (from: string, to: string) => [...financeKeys.all, 'closes', from, to] as const,
   adjustments: (customerId: string | null) => [...financeKeys.all, 'adjustments', customerId ?? 'all'] as const,
   compensationOrders: (customerId: string) => [...financeKeys.all, 'compensation-orders', customerId] as const,
+  banks: () => [...financeKeys.all, 'banks'] as const,
+}
+
+// Dahab's accounts to pick the bank from (owner notes of 2026-10-29).
+export function useBanksQuery (enabled: MaybeRefOrGetter<boolean> = true) {
+  return useQuery({
+    queryKey: financeKeys.banks(),
+    queryFn: () => financeService.banks(),
+    enabled: computed(() => toValue(enabled)),
+    staleTime: 60_000,
+    retry: retryTransient,
+  })
 }
 
 // Save a CSV the Backend made (it records each export).
@@ -150,8 +162,8 @@ export function useRecentClosesQuery (from: MaybeRefOrGetter<string>, to: MaybeR
 export function useCloseDay () {
   const refresh = useRefreshMoney()
   return useMutation({
-    mutationFn: (input: { date: string, bankBalance: string, explanation: string | null, idempotencyKey: string }) =>
-      financeService.closeDay(input.date, input.bankBalance, input.explanation, input.idempotencyKey),
+    mutationFn: (input: { date: string, balances: Array<{ receivingAccountId: number, balance: string }>, explanation: string | null, idempotencyKey: string }) =>
+      financeService.closeDay(input.date, input.balances, input.explanation, input.idempotencyKey),
     onSuccess: refresh,
   })
 }

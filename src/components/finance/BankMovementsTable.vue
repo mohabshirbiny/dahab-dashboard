@@ -3,6 +3,7 @@
     <template #head>
       <th>Date</th>
       <th>What</th>
+      <th>Bank</th>
       <th class="r">In</th>
       <th class="r">Out</th>
       <th>By</th>
@@ -20,6 +21,11 @@
           <template v-if="!m.postsToLedger"> · for the record only</template>
           <template v-if="m.hasProof"> · <a href="#" @click.prevent="emit('proof', m.id)">Proof</a></template>
         </div>
+      </td>
+
+      <td>
+        {{ m.bank?.label ?? (m.toBank ? 'Not assigned' : '—') }}
+        <div v-if="m.toBank" class="who2">to {{ m.toBank.label }}</div>
       </td>
 
       <td class="r mono">{{ m.direction === 'in' ? formatMoney(m.amount) : '—' }}</td>

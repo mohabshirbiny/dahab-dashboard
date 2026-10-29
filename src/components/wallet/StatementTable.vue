@@ -5,6 +5,8 @@
       <th>What</th>
       <!-- An order number, or a top-up's TOP-n (Backend spec 009). -->
       <th>Reference</th>
+      <!-- Owner notes of 2026-10-29: the bank in its own column — Dahab's account the money came into, or the customer's bank it went to. -->
+      <th>Bank</th>
       <th class="r">Before</th>
       <th class="r">In</th>
       <th class="r">Out</th>
@@ -31,12 +33,21 @@
           <div v-if="row.wallet" class="who2">Wallet {{ row.wallet.displayRef }}{{ row.wallet.fullName ? ` · ${row.wallet.fullName}` : '' }}</div>
           <div v-if="row.movedToHeld && row.movedToHeld !== '0.0000'" class="who2">{{ movedNote(row.movedToHeld) }}</div>
           <div v-if="row.heldAfter !== null && isHoldMove(row.eventKind)" class="who2">Held after: {{ formatMoney(row.heldAfter) }}</div>
-          <div v-if="row.bank" class="who2">{{ row.bank.direction === 'in' ? 'Received in' : 'Paid to' }} {{ row.bank.name }}</div>
           <div v-if="row.memo" class="who2">{{ row.memo }}</div>
           <div v-if="row.actor.type !== 'customer' && row.actor.name" class="who2">By {{ row.actor.name }}</div>
         </td>
 
         <td class="mono">{{ row.reference ?? '—' }}</td>
+
+        <td>
+          <template v-if="row.bank">
+            {{ row.bank.name }}
+            <div class="who2">{{ row.bank.direction === 'in' ? 'Received in' : 'Paid to' }}</div>
+          </template>
+
+          <template v-else>—</template>
+        </td>
+
         <td class="r mono d-st__muted">{{ formatMoney(row.before) }}</td>
         <td class="r mono d-st__in">{{ dash(row.in) }}</td>
         <td class="r mono">{{ dash(row.out) }}</td>
@@ -55,6 +66,7 @@
         <td>{{ grain === 'day' ? formatDate(row.period) : monthLabel(row.period) }}</td>
         <td>{{ row.count }} {{ row.count === 1 ? 'movement' : 'movements' }}</td>
         <td class="mono">—</td>
+        <td>—</td>
         <td class="r mono d-st__muted">{{ formatMoney(row.before) }}</td>
         <td class="r mono d-st__in">{{ dash(row.in) }}</td>
         <td class="r mono">{{ dash(row.out) }}</td>

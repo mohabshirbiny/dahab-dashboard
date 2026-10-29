@@ -6,7 +6,16 @@
       </FormField>
 
       <p v-if="kind === 'other'" class="who2">If you pick something else, write what it was in the box below. That text is what you will read a year from now.</p>
-      <p v-if="kind === 'own_transfer'" class="who2">Moving money between Dahab's own accounts changes nothing in the books. It is kept for the record only.</p>
+      <p v-if="kind === 'own_transfer'" class="who2">Moving money between Dahab's own accounts changes nothing in the total. It moves the money from one account to the other in each account's books.</p>
+
+      <!-- Owner notes of 2026-10-29: every movement names Dahab's account; a transfer names both. -->
+      <FormField v-slot="{ controlId }" :error="bankMessage" :label="kind === 'own_transfer' ? 'From the account' : 'Which account'">
+        <DSelect :id="controlId" v-model="bankId" :disabled="busy || banks.isLoading.value" :options="kind === 'own_transfer' ? fromOptions : bankOptions" />
+      </FormField>
+
+      <FormField v-if="kind === 'own_transfer'" v-slot="{ controlId }" :error="toBankMessage" label="To the account">
+        <DSelect :id="controlId" v-model="toBankId" :disabled="busy || banks.isLoading.value" :options="bankOptions" />
+      </FormField>
 
       <FormField v-slot="{ controlId, describedBy, invalid }" :error="amountMessage" label="Amount in EGP">
         <DInput
@@ -20,7 +29,7 @@
         />
       </FormField>
 
-      <FormField v-slot="{ controlId }" label="In or out">
+      <FormField v-if="kind !== 'own_transfer'" v-slot="{ controlId }" label="In or out">
         <DSelect :id="controlId" v-model="direction" :disabled="busy" :options="DIRECTIONS" />
       </FormField>
 
@@ -78,7 +87,7 @@
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import Panel from '@/components/ui/Panel.vue'
-  import { useRecordMovement } from '@/composables/useFinance'
+  import { useBanksQuery, useRecordMovement } from '@/composables/useFinance'
   import { formatMoney } from '@/composables/useFormatters'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
   import { useToast } from '@/composables/useToast'
@@ -86,7 +95,8 @@
   import { BANK_MOVEMENT_KINDS } from '@/types/finance'
   import { amountError, financeFormError, lengthError } from './financeErrors'
 
-  // Money in or out of Dahab's bank outside the app (Backend spec 015 FR-010, bank.record).
+  // Money in or out of Dahab's bank outside the app (Backend spec 015 FR-010, bank.record), naming
+  // the account it used (owner notes of 2026-10-29).
   const DIRECTIONS: ReadonlyArray<{ value: 'in' | 'out', label: string }> = [
     { value: 'out', label: 'Out of the account' },
     { value: 'in', label: 'Into the account' },
@@ -101,6 +111,16 @@
   const proof = ref<File | null>(null)
   const fileInput = ref<HTMLInputElement | null>(null)
   const submitted = ref(false)
+  // Select values are strings; '' is nothing picked, 'none' (a transfer only) is cash not yet assigned to an account.
+  const bankId = ref('')
+  const toBankId = ref('')
+
+  const banks = useBanksQuery()
+  const bankOptions = computed(() => [
+    { value: '', label: 'Pick an account' },
+    ...(banks.data.value ?? []).map(b => ({ value: String(b.id), label: `${b.label}${b.bankName && b.bankName !== b.label ? ` · ${b.bankName}` : ''}${b.isActive ? '' : ' (not in use)'}` })),
+  ])
+  const fromOptions = computed(() => [...bankOptions.value, { value: 'none', label: 'Not assigned yet (from before banks were named)' }])
 
   watch(kind, value => {
     direction.value = BANK_MOVEMENT_KINDS.find(k => k.value === value)?.usually ?? 'out'
@@ -114,6 +134,10 @@
   const amountMessage = computed(() => (submitted.value ? amountError(amount.value) : undefined) ?? fieldError(mutation.error.value, 'amount'))
   const reasonMessage = computed(() => (submitted.value ? lengthError(reason.value, 10, 500, 'what it was for') : undefined) ?? fieldError(mutation.error.value, 'reason'))
   const proofMessage = computed(() => (proof.value && proof.value.size > MAX_BYTES ? 'The file is over 10 MB.' : undefined) ?? fieldError(mutation.error.value, 'file'))
+  const bankMessage = computed(() => (submitted.value && bankId.value === '' ? 'Pick the account.' : undefined) ?? fieldError(mutation.error.value, 'receiving_account_id'))
+  const toBankMessage = computed(() => (submitted.value && kind.value === 'own_transfer' && (toBankId.value === '' || toBankId.value === bankId.value)
+    ? 'Pick the account the money reached, not the one it left.'
+    : undefined) ?? fieldError(mutation.error.value, 'to_receiving_account_id'))
   const submitError = computed(() => financeFormError(mutation.error.value))
 
   function onFile (event: Event) {
@@ -123,12 +147,21 @@
   async function onSubmit () {
     if (busy.value) return
     submitted.value = true
-    if (amountMessage.value || reasonMessage.value || proofMessage.value) return
-    const body = { kind: kind.value, direction: direction.value, amount: amount.value.trim(), occurredOn: occurredOn.value, reason: reason.value.trim() }
+    if (amountMessage.value || reasonMessage.value || proofMessage.value || bankMessage.value || toBankMessage.value) return
+    const own = kind.value === 'own_transfer'
+    const body = {
+      kind: kind.value,
+      direction: own ? 'out' as const : direction.value,
+      amount: amount.value.trim(),
+      occurredOn: occurredOn.value,
+      reason: reason.value.trim(),
+      receivingAccountId: bankId.value === 'none' || bankId.value === '' ? null : Number(bankId.value),
+      toReceivingAccountId: own ? Number(toBankId.value) : null,
+    }
     try {
       await mutation.mutateAsync({ body, proof: proof.value, idempotencyKey: idempotency.keyFor({ ...body, proof: proof.value?.name ?? null }) })
       idempotency.reset()
-      toast.ok(`Recorded: ${direction.value === 'in' ? 'in' : 'out'} ${formatMoney(body.amount)} EGP.`)
+      toast.ok(own ? `Recorded: ${formatMoney(body.amount)} EGP moved between accounts.` : `Recorded: ${direction.value === 'in' ? 'in' : 'out'} ${formatMoney(body.amount)} EGP.`)
       amount.value = ''
       reason.value = ''
       proof.value = null

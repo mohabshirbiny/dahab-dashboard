@@ -67,7 +67,7 @@
   import PayoutAccountModal from './PayoutAccountModal.vue'
   import { withdrawalErrorMessage } from './withdrawalErrors'
 
-  // Payout accounts to check (Backend spec 013 US2, payout_account.verify): oldest first.
+  // Payout accounts to check (Backend spec 013 US2, payout_account.verify): newest first.
   const list = usePayoutAccountsQuery('pending_review', '')
   const rows = computed(() => list.data.value?.pages.flatMap(p => p.rows) ?? [])
   const waiting = computed(() => list.data.value?.pages[0]?.waiting ?? 0)

@@ -125,7 +125,7 @@ const keyHeader = (idempotencyKey: string) => ({ headers: { 'Idempotency-Key': i
 // with money or a suspension also needs order.refund / compensation.pay / customer.suspend.
 // Every action sends the caller's Idempotency-Key.
 export const disputeService = {
-  // GET /dashboard/disputes — oldest first.
+  // GET /dashboard/disputes — newest first.
   async list (filter: DisputeFilter, assignedToMe: boolean, q: string, cursor: string | null, perPage = 25): Promise<DisputePage> {
     const { data } = await http.get<ApiDisputePage>(endpoints.disputes, {
       params: {

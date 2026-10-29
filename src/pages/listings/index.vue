@@ -58,7 +58,7 @@
   // each decision needs its own, and the Backend says which apply (can*).
   // The queue and the open listing live in the address, so a link reopens the same view.
   const QUEUES: Record<ListingQueue, { title: string, subtitle: string, empty: string }> = {
-    in_review: { title: 'Waiting for review', subtitle: 'Oldest first', empty: 'Nothing is waiting for review' },
+    in_review: { title: 'Waiting for review', subtitle: 'Newest first', empty: 'Nothing is waiting for review' },
     changes_requested: { title: 'Changes asked', subtitle: 'Waiting for the seller', empty: 'No listing is waiting for its seller' },
     live: { title: 'Live on the market', subtitle: 'Most recent first', empty: 'Nothing is live' },
     reserved: { title: 'Buyers in line', subtitle: 'Most recent first', empty: 'No piece has buyers in line' },

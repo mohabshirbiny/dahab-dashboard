@@ -1,5 +1,5 @@
 <template>
-  <Panel subtitle="Oldest first" title="Needs a decision">
+  <Panel subtitle="Newest first" title="Needs a decision">
     <EmptyState v-if="rows.length === 0" title="Nothing is waiting on a decision" />
 
     <DataTable v-else>

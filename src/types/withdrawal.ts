@@ -61,6 +61,8 @@ export interface Withdrawal {
   signals: WithdrawalSignals | null
   releasedAt: string | null
   bankTxnNumber: string | null
+  // Owner notes of 2026-10-29: the Dahab account the transfer left.
+  paidFrom: { id: number, label: string | null } | null
   transferReference: string | null
   valueDate: string | null
   rejection: { reason: WithdrawalRejectReason, note: string } | null

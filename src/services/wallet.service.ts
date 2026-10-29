@@ -210,7 +210,7 @@ export const walletService = {
     }
   },
 
-  // GET /dashboard/wallet-statement — oldest first, keyset pages. The Backend
+  // GET /dashboard/wallet-statement — newest first, keyset pages. The Backend
   // audits the first page of a one-customer statement.
   async statement (query: StatementQuery, cursor: string | null, perPage = 50): Promise<StatementPage> {
     const { data } = await http.get<ApiStatementPage>(endpoints.walletStatement, {

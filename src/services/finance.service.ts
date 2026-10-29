@@ -3,9 +3,11 @@ import type {
   BankBookPage,
   BankBookRow,
   BankBookSource,
+  BankChoice,
   BankMovement,
   BankMovementKind,
   BankMovementPage,
+  BankRef,
   CloseDay,
   Compensation,
   CompensationOrder,
@@ -72,7 +74,13 @@ interface ApiMovement {
   recorded_by: { id: string, name: string | null }
   recorded_at: string
   posts_to_ledger: boolean
+  bank?: ApiBank | null
+  to_bank?: ApiBank | null
 }
+
+interface ApiBank { id: number, label: string | null }
+
+const toBank = (b: ApiBank | null | undefined): BankRef | null => (b ? { id: b.id, label: b.label } : null)
 
 interface ApiBookRow {
   ledger_txn_id: string
@@ -83,6 +91,7 @@ interface ApiBookRow {
   cash_after: string
   actor: { type: 'staff' | 'system' | 'customer', name: string | null }
   source: Record<string, unknown> & { type: string }
+  bank?: ApiBank | null
 }
 
 interface ApiClose {
@@ -102,6 +111,7 @@ interface ApiClose {
   saved_at: string
   closed_by: { id: string, name: string | null } | null
   closed_at: string | null
+  banks?: Array<{ receiving_account_id: number | null, label: string | null, statement_balance: string | null, books: string, difference: string }>
 }
 
 interface ApiCompensationPage {
@@ -165,6 +175,8 @@ function toMovement (m: ApiMovement): BankMovement {
     recordedBy: m.recorded_by,
     recordedAt: m.recorded_at,
     postsToLedger: m.posts_to_ledger,
+    bank: toBank(m.bank),
+    toBank: toBank(m.to_bank),
   }
 }
 
@@ -199,6 +211,7 @@ function toBookRow (r: ApiBookRow): BankBookRow {
     cashAfter: r.cash_after,
     actor: r.actor,
     source: toSource(r.source),
+    bank: toBank(r.bank),
   }
 }
 
@@ -220,6 +233,9 @@ function toClose (c: ApiClose): DailyClose {
     savedAt: c.saved_at,
     closedBy: c.closed_by,
     closedAt: c.closed_at,
+    banks: (c.banks ?? []).map(l => ({
+      receivingAccountId: l.receiving_account_id, label: l.label, statementBalance: l.statement_balance, books: l.books, difference: l.difference,
+    })),
   }
 }
 
@@ -297,6 +313,7 @@ export const financeService = {
     const { data } = await http.post<{ data: ApiMovement }>(endpoints.bankMovements, {
       kind: input.kind, direction: input.direction, amount: input.amount, occurred_on: input.occurredOn, reason: input.reason,
       proof_upload_token: input.proofUploadToken,
+      receiving_account_id: input.receivingAccountId, to_receiving_account_id: input.kind === 'own_transfer' ? input.toReceivingAccountId : undefined,
     }, keyHeader(idempotencyKey))
     return toMovement(data.data)
   },
@@ -328,9 +345,23 @@ export const financeService = {
     return toExport(await http.get<Blob>(endpoints.bankBookExport, { params: { from: blank(from), to: blank(to) }, responseType: 'blob' }), 'bank-book.csv')
   },
 
+  // GET /dashboard/banks   (bank.record, wallet.view, withdrawal.release or day.close)
+  async banks (): Promise<BankChoice[]> {
+    const { data } = await http.get<{ data: Array<{ id: number, label: string, bank_name: string | null, method: BankChoice['method'], is_active: boolean }> }>(endpoints.banks)
+    return data.data.map(b => ({ id: b.id, label: b.label, bankName: b.bank_name, method: b.method, isActive: b.is_active }))
+  },
+
   // GET /dashboard/daily-close   (day.close or wallet.view)
   async day (date: string | null): Promise<CloseDay> {
-    const { data } = await http.get<{ data: { date: string, ended: boolean, books: Record<string, string>, close: ApiClose | null, can_close: boolean } }>(
+    const { data } = await http.get<{ data: {
+      date: string
+      ended: boolean
+      books: Record<string, string>
+      banks?: Array<{ receiving_account_id: number, label: string, bank_name: string | null, is_active: boolean, books: string }>
+      not_assigned?: string
+      close: ApiClose | null
+      can_close: boolean
+    } }>(
       endpoints.dailyClose, { params: { date: date ?? undefined } })
     const b = data.data.books
     return {
@@ -341,6 +372,8 @@ export const financeService = {
         customerLiability: b.customer_liability ?? '0', dahabWallet: b.dahab_wallet ?? '0', escrow: b.escrow ?? '0',
         vatPayable: b.vat_payable ?? '0', movementsIn: b.movements_in ?? '0', movementsOut: b.movements_out ?? '0',
       },
+      banks: (data.data.banks ?? []).map(b => ({ receivingAccountId: b.receiving_account_id, label: b.label, bankName: b.bank_name, isActive: b.is_active, books: b.books })),
+      notAssigned: data.data.not_assigned ?? '0.0000',
       close: data.data.close ? toClose(data.data.close) : null,
       canClose: data.data.can_close,
     }
@@ -353,9 +386,10 @@ export const financeService = {
   },
 
   // POST /dashboard/daily-close   (day.close)
-  async closeDay (date: string, bankBalance: string, explanation: string | null, idempotencyKey: string): Promise<{ state: 'locked' | 'saved', close: DailyClose }> {
+  // One statement balance per account (owner notes of 2026-10-29).
+  async closeDay (date: string, balances: Array<{ receivingAccountId: number, balance: string }>, explanation: string | null, idempotencyKey: string): Promise<{ state: 'locked' | 'saved', close: DailyClose }> {
     const { data } = await http.post<{ data: { state: 'locked' | 'saved', close: ApiClose } }>(endpoints.dailyClose,
-      { date, bank_balance: bankBalance, explanation }, keyHeader(idempotencyKey))
+      { date, bank_balances: balances.map(b => ({ receiving_account_id: b.receivingAccountId, balance: b.balance })), explanation }, keyHeader(idempotencyKey))
     return { state: data.data.state, close: toClose(data.data.close) }
   },
 }
