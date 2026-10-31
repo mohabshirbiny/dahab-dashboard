@@ -104,7 +104,8 @@ function toStone (s: ApiStone | null | undefined): PieceStone | null {
 
 export interface ApiOrderDetail extends ApiOrder {
   certificates?: PieceCertificate[]
-  lab?: { id: number } | null
+  lab?: { id: number, name_en: string } | null
+  certificate_kind_found?: 'lab' | 'other_lab' | 'none' | null
   locked_total_price: string
   deposit_amount: string
   locked_seller_unit_rate: string | null
@@ -316,6 +317,8 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
     ...toOrder(o),
     certificates: o.certificates ?? [],
     labId: o.lab?.id ?? null,
+    labName: o.lab?.name_en ?? null,
+    certificateKindFound: o.certificate_kind_found ?? null,
     lockedTotalPrice: o.locked_total_price,
     depositAmount: o.deposit_amount,
     lockedSellerUnitRate: o.locked_seller_unit_rate,

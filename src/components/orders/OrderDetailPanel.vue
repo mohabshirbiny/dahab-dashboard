@@ -35,7 +35,9 @@
         <template v-else>{{ order.buyer.displayRef ?? '—' }}</template>
       </KeyValueRow>
 
+      <KeyValueRow v-if="order.labName" label="Lab" :value="order.labName" />
       <KeyValueRow label="Branch" :value="order.branch.nameEn ?? '—'" />
+      <KeyValueRow v-if="order.certificateKindFound" label="Certificate found at inspection" :value="certificateWords({ certificateKind: order.certificateKindFound, certificateLabName: order.labName, carat: null, clarity: null, cut: null }) ?? '—'" />
       <KeyValueRow label="Accepted" :value="formatDateTime(order.acceptedAt)" />
       <KeyValueRow label="Price locked" :value="`${formatMoney(order.lockedTotalPrice)} EGP`" />
       <KeyValueRow label="Deposit" :value="`${formatMoney(order.depositAmount)} EGP`" />
@@ -245,7 +247,7 @@
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
   import { disputeStateMeta, OUTCOME_LABELS } from '@/types/dispute'
-  import { DEADLINE_LABELS, EXTENSION_STATE_META, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
+  import { certificateWords, DEADLINE_LABELS, EXTENSION_STATE_META, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
   import { PERMISSIONS } from '@/types/staff'
   import AnswerExtensionModal from './AnswerExtensionModal.vue'
   import ChangeBranchModal from './ChangeBranchModal.vue'

@@ -334,6 +334,9 @@ export interface OrderAdvance {
 export interface OrderDetail extends Order {
   certificates: PieceCertificate[]
   labId: number | null
+  labName: string | null
+  // What inspection found when it was not what the seller stated (the cost moved with it).
+  certificateKindFound: 'lab' | 'other_lab' | 'none' | null
   lockedTotalPrice: Money
   depositAmount: Money
   lockedSellerUnitRate: Money | null
