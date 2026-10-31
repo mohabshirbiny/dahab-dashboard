@@ -205,6 +205,7 @@
           statedWeightG: item.statedWeightG,
           stone: item.stone,
           certificates: item.certificates,
+          labId: item.labId,
           correcting: item.task === 'correct' ? item.latestInspection : null,
         }
         break

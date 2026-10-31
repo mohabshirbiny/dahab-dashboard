@@ -58,6 +58,8 @@ export const endpoints = {
   staffBranch: (id: string) => `/dashboard/staff/${encodeURIComponent(id)}/branch`,
   karats: '/dashboard/karats',
   karatToggle: (code: number) => `/dashboard/karats/${code}/toggle`,
+  labs: '/dashboard/labs',
+  lab: (id: number) => `/dashboard/labs/${id}`,
   branches: '/dashboard/branches',
   branch: (id: number) => `/dashboard/branches/${id}`,
   branchClosures: '/dashboard/branch-closures',

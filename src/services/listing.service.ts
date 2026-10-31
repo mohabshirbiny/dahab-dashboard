@@ -33,10 +33,14 @@ interface ApiListing {
   price_is_indicative: boolean
   you_would_receive: string | null
   // Package D: the certificate the seller brings (stones) and what it costs them; already out of you_would_receive.
-  certificate_kind?: 'igi' | 'other_lab' | 'none' | null
+  certificate_kind?: 'lab' | 'other_lab' | 'none' | null
   certificate_fee?: string | null
+  lab?: { name_en: string } | null
+  certificate_lab?: { name_en: string } | null
+  certificate_other_lab_name?: string | null
+  gold_inspection_fee?: string | null
   // Stones only (null for gold), as the seller states them; absent from an older Backend.
-  stone?: { certificate_kind: string | null, carat: string | null, clarity: string | null, cut: string | null } | null
+  stone?: { certificate_kind: string | null, certificate_lab?: { name_en: string } | null, carat: string | null, clarity: string | null, cut: string | null } | null
   gold_rate_per_gram: string | null
   seller: { id: string, display_ref: string, full_name: string | null, phone_masked: string, status: string }
   created_at: string
@@ -127,6 +131,10 @@ function toListing (l: ApiListing): Listing {
     youWouldReceive: l.you_would_receive,
     certificateKind: l.certificate_kind ?? null,
     certificateFee: l.certificate_fee ?? null,
+    labName: l.lab?.name_en ?? null,
+    certificateLabName: l.certificate_lab?.name_en ?? null,
+    certificateOtherLabName: l.certificate_other_lab_name ?? null,
+    goldInspectionFee: l.gold_inspection_fee ?? null,
     stone: l.stone ? { carat: l.stone.carat, clarity: l.stone.clarity, cut: l.stone.cut } : null,
     goldRatePerGram: l.gold_rate_per_gram,
     seller: {

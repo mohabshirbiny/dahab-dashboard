@@ -74,8 +74,9 @@ export interface StatementSummary {
   // Dahab's money fronted, not earned, so not in `in`/`out`.
   advanceOut?: Money
   advanceBack?: Money
-  // view = dahab: what sellers paid for IGI's stone certificates — owed to IGI, not earned, so not in `in`/`out`.
+  // view = dahab: what sellers paid for the labs' costs — owed to the labs, not earned, so not in `in`/`out`.
   certificatesPayable?: Money
+  payableByLab?: Array<{ labId: number, nameEn: string, amount: Money }>
   certificateIn?: Money
   certificateOut?: Money
   // view = equity: the period by what moved it, Dahab's earnings and own money together at the end of

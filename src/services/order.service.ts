@@ -96,14 +96,16 @@ interface ApiInspection {
   superseded?: boolean
 }
 
-interface ApiStone { certificate_kind: PieceStone['certificateKind'], carat: string | null, clarity: string | null, cut: string | null }
+interface ApiStone { certificate_kind: PieceStone['certificateKind'], certificate_lab?: { name_en: string } | null, carat: string | null, clarity: string | null, cut: string | null }
 
 function toStone (s: ApiStone | null | undefined): PieceStone | null {
-  return s ? { certificateKind: s.certificate_kind ?? null, carat: s.carat, clarity: s.clarity, cut: s.cut } : null
+  return s ? { certificateKind: s.certificate_kind ?? null, certificateLabName: s.certificate_lab?.name_en ?? null, carat: s.carat, clarity: s.clarity, cut: s.cut } : null
 }
 
 export interface ApiOrderDetail extends ApiOrder {
   certificates?: PieceCertificate[]
+  lab?: { id: number, name_en: string } | null
+  certificate_kind_found?: 'lab' | 'other_lab' | 'none' | null
   locked_total_price: string
   deposit_amount: string
   locked_seller_unit_rate: string | null
@@ -117,6 +119,7 @@ export interface ApiOrderDetail extends ApiOrder {
     spread_amount: string
     // Package D: the stone certificate cost taken from the seller's proceeds.
     certificate_fee?: string
+    gold_inspection_fee?: string
     seller_proceeds: string
     balance_amount: string
   } | null
@@ -208,6 +211,7 @@ interface ApiWorkListItem {
   since: string
   stone?: ApiStone | null
   certificates?: PieceCertificate[]
+  lab_id?: number | null
   proxy?: { name: string, phone: string, has_id_photo: boolean, id_kind?: IdKind | null, has_back?: boolean } | null
   buyer_id?: ApiBuyerId | null
 }
@@ -312,6 +316,9 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
   return {
     ...toOrder(o),
     certificates: o.certificates ?? [],
+    labId: o.lab?.id ?? null,
+    labName: o.lab?.name_en ?? null,
+    certificateKindFound: o.certificate_kind_found ?? null,
     lockedTotalPrice: o.locked_total_price,
     depositAmount: o.deposit_amount,
     lockedSellerUnitRate: o.locked_seller_unit_rate,
@@ -325,6 +332,7 @@ export function toDetail (o: ApiOrderDetail): OrderDetail {
           vatAmount: s.vat_amount,
           spreadAmount: s.spread_amount,
           certificateFee: s.certificate_fee ?? '0.0000',
+          goldInspectionFee: s.gold_inspection_fee ?? '0.0000',
           sellerProceeds: s.seller_proceeds,
           balanceAmount: s.balance_amount,
         }
@@ -430,6 +438,7 @@ function toWorkItem (w: ApiWorkListItem): WorkListItem {
     since: w.since,
     stone: toStone(w.stone),
     certificates: w.certificates ?? [],
+    labId: w.lab_id ?? null,
     proxy: w.proxy
       ? { name: w.proxy.name, phone: w.proxy.phone, namedAt: null, hasIdPhoto: w.proxy.has_id_photo, collectedByProxy: false, idKind: w.proxy.id_kind ?? null, hasBack: w.proxy.has_back ?? false }
       : null,
@@ -527,6 +536,8 @@ export const orderService = {
       is_counterfeit: input.isCounterfeit,
       stone_below_claim: input.stoneBelowClaim,
       supersedes_id: input.supersedesId,
+      certificate_kind_found: input.certificateKindFound ?? null,
+      certificate_lab_id_found: input.certificateLabIdFound ?? null,
     }
     const { data } = await http.post<ApiEnvelope<{ inspection: ApiInspection, order_state: OrderState }>>(
       endpoints.orderAction(id, 'inspection-results'), body, keyHeader(idempotencyKey))

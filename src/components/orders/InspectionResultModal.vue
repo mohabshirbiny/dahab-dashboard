@@ -75,6 +75,16 @@
         </FormField>
       </div>
 
+      <FormField
+        v-if="hasStone"
+        v-slot="{ controlId }"
+        :error="fieldError(mutation.error.value, 'certificate_kind_found')"
+        hint="Change it only if the certificate is not what the seller stated. The cost moves to this lab's cost for it and the seller is told."
+        label="Certificate found"
+      >
+        <DSelect :id="controlId" v-model="found" :disabled="busy" :options="foundOptions" />
+      </FormField>
+
       <label v-if="hasStone" class="d-irm__check">
         <input v-model="stoneBelow" :disabled="busy" type="checkbox">
         The stone is below what the seller claimed
@@ -117,6 +127,7 @@
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
   import DModal from '@/components/ui/DModal.vue'
+  import DSelect from '@/components/ui/DSelect.vue'
   import DTextarea from '@/components/ui/DTextarea.vue'
   import FormField from '@/components/ui/FormField.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
@@ -144,7 +155,15 @@
   const note = ref('')
   const counterfeit = ref(false)
   const stoneBelow = ref(false)
+  const found = ref('stated')
   const submitted = ref(false)
+
+  const foundOptions = computed(() => [
+    { value: 'stated', label: 'As the seller stated' },
+    ...(props.target?.labId ? [{ value: 'lab', label: 'This lab\'s own certificate' }] : []),
+    { value: 'other_lab', label: 'Another lab\'s certificate' },
+    { value: 'none', label: 'No certificate' },
+  ])
 
   const hasGold = computed(() => props.target !== null && props.target.category !== 'diamond')
   const hasStone = computed(() => props.target !== null && props.target.category !== 'gold')
@@ -168,6 +187,7 @@
     note.value = ''
     counterfeit.value = c?.isCounterfeit ?? false
     stoneBelow.value = c?.stoneBelowClaim ?? false
+    found.value = 'stated'
     submitted.value = false
     mutation.reset()
     idempotency.reset()
@@ -216,6 +236,8 @@
       isCounterfeit: counterfeit.value,
       stoneBelowClaim: hasStone.value && stoneBelow.value,
       supersedesId: props.target.correcting?.id ?? null,
+      certificateKindFound: hasStone.value && found.value !== 'stated' ? found.value : null,
+      certificateLabIdFound: hasStone.value && found.value === 'lab' ? props.target.labId : null,
     }
     const payload = { orderId: props.target.orderId, action: { kind: 'inspect' as const, input } }
     try {

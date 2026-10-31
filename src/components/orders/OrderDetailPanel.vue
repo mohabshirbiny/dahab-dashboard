@@ -35,7 +35,9 @@
         <template v-else>{{ order.buyer.displayRef ?? '—' }}</template>
       </KeyValueRow>
 
+      <KeyValueRow v-if="order.labName" label="Lab" :value="order.labName" />
       <KeyValueRow label="Branch" :value="order.branch.nameEn ?? '—'" />
+      <KeyValueRow v-if="order.certificateKindFound" label="Certificate found at inspection" :value="certificateWords({ certificateKind: order.certificateKindFound, certificateLabName: order.labName, carat: null, clarity: null, cut: null }) ?? '—'" />
       <KeyValueRow label="Accepted" :value="formatDateTime(order.acceptedAt)" />
       <KeyValueRow label="Price locked" :value="`${formatMoney(order.lockedTotalPrice)} EGP`" />
       <KeyValueRow label="Deposit" :value="`${formatMoney(order.depositAmount)} EGP`" />
@@ -84,6 +86,7 @@
         <KeyValueRow label="VAT in the commission" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
         <KeyValueRow label="Spread" :value="`${formatMoney(order.settlement.spreadAmount)} EGP`" />
         <KeyValueRow v-if="Number(order.settlement.certificateFee) > 0" label="Stone certificate fee" :value="`${formatMoney(order.settlement.certificateFee)} EGP`" />
+        <KeyValueRow v-if="Number(order.settlement.goldInspectionFee) > 0" label="Gold inspection" :value="`${formatMoney(order.settlement.goldInspectionFee)} EGP`" />
         <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
       </template>
 
@@ -244,7 +247,7 @@
   import { usePermissions } from '@/composables/usePermissions'
   import { useToast } from '@/composables/useToast'
   import { disputeStateMeta, OUTCOME_LABELS } from '@/types/dispute'
-  import { DEADLINE_LABELS, EXTENSION_STATE_META, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
+  import { certificateWords, DEADLINE_LABELS, EXTENSION_STATE_META, orderStateMeta, outcomeMeta, pieceTitle } from '@/types/order'
   import { PERMISSIONS } from '@/types/staff'
   import AnswerExtensionModal from './AnswerExtensionModal.vue'
   import ChangeBranchModal from './ChangeBranchModal.vue'
@@ -317,6 +320,7 @@
       statedWeightG: props.order.piece.weightG,
       stone: props.order.piece.stone,
       certificates: props.order.certificates,
+      labId: props.order.labId,
       correcting,
     }
   }

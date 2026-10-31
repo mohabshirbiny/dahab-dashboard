@@ -386,8 +386,22 @@ export interface ApiBranchHour {
 }
 
 // `GET|POST /dashboard/branches`, `PATCH /dashboard/branches/{branch}`.
+// `GET|POST|PATCH /dashboard/labs`.
+export interface ApiLab {
+  id: number
+  name_en: string
+  name_ar: string
+  certificate_own_cost_egp: string
+  certificate_other_cost_egp: string
+  certificate_none_cost_egp: string
+  gold_inspection_cost_egp: string
+  is_enabled: boolean
+  live_pieces: number
+}
+
 export interface ApiBranch {
   id: number
+  lab_id: number
   name_en: string
   name_ar: string
   address_en: string

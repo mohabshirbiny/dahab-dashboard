@@ -120,7 +120,9 @@ export interface OrderPiece {
 
 // The stone as the seller stated it (carat, clarity vvs|vs|si|i, cut excellent|very_good|good) and the certificate they named.
 export interface PieceStone {
-  certificateKind: 'igi' | 'other_lab' | 'none' | null
+  certificateKind: 'lab' | 'other_lab' | 'none' | null
+  // With `lab`: the lab that issued it.
+  certificateLabName: string | null
   carat: string | null
   clarity: string | null
   cut: string | null
@@ -129,7 +131,7 @@ export interface PieceStone {
 // A stone certificate file the seller uploaded, opened through the order (GET /dashboard/orders/{id}/certificates/{media}).
 export interface PieceCertificate { id: string, mime: string }
 
-const CERTIFICATE_WORDS = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
+const CERTIFICATE_WORDS = { lab: 'A lab certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
 const CUT_WORDS: Record<string, string> = { excellent: 'Excellent', very_good: 'Very good', good: 'Good' }
 
 // "0.70 ct · VS · Very good cut", or null when the seller stated nothing.
@@ -142,6 +144,9 @@ export function stoneWords (s: PieceStone | null): string | null {
 }
 
 export function certificateWords (s: PieceStone | null): string | null {
+  if (s?.certificateKind === 'lab' && s.certificateLabName) {
+    return `A certificate from ${s.certificateLabName}`
+  }
   return s?.certificateKind ? CERTIFICATE_WORDS[s.certificateKind] : null
 }
 
@@ -233,8 +238,9 @@ export interface OrderSettlement {
   commissionAmount: Money
   vatAmount: Money
   spreadAmount: Money
-  // The stone certificate cost taken from the seller's proceeds (0 when none).
+  // What the lab cost, taken from the seller's proceeds (0 when none).
   certificateFee: Money
+  goldInspectionFee: Money
   sellerProceeds: Money
   balanceAmount: Money
 }
@@ -327,6 +333,10 @@ export interface OrderAdvance {
 
 export interface OrderDetail extends Order {
   certificates: PieceCertificate[]
+  labId: number | null
+  labName: string | null
+  // What inspection found when it was not what the seller stated (the cost moved with it).
+  certificateKindFound: 'lab' | 'other_lab' | 'none' | null
   lockedTotalPrice: Money
   depositAmount: Money
   lockedSellerUnitRate: Money | null
@@ -399,6 +409,7 @@ export interface WorkListItem {
   branch: { id: number | null, nameEn: string | null }
   since: string
   stone: PieceStone | null
+  labId: number | null
   certificates: PieceCertificate[]
   // Spec 014: on a handover only, the person the buyer named to collect.
   proxy: OrderProxy | null
@@ -437,6 +448,9 @@ export interface InspectionInput {
   isCounterfeit: boolean
   stoneBelowClaim: boolean
   supersedesId: string | null
+  // The certificate actually found, when it is not what the seller stated.
+  certificateKindFound?: string | null
+  certificateLabIdFound?: number | null
 }
 
 // The piece an inspection result is entered for, from the work list or the order detail.
@@ -449,6 +463,8 @@ export interface InspectionTarget {
   statedWeightG: string | null
   stone: PieceStone | null
   certificates: PieceCertificate[]
+  // The lab that inspects the piece.
+  labId: number | null
   // Set when the result corrects the latest one.
   correcting: InspectionResult | null
 }

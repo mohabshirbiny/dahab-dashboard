@@ -45,7 +45,7 @@ export const navGroups: NavGroup[] = [
       { key: 'mm', title: 'Market maker approvals', to: '/dashboard/market-maker', anyPermission: ['market_maker.approve', 'promo.manage'] },
       { key: 'karats', title: 'Karats', to: '/dashboard/karats', permission: 'reference.view' },
       { key: 'switches', title: 'Switches', to: '/dashboard/switches', anyPermission: ['category.stop_new', 'category.pause', 'platform.stop_everything', 'visibility.manage'] },
-      { key: 'branches', title: 'Branches and hours', to: '/dashboard/branches', permission: 'reference.view' },
+      { key: 'branches', title: 'Labs and branches', to: '/dashboard/branches', permission: 'reference.view' },
       // Backend spec 019: the customer app's texts (content.edit; not in the design as a separate page route).
       { key: 'content', title: 'App text', to: '/dashboard/content', permission: 'content.edit' },
       // Backend spec 019: every legal text and its versions; a new version needs legal.publish (the CEO).

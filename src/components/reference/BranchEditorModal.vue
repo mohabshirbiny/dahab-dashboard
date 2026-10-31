@@ -8,6 +8,10 @@
   >
     <form id="branch-editor-form" novalidate @submit.prevent="onSubmit">
       <div class="d-be__grid">
+        <FormField v-slot="{ controlId }" :error="fieldErrors?.lab_id?.[0]" hint="A branch with pieces on the way or on the market keeps its lab." label="Lab">
+          <DSelect :id="controlId" v-model="form.labId" :disabled="loading" :options="labOptions" />
+        </FormField>
+
         <FormField v-slot="{ controlId, describedBy, invalid }" :error="errorFor('name_en')" label="Name (English)">
           <DInput
             :id="controlId"
@@ -147,7 +151,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { Branch, BranchHour, BranchInput } from '@/types/reference'
+  import type { Branch, BranchHour, BranchInput, Lab } from '@/types/reference'
   import { computed, reactive, ref, watch } from 'vue'
   import DBtn from '@/components/ui/DBtn.vue'
   import DInput from '@/components/ui/DInput.vue'
@@ -164,6 +168,7 @@
     modelValue: boolean
     // null = a new branch.
     branch: Branch | null
+    labs: readonly Lab[]
     loading?: boolean
     submitError?: string
     // Backend validation messages, by field (`name_en`, `hours.2`, …).
@@ -175,10 +180,13 @@
     (e: 'confirm', payload: BranchInput): void
   }>()
 
+  const labOptions = computed(() => props.labs.filter(l => l.isEnabled || l.id === props.branch?.labId).map(l => ({ value: String(l.id), label: l.nameEn })))
+
   const dayOptions = DAY_NAMES.map((label, dow) => ({ value: String(dow) as DayValue, label }))
 
   let nextKey = 0
   const form = reactive({
+    labId: '',
     nameEn: '',
     nameAr: '',
     addressEn: '',
@@ -199,6 +207,7 @@
   watch(() => props.modelValue, open => {
     if (!open) return
     const b = props.branch
+    form.labId = String(b?.labId ?? props.labs[0]?.id ?? '')
     form.nameEn = b?.nameEn ?? ''
     form.nameAr = b?.nameAr ?? ''
     form.addressEn = b?.addressEn ?? ''
@@ -271,6 +280,7 @@
     submitted.value = true
     if (required.some(k => form[k].trim() === '') || rowErrors.value.some(Boolean)) return
     emit('confirm', {
+      labId: Number(form.labId),
       nameEn: form.nameEn.trim(),
       nameAr: form.nameAr.trim(),
       addressEn: form.addressEn.trim(),
