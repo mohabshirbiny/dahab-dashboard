@@ -47,7 +47,9 @@
       <KeyValueRow label="Video" :value="has('video') ? 'Uploaded' : 'None'" />
       <KeyValueRow label="Original invoice" :value="has('invoice') ? 'Uploaded' : 'None'" />
       <KeyValueRow v-if="listing.category !== 'gold'" label="Stone certificate" :value="has('stone_certificate') ? 'Uploaded' : 'None'" />
-      <KeyValueRow v-if="listing.certificateKind" label="Certificate brought" :value="`${certificateWords[listing.certificateKind]}${listing.certificateFee && Number(listing.certificateFee) > 0 ? ` · ${formatMoney(listing.certificateFee)} EGP from the seller` : ''}`" />
+      <KeyValueRow v-if="listing.labName" label="Lab" :value="listing.labName" />
+      <KeyValueRow v-if="listing.certificateKind" label="Certificate brought" :value="`${certificateLabel}${listing.certificateFee && Number(listing.certificateFee) > 0 ? ` · ${formatMoney(listing.certificateFee)} EGP from the seller` : ''}`" />
+      <KeyValueRow v-if="listing.goldInspectionFee" label="Gold inspection" :value="`${formatMoney(listing.goldInspectionFee)} EGP from the seller`" />
       <KeyValueRow v-if="stoneWords" label="The stone, as stated" :value="stoneWords" />
       <KeyValueRow v-if="listing.listedAt" label="Went live" :value="formatDateTime(listing.listedAt)" />
 
@@ -134,7 +136,12 @@
   const hasActions = computed(() => props.listing.canApprove || props.listing.canRequestChanges || props.listing.canReject || props.listing.canTakeDown || props.listing.canRelist)
   const branches = computed(() => props.listing.branchOptions.map(b => b.nameEn).join(', ') || '—')
   const has = (kind: ListingMediaKind) => props.listing.media.some(m => m.kind === kind)
-  const certificateWords = { igi: 'An IGI certificate', other_lab: 'Another lab certificate', none: 'No certificate' }
+  const certificateLabel = computed(() => {
+    const l = props.listing
+    if (l.certificateKind === 'lab') return `A certificate from ${l.certificateLabName ?? 'a listed lab'}`
+    if (l.certificateKind === 'other_lab') return `Another lab: ${l.certificateOtherLabName ?? 'not named'}`
+    return 'No certificate'
+  })
   // The stone as the seller states it: "0.70 ct · VS · Very good cut" (IGI checks it at handover).
   const stoneWords = computed(() => {
     const s = props.listing.stone

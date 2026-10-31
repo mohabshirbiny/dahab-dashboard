@@ -1,9 +1,60 @@
 <template>
   <div class="d-page">
     <PageLead>
-      Where pieces are inspected and handed over. Working hours matter: every deadline in the system is counted in
-      working hours at the branch the seller chose.
+      Where pieces are inspected and handed over, and what each lab costs the seller. Working hours matter: every
+      deadline in the system is counted in working hours at the branch the seller chose.
     </PageLead>
+
+    <Panel subtitle="Taken from the seller's money when the buyer pays" title="Labs">
+      <template v-if="canManage" #actions>
+        <DBtn @click="openLab(null)">Add a lab</DBtn>
+      </template>
+
+      <LoadingState v-if="labs.isPending.value" label="Loading labs…" />
+
+      <ErrorState
+        v-else-if="labs.isError.value"
+        :message="referenceErrorMessage(labs.error.value)"
+        :retryable="errorCodeOf(labs.error.value) !== 'forbidden'"
+        title="Could not load labs"
+        @retry="labs.refetch()"
+      />
+
+      <EmptyState v-else-if="!labs.data.value || labs.data.value.length === 0" title="No labs yet" />
+
+      <DataTable v-else>
+        <template #head>
+          <th>Lab</th>
+          <th class="r">Its own certificate</th>
+          <th class="r">Another lab's</th>
+          <th class="r">No certificate</th>
+          <th class="r">Gold inspection</th>
+          <th class="r">Live pieces</th>
+          <th v-if="canManage" aria-label="Action" class="r" />
+        </template>
+
+        <tr v-for="lab in labs.data.value" :key="lab.id">
+          <td>
+            <div class="d-branches__name">
+              {{ lab.nameEn }}
+              <StatusTag v-if="!lab.isEnabled" label="Disabled" variant="off" />
+            </div>
+
+            <div class="who2" dir="rtl">{{ lab.nameAr }}</div>
+          </td>
+
+          <td class="r mono">{{ formatMoney(lab.ownCost) }}</td>
+          <td class="r mono">{{ formatMoney(lab.otherCost) }}</td>
+          <td class="r mono">{{ formatMoney(lab.noneCost) }}</td>
+          <td class="r mono">{{ formatMoney(lab.goldCost) }}</td>
+          <td class="r mono">{{ lab.livePieces }}</td>
+
+          <td v-if="canManage" class="r">
+            <DBtn :aria-label="`Edit ${lab.nameEn}`" @click="openLab(lab)">Edit</DBtn>
+          </td>
+        </tr>
+      </DataTable>
+    </Panel>
 
     <Panel title="Branches">
       <template v-if="canManage" #actions>
@@ -27,6 +78,7 @@
       <DataTable v-else>
         <template #head>
           <th>Branch</th>
+          <th>Lab</th>
           <th>Where</th>
           <th>Open</th>
           <th>Closed</th>
@@ -42,6 +94,8 @@
 
             <div class="who2" dir="rtl">{{ branch.nameAr }}</div>
           </td>
+
+          <td>{{ labName(branch.labId) }}</td>
 
           <td>
             {{ branch.addressEn }}
@@ -136,9 +190,19 @@
       v-model="editorOpen"
       :branch="editing"
       :field-errors="editorFieldErrors"
+      :labs="labs.data.value ?? []"
       :loading="saveBranch.isPending.value"
       :submit-error="editorError"
       @confirm="save"
+    />
+
+    <LabEditorModal
+      v-model="labOpen"
+      :field-errors="labFieldErrors"
+      :lab="editingLab"
+      :loading="saveLab.isPending.value"
+      :submit-error="labError"
+      @confirm="saveLabForm"
     />
 
     <AddClosureModal
@@ -164,10 +228,11 @@
 </template>
 
 <script lang="ts" setup>
-  import type { Branch, BranchClosure, BranchInput, CreateClosureInput } from '@/types/reference'
+  import type { Branch, BranchClosure, BranchInput, CreateClosureInput, Lab, LabInput } from '@/types/reference'
   import { computed, ref } from 'vue'
   import AddClosureModal from '@/components/reference/AddClosureModal.vue'
   import BranchEditorModal from '@/components/reference/BranchEditorModal.vue'
+  import LabEditorModal from '@/components/reference/LabEditorModal.vue'
   import { referenceErrorMessage } from '@/components/reference/referenceErrors'
   import { fieldError } from '@/components/staff/accessErrors'
   import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
@@ -186,7 +251,9 @@
     useClosuresQuery,
     useCreateClosure,
     useDeleteClosure,
+    useLabsQuery,
     useSaveBranch,
+    useSaveLab,
   } from '@/composables/useReference'
   import { useToast } from '@/composables/useToast'
   import { errorCodeOf, isServiceError } from '@/services/errors'
@@ -199,6 +266,7 @@
   // Viewing needs reference.view (route guard); every change needs branches.manage.
   const canManage = computed(() => can(PERMISSIONS.branchesManage))
 
+  const labs = useLabsQuery()
   const branches = useBranchesQuery()
   const closures = useClosuresQuery()
 
@@ -214,6 +282,42 @@
     const [year, month, day] = date.split('-').map(Number)
     return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
       .format(new Date(Date.UTC(year!, month! - 1, day!)))
+  }
+
+  const formatMoney = (value: string) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(Number(value))
+
+  function labName (labId: number): string {
+    return labs.data.value?.find(l => l.id === labId)?.nameEn ?? '—'
+  }
+
+  // Lab editor
+  const saveLab = useSaveLab()
+  const labOpen = ref(false)
+  const editingLab = ref<Lab | null>(null)
+  const labError = ref<string>()
+  const labFieldErrors = ref<Readonly<Record<string, string[]>>>({})
+
+  function openLab (lab: Lab | null) {
+    editingLab.value = lab
+    labError.value = undefined
+    labFieldErrors.value = {}
+    labOpen.value = true
+  }
+
+  function saveLabForm (payload: LabInput) {
+    labError.value = undefined
+    labFieldErrors.value = {}
+    const isNew = editingLab.value === null
+    saveLab.mutate({ id: editingLab.value?.id ?? null, ...payload }, {
+      onSuccess: lab => {
+        labOpen.value = false
+        ok(isNew ? `${lab.nameEn} added. Add its branches below.` : `${lab.nameEn} saved.`)
+      },
+      onError: error => {
+        labFieldErrors.value = isServiceError(error) ? error.fields : {}
+        labError.value = referenceErrorMessage(error)
+      },
+    })
   }
 
   function branchLabel (branchId: number | null): string {

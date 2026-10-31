@@ -134,6 +134,8 @@ function toDetail (i: ApiInvoice): InvoiceDetail {
       commissionMinimum: str(l.commission_minimum),
       paidToWallet: str(l.paid_to_wallet),
       certificateFee: str(l.certificate_fee),
+      goldInspectionFee: str(l.gold_inspection_fee),
+      labName: str(l.lab_name_en),
       commissionVatInclusive: l.commission_vat_inclusive === true,
       sellerUnitRate: str(l.seller_unit_rate),
       goldValueAtSellerRate: str(l.gold_value_at_seller_rate),

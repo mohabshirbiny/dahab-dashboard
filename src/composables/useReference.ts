@@ -1,4 +1,4 @@
-import type { BranchInput, CreateClosureInput, CreateKaratInput } from '@/types/reference'
+import type { BranchInput, CreateClosureInput, CreateKaratInput, LabInput } from '@/types/reference'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { referenceService } from '@/services/reference.service'
@@ -8,6 +8,7 @@ import { accessKeys } from './useAccessControl'
 export const referenceKeys = {
   all: ['reference'] as const,
   karats: () => [...referenceKeys.all, 'karats'] as const,
+  labs: () => [...referenceKeys.all, 'labs'] as const,
   branches: () => [...referenceKeys.all, 'branches'] as const,
   closures: () => [...referenceKeys.all, 'closures'] as const,
 }
@@ -25,6 +26,14 @@ export function useBranchesQuery (enabled: MaybeRefOrGetter<boolean> = true) {
     queryKey: referenceKeys.branches(),
     queryFn: () => referenceService.listBranches(),
     enabled: computed(() => toValue(enabled)),
+    retry: retryTransient,
+  })
+}
+
+export function useLabsQuery () {
+  return useQuery({
+    queryKey: referenceKeys.labs(),
+    queryFn: () => referenceService.listLabs(),
     retry: retryTransient,
   })
 }
@@ -66,6 +75,15 @@ export function useSaveBranch () {
   return useMutation({
     mutationFn: (input: BranchInput & { id: number | null }) =>
       input.id === null ? referenceService.createBranch(input) : referenceService.updateBranch(input.id, input),
+    onSuccess: refresh,
+  })
+}
+
+export function useSaveLab () {
+  const refresh = useRefresh(referenceKeys.labs())
+  return useMutation({
+    mutationFn: (input: LabInput & { id: number | null }) =>
+      input.id === null ? referenceService.createLab(input) : referenceService.updateLab(input.id, input),
     onSuccess: refresh,
   })
 }

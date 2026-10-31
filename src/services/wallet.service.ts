@@ -56,6 +56,7 @@ interface ApiStatementSummary {
   advance_back?: string
   // view = dahab: the stone certificate fees sellers paid (owed to IGI; not in in/out).
   certificates_payable?: string
+  payable_by_lab?: Array<{ lab_id: number, name_en: string, amount: string }>
   certificate_in?: string
   certificate_out?: string
   // view = equity: Dahab's own money by what moved it, earnings beside it, advances still out (today).
@@ -138,6 +139,7 @@ function toSummary (s: ApiStatementSummary): StatementSummary {
     advanceOut: s.advance_out,
     advanceBack: s.advance_back,
     certificatesPayable: s.certificates_payable,
+    payableByLab: s.payable_by_lab?.map(l => ({ labId: l.lab_id, nameEn: l.name_en, amount: l.amount })),
     certificateIn: s.certificate_in,
     certificateOut: s.certificate_out,
     groups: s.groups,

@@ -123,8 +123,13 @@ export interface Listing {
   priceIsIndicative: boolean
   youWouldReceive: Money | null
   // Stones only: the certificate the seller brings and what it costs them (null before it existed).
-  certificateKind: 'igi' | 'other_lab' | 'none' | null
+  certificateKind: 'lab' | 'other_lab' | 'none' | null
   certificateFee: Money | null
+  // The lab that inspects the piece; the lab behind the certificate, or what the seller typed.
+  labName: string | null
+  certificateLabName: string | null
+  certificateOtherLabName: string | null
+  goldInspectionFee: Money | null
   // Stones only: the stone as the seller states it (carat, clarity vvs|vs|si|i, cut excellent|very_good|good).
   stone: { carat: string | null, clarity: string | null, cut: string | null } | null
   // What buyers pay per gram of this karat now (gold only).

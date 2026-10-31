@@ -57,7 +57,8 @@
 
         <KeyValueRow :label="`VAT at ${Number(invoice.vatRate)}%`" :value="formatMoney(invoice.vat)" />
         <KeyValueRow big :label="invoice.lines.commissionVatInclusive ? 'Commission, VAT included' : 'Total charges'" :value="formatMoney(invoice.gross)" />
-        <KeyValueRow v-if="invoice.lines.certificateFee" label="Stone certificate fee (from the proceeds)" :value="formatMoney(invoice.lines.certificateFee)" />
+        <KeyValueRow v-if="invoice.lines.certificateFee" :label="`Stone certificate fee${invoice.lines.labName ? `, ${invoice.lines.labName}` : ''} (from the proceeds)`" :value="formatMoney(invoice.lines.certificateFee)" />
+        <KeyValueRow v-if="invoice.lines.goldInspectionFee" :label="`Gold inspection${invoice.lines.labName ? `, ${invoice.lines.labName}` : ''} (from the proceeds)`" :value="formatMoney(invoice.lines.goldInspectionFee)" />
         <KeyValueRow label="Paid to the seller's wallet" :value="formatMoney(invoice.lines.paidToWallet)" />
       </template>
 

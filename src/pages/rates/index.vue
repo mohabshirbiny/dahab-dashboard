@@ -202,16 +202,6 @@
       ],
     },
     {
-      title: 'Stone certificates',
-      subtitle: 'What IGI\'s certificate costs the seller, by the certificate they bring',
-      note: 'Shown to the seller on the sell form of a diamond or gold with diamond. Not yet taken from the settlement.',
-      fields: [
-        { key: 'certificate.igi_cost_egp', label: 'They bring an IGI certificate', hint: 'EGP. 0 = free' },
-        { key: 'certificate.other_lab_cost_egp', label: 'They bring another lab\'s certificate', hint: 'EGP. IGI starts from it, so it costs less' },
-        { key: 'certificate.none_cost_egp', label: 'They bring no certificate', hint: 'EGP. The full cost' },
-      ],
-    },
-    {
       title: 'Sign-in security',
       subtitle: 'How staff confirm a device they sign in from for the first time',
       note: 'With this on, a staff member on a new device gets a code by SMS to the phone on their staff account, and a founder\'s first device is confirmed the same way instead of with php artisan founder:trust-device on the server. A founder\'s later new devices still wait for the other founder. Staff with no phone on file are not asked.',

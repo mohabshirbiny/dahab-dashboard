@@ -16,8 +16,34 @@ export interface BranchHour {
   closesAt: string
 }
 
+// A lab sets what it costs the seller; its branches are where pieces go. Money is a decimal string.
+export interface Lab {
+  id: number
+  nameEn: string
+  nameAr: string
+  // The seller holds this lab's certificate, another lab's, or none.
+  ownCost: string
+  otherCost: string
+  noneCost: string
+  // Gold only; 0 appears nowhere for the seller.
+  goldCost: string
+  isEnabled: boolean
+  livePieces: number
+}
+
+export interface LabInput {
+  nameEn: string
+  nameAr: string
+  ownCost: string
+  otherCost: string
+  noneCost: string
+  goldCost: string
+  isEnabled: boolean
+}
+
 export interface Branch {
   id: number
+  labId: number
   nameEn: string
   nameAr: string
   addressEn: string
@@ -45,6 +71,7 @@ export interface CreateKaratInput {
 }
 
 export interface BranchInput {
+  labId: number
   nameEn: string
   nameAr: string
   addressEn: string

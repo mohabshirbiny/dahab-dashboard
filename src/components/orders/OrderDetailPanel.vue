@@ -84,6 +84,7 @@
         <KeyValueRow label="VAT in the commission" :value="`${formatMoney(order.settlement.vatAmount)} EGP`" />
         <KeyValueRow label="Spread" :value="`${formatMoney(order.settlement.spreadAmount)} EGP`" />
         <KeyValueRow v-if="Number(order.settlement.certificateFee) > 0" label="Stone certificate fee" :value="`${formatMoney(order.settlement.certificateFee)} EGP`" />
+        <KeyValueRow v-if="Number(order.settlement.goldInspectionFee) > 0" label="Gold inspection" :value="`${formatMoney(order.settlement.goldInspectionFee)} EGP`" />
         <KeyValueRow big label="Seller receives" :value="`${formatMoney(order.settlement.sellerProceeds)} EGP`" />
       </template>
 
@@ -317,6 +318,7 @@
       statedWeightG: props.order.piece.weightG,
       stone: props.order.piece.stone,
       certificates: props.order.certificates,
+      labId: props.order.labId,
       correcting,
     }
   }

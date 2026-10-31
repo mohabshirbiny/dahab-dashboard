@@ -16,11 +16,11 @@
         :value="formatMoney(net(summary.vatIn, summary.vatOut))"
       />
 
-      <!-- Stone certificate fees taken from sellers at settlement: owed to IGI, not earned, not in the balance. -->
+      <!-- What the labs cost sellers at settlement: owed to the labs, not earned, not in the balance. -->
       <StatCard
         v-if="summary.certificateIn !== undefined"
-        :hint="`${splitHint(summary.certificateIn, summary.certificateOut ?? '0')} · held for IGI, not in the balance${summary.certificatesPayable ? ` · total held ${formatMoney(summary.certificatesPayable)}` : ''}`"
-        label="Certificate fees"
+        :hint="`${splitHint(summary.certificateIn, summary.certificateOut ?? '0')} · owed to the labs, not in the balance${summary.certificatesPayable ? ` · total held ${formatMoney(summary.certificatesPayable)}` : ''}${labBreakdown}`"
+        label="Lab fees"
         :value="formatMoney(net(summary.certificateIn, summary.certificateOut ?? '0'))"
       />
 
@@ -73,6 +73,11 @@
     if (props.summary.view === 'dahab') return 'Commission and spread, shown apart below'
     if (props.summary.view === 'equity') return 'Capital, refunds and advances back, shown apart below'
     return 'Money in, and deposits returned'
+  })
+
+  const labBreakdown = computed(() => {
+    const labs = props.summary.payableByLab ?? []
+    return labs.length > 0 ? ` · ${labs.map(l => `${l.nameEn} ${formatMoney(l.amount)}`).join(', ')}` : ''
   })
 
   const advancesHint = computed(() => {

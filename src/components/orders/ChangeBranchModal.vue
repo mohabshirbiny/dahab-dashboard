@@ -8,14 +8,14 @@
   >
     <form novalidate @submit.prevent="onSubmit">
       <p class="d-cbm__lead">
-        {{ order.orderRef }} goes to {{ order.branch.nameEn ?? '—' }} now. Only the branches the seller
-        offered for this piece can be picked. The reach-branch deadline keeps running unless you move it.
+        {{ order.orderRef }} goes to {{ order.branch.nameEn ?? '—' }} now. Only open branches of the same lab
+        can be picked, so the cost stays the same. The reach-branch deadline keeps running unless you move it.
       </p>
 
       <LoadingState v-if="options.loading" label="Loading branches…" />
 
       <NoteBanner v-else-if="options.list.length === 0" variant="wait">
-        No branch list is available to you. You need the listing or reference permissions to see the branches.
+        No other open branch of this lab is available to you. Seeing the branches needs the reference permission.
       </NoteBanner>
 
       <template v-else>
@@ -72,7 +72,6 @@
   import LoadingState from '@/components/ui/LoadingState.vue'
   import NoteBanner from '@/components/ui/NoteBanner.vue'
   import { useIdempotencyKey } from '@/composables/useIdempotencyKey'
-  import { useListingQuery } from '@/composables/useListings'
   import { useOrderAction } from '@/composables/useOrders'
   import { usePermissions } from '@/composables/usePermissions'
   import { useBranchesQuery } from '@/composables/useReference'
@@ -81,29 +80,22 @@
   import { orderFormError, REASON_MAX, reasonError } from './orderErrors'
   import { fromLocalInput } from './orderFormat'
 
-  // Move an order to another of the seller's branches while the piece has not arrived
-  // (Backend spec 012 FR-008, order.change_branch). The branch options come from the
-  // listing (listing permissions); without them, every branch (reference.view) and the
-  // Backend refuses one the seller did not offer.
+  // Move an order to another open branch of its lab while the piece has not arrived
+  // (Backend spec 012 FR-008, order.change_branch). The branches come from reference.view;
+  // the Backend refuses one of another lab.
   const props = defineProps<{ open: boolean, order: OrderDetail }>()
   const emit = defineEmits<{ (e: 'close'): void }>()
 
-  const { can, canAny } = usePermissions()
-  const readsListing = computed(() => canAny([PERMISSIONS.listingReview, PERMISSIONS.listingRequestChanges, PERMISSIONS.listingTakedown]))
-  const listing = useListingQuery(() => (props.open && readsListing.value ? props.order.piece.listingId : null))
-  const branches = useBranchesQuery(() => props.open && !readsListing.value && can(PERMISSIONS.referenceView))
+  const { can } = usePermissions()
+  const branches = useBranchesQuery(() => props.open && can(PERMISSIONS.referenceView))
 
   const options = computed(() => {
     const here = props.order.branch.id
-    if (readsListing.value) {
-      return {
-        loading: listing.isPending.value,
-        list: (listing.data.value?.branchOptions ?? []).filter(b => b.isEnabled && b.id !== here).map(b => ({ value: String(b.id), label: b.nameEn })),
-      }
-    }
+    const all = branches.data.value ?? []
+    const labId = all.find(b => b.id === here)?.labId
     return {
       loading: branches.isPending.value && branches.fetchStatus.value !== 'idle',
-      list: (branches.data.value ?? []).filter(b => b.isEnabled && b.id !== here).map(b => ({ value: String(b.id), label: b.nameEn })),
+      list: all.filter(b => b.isEnabled && b.id !== here && b.labId === labId).map(b => ({ value: String(b.id), label: b.nameEn })),
     }
   })
 
